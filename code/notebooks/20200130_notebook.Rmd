@@ -1,0 +1,18 @@
+---
+title: "Racist hypothesis notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+*20200130*
+
+# Data
+
+• 1KG final release VCFs: <ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/>
+
+Papers:
+
+• Berg J. J., Coop G., 2014 'A population genetic signal of polygenic adaptation'. PLoS Genetics 10: e1004412 
+• Also their 2017 paper <https://www.biorxiv.org/content/10.1101/167551v4>
+• Spiedel et al on a tool for inferring genealogy (and hence changes in allele frequencies, hence selection): <https://www.nature.com/articles/s41588-019-0484-x>
