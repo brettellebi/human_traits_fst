@@ -1770,13 +1770,43 @@ $(document).ready(function () {
 <p><em>20200130</em></p>
 <div id="data" class="section level1">
 <h1>Data</h1>
-<p>• 1KG final release VCFs: <a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/" class="uri">ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/</a></p>
+<p>• 1KG final release VCFs: <a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/" class="uri">ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/</a> • Educational attainment paper: <a href="https://www.nature.com/articles/s41588-018-0147-3" class="uri">https://www.nature.com/articles/s41588-018-0147-3</a> • Lead loci from that paper: <code>racist_hypothesis/data/20200130_iq_gwas_topf.csv</code></p>
 <p>Papers:</p>
 <p>• Berg J. J., Coop G., 2014 ‘A population genetic signal of polygenic adaptation’. PLoS Genetics 10: e1004412 • Also their 2017 paper <a href="https://www.biorxiv.org/content/10.1101/167551v4" class="uri">https://www.biorxiv.org/content/10.1101/167551v4</a> • Spiedel et al on a tool for inferring genealogy (and hence changes in allele frequencies, hence selection): <a href="https://www.nature.com/articles/s41588-019-0484-x" class="uri">https://www.nature.com/articles/s41588-019-0484-x</a></p>
+</div>
+<div id="cluster-structure" class="section level1">
+<h1>Cluster structure</h1>
+<p>Home: <code>/hps/research1/birney/users/ian/rac_hyp</code></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxubWtjZCB2Y2ZzXG5cbiMgZG93bmxvYWQgVkNGIGFuZCBpbmRleFxud2dldCBmdHA6Ly9mdHAuMTAwMGdlbm9tZXMuZWJpLmFjLnVrL3ZvbDEvZnRwL3JlbGVhc2UvMjAxMzA1MDIvQUxMLndncy5waGFzZTNfc2hhcGVpdDJfbXZuY2FsbF9pbnRlZ3JhdGVkX3Y1Yi4yMDEzMDUwMi5zaXRlcy52Y2YuZ3pcbndnZXQgZnRwOi8vZnRwLjEwMDBnZW5vbWVzLmViaS5hYy51ay92b2wxL2Z0cC9yZWxlYXNlLzIwMTMwNTAyL0FMTC53Z3MucGhhc2UzX3NoYXBlaXQyX212bmNhbGxfaW50ZWdyYXRlZF92NWIuMjAxMzA1MDIuc2l0ZXMudmNmLmd6LnRiaVxuYGBgIn0= -->
+<pre class="bash"><code>mkcd vcfs
+
+# download VCF and index
+wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz.tbi</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="update-gatk" class="section level2">
+<h2>Update GATK</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxuY2QgL25mcy9zb2Z0d2FyZS9iaXJuZXlcbndnZXQgaHR0cHM6Ly9naXRodWIuY29tL2Jyb2FkaW5zdGl0dXRlL2dhdGsvcmVsZWFzZXMvZG93bmxvYWQvNC4xLjQuMS9nYXRrLTQuMS40LjEuemlwXG51bnppcCBnYXRrLTQuMS40LjEuemlwXG5cbiMgYW1lbmQgYWxpYXNlcyBpbiB+Ly5iYXNocmMgYW5kIH4vLmJhc2hfcHJvZmlsZVxuZXhwb3J0IFBBVEg9JFBBVEg6L25mcy9zb2Z0d2FyZS9iaXJuZXkvZ2F0ay00LjEuNC4xL1xuYGBgIn0= -->
+<pre class="bash"><code>cd /nfs/software/birney
+wget https://github.com/broadinstitute/gatk/releases/download/4.1.4.1/gatk-4.1.4.1.zip
+unzip gatk-4.1.4.1.zip
+
+# amend aliases in ~/.bashrc and ~/.bash_profile
+export PATH=$PATH:/nfs/software/birney/gatk-4.1.4.1/</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 </div>
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmFjaXN0IGh5cG90aGVzaXMgbm90ZWJvb2siCm91dHB1dDogaHRtbF9ub3RlYm9vawplZGl0b3Jfb3B0aW9uczogCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQotLS0KCioyMDIwMDEzMCoKCiMgRGF0YQoK4oCiIDFLRyBmaW5hbCByZWxlYXNlIFZDRnM6IDxmdHA6Ly9mdHAuMTAwMGdlbm9tZXMuZWJpLmFjLnVrL3ZvbDEvZnRwL3JlbGVhc2UvMjAxMzA1MDIvPgoKUGFwZXJzOgoK4oCiIEJlcmcgSi4gSi4sIENvb3AgRy4sIDIwMTQgJ0EgcG9wdWxhdGlvbiBnZW5ldGljIHNpZ25hbCBvZiBwb2x5Z2VuaWMgYWRhcHRhdGlvbicuIFBMb1MgR2VuZXRpY3MgMTA6IGUxMDA0NDEyIArigKIgQWxzbyB0aGVpciAyMDE3IHBhcGVyIDxodHRwczovL3d3dy5iaW9yeGl2Lm9yZy9jb250ZW50LzEwLjExMDEvMTY3NTUxdjQ+CuKAoiBTcGllZGVsIGV0IGFsIG9uIGEgdG9vbCBmb3IgaW5mZXJyaW5nIGdlbmVhbG9neSAoYW5kIGhlbmNlIGNoYW5nZXMgaW4gYWxsZWxlIGZyZXF1ZW5jaWVzLCBoZW5jZSBzZWxlY3Rpb24pOiA8aHR0cHM6Ly93d3cubmF0dXJlLmNvbS9hcnRpY2xlcy9zNDE1ODgtMDE5LTA0ODQteD4K</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmFjaXN0IGh5cG90aGVzaXMgbm90ZWJvb2siCm91dHB1dDogaHRtbF9ub3RlYm9vawplZGl0b3Jfb3B0aW9uczogCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQotLS0KCioyMDIwMDEzMCoKCiMgRGF0YQoK4oCiIDFLRyBmaW5hbCByZWxlYXNlIFZDRnM6IDxmdHA6Ly9mdHAuMTAwMGdlbm9tZXMuZWJpLmFjLnVrL3ZvbDEvZnRwL3JlbGVhc2UvMjAxMzA1MDIvPgrigKIgRWR1Y2F0aW9uYWwgYXR0YWlubWVudCBwYXBlcjogPGh0dHBzOi8vd3d3Lm5hdHVyZS5jb20vYXJ0aWNsZXMvczQxNTg4LTAxOC0wMTQ3LTM+CuKAoiBMZWFkIGxvY2kgZnJvbSB0aGF0IHBhcGVyOiBgcmFjaXN0X2h5cG90aGVzaXMvZGF0YS8yMDIwMDEzMF9pcV9nd2FzX3RvcGYuY3N2YAoKUGFwZXJzOgoK4oCiIEJlcmcgSi4gSi4sIENvb3AgRy4sIDIwMTQgJ0EgcG9wdWxhdGlvbiBnZW5ldGljIHNpZ25hbCBvZiBwb2x5Z2VuaWMgYWRhcHRhdGlvbicuIFBMb1MgR2VuZXRpY3MgMTA6IGUxMDA0NDEyIArigKIgQWxzbyB0aGVpciAyMDE3IHBhcGVyIDxodHRwczovL3d3dy5iaW9yeGl2Lm9yZy9jb250ZW50LzEwLjExMDEvMTY3NTUxdjQ+CuKAoiBTcGllZGVsIGV0IGFsIG9uIGEgdG9vbCBmb3IgaW5mZXJyaW5nIGdlbmVhbG9neSAoYW5kIGhlbmNlIGNoYW5nZXMgaW4gYWxsZWxlIGZyZXF1ZW5jaWVzLCBoZW5jZSBzZWxlY3Rpb24pOiA8aHR0cHM6Ly93d3cubmF0dXJlLmNvbS9hcnRpY2xlcy9zNDE1ODgtMDE5LTA0ODQteD4KCiMgQ2x1c3RlciBzdHJ1Y3R1cmUKCkhvbWU6IGAvaHBzL3Jlc2VhcmNoMS9iaXJuZXkvdXNlcnMvaWFuL3JhY19oeXBgCgpgYGB7YmFzaH0KbWtjZCB2Y2ZzCgojIGRvd25sb2FkIFZDRiBhbmQgaW5kZXgKd2dldCBmdHA6Ly9mdHAuMTAwMGdlbm9tZXMuZWJpLmFjLnVrL3ZvbDEvZnRwL3JlbGVhc2UvMjAxMzA1MDIvQUxMLndncy5waGFzZTNfc2hhcGVpdDJfbXZuY2FsbF9pbnRlZ3JhdGVkX3Y1Yi4yMDEzMDUwMi5zaXRlcy52Y2YuZ3oKd2dldCBmdHA6Ly9mdHAuMTAwMGdlbm9tZXMuZWJpLmFjLnVrL3ZvbDEvZnRwL3JlbGVhc2UvMjAxMzA1MDIvQUxMLndncy5waGFzZTNfc2hhcGVpdDJfbXZuY2FsbF9pbnRlZ3JhdGVkX3Y1Yi4yMDEzMDUwMi5zaXRlcy52Y2YuZ3oudGJpCmBgYAoKIyMgVXBkYXRlIEdBVEsKCmBgYHtiYXNofQpjZCAvbmZzL3NvZnR3YXJlL2Jpcm5leQp3Z2V0IGh0dHBzOi8vZ2l0aHViLmNvbS9icm9hZGluc3RpdHV0ZS9nYXRrL3JlbGVhc2VzL2Rvd25sb2FkLzQuMS40LjEvZ2F0ay00LjEuNC4xLnppcAp1bnppcCBnYXRrLTQuMS40LjEuemlwCgojIGFtZW5kIGFsaWFzZXMgaW4gfi8uYmFzaHJjIGFuZCB+Ly5iYXNoX3Byb2ZpbGUKZXhwb3J0IFBBVEg9JFBBVEg6L25mcy9zb2Z0d2FyZS9iaXJuZXkvZ2F0ay00LjEuNC4xLwpgYGAKCgoKCg==</div>
 
 
 
