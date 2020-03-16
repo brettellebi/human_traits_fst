@@ -42,6 +42,372 @@ unzip gatk-4.1.4.1.zip
 export PATH=$PATH:/nfs/software/birney/gatk-4.1.4.1/
 ```
 
+## Set up reference
+```{bash}
+mkcd refs
+# download FASTA
+wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
+# create dictionary follwoing guiadance here: <https://gatkforums.broadinstitute.org/gatk/discussion/1601/how-can-i-prepare-a-fasta-file-to-use-as-reference>
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar CreateSequenceDictionary \
+  R=refs/Homo_sapiens.GRCh38.dna.toplevel.fa.gz \
+  O=refs/Homo_sapiens.GRCh38.dna.toplevel.dict
+# create fasta index file
+/nfs/software/birney/samtools-1.9/samtools faidx refs/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
+# [E::fai_build3_core] Cannot index files compressed with gzip, please use bgzip
+## unzip 
+gunzip refs/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
+## create dictionary again
+rm refs/Homo_sapiens.GRCh38.dna.toplevel.dict
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar CreateSequenceDictionary \
+  R=refs/Homo_sapiens.GRCh38.dna.toplevel.fa \
+  O=refs/Homo_sapiens.GRCh38.dna.toplevel.dict
+# create gast index file
+/nfs/software/birney/samtools-1.9/samtools faidx refs/Homo_sapiens.GRCh38.dna.toplevel.fa
+```
+
+## Create list of SNPs from top hits table: `racist_hypothesis/data/20200204_snps.list`
+```{bash}
+cut racist_hypothesis/data/20200204_iq_gwas_topf -f5 -d"," | sed 's/"//g' | tail -n+2 > racist_hypothesis/data/20200204_snps.list 
+```
+
+# Pull out SNPs from VCF based on loci
+
+```{bash}
+gatk SelectVariants \
+  -R refs/Homo_sapiens.GRCh38.dna.toplevel.fa \
+  -V vcfs/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200204_snps.list \
+  -O vcfs/ALL.hits.vcf.gz
+# Error initializing feature reader for path vcfs/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+# Caused by: htsjdk.tribble.TribbleException$MalformedFeatureFile: Unable to parse header with error: Invalid GZIP header, for input source: vcfs/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz  
+```
+
+This VCF doesn't have the per-sample calls, but just the allele frequencies for each continental population.
+
+Have to download all the VCFs on the page, then put them together.
+
+## Download
+
+```{bash}
+wget -r -p -k --no-parent -cut-dirs=5 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+```
+
+## Put list of files into list
+
+```{bash}
+find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz > racist_hypothesis/data/20200205_vcfs.list
+```
+
+## Merge VCFs
+
+```{bash}
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
+
+# So remove that one from list above
+sed -i '/MT/d' racist_hypothesis/data/20200205_vcfs.list
+
+# run MergeVCFs again
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+  
+# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
+sed -i '/chrY/d' racist_hypothesis/data/20200205_vcfs.list
+
+# run MergeVCFs again
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+# WORKS
+```
+
+## Get reference used for this callset
+```{bash}
+# Find out which reference is used by the callset
+bcftools view vcfs/1gk_all.vcf.gz | less
+# ftp://ftp.1000genomes.ebi.ac.uk//vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+
+# download that reference
+cd refs
+wget ftp://ftp.1000genomes.ebi.ac.uk//vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+# create index
+/nfs/software/birney/samtools-1.9/samtools faidx refs/hs37d5.fa.gz
+# create dictionary
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar CreateSequenceDictionary \
+  R=refs/hs37d5.fa.gz \
+  O=refs/hs37d5.dict
+```
+
+## Pull out SNPs
+
+```{bash}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200204_snps.list \
+  -O vcfs/snp_hits.vcf.gz
+# SUCCESS
+```
+
+## Copy to repo
+
+```{bash}
+cp vcfs/snp_hits.vcf.gz racist_hypothesis/data/20200303_snp_hits.vcf.gz
+cp vcfs/snp_hits.vcf.gz.tbi racist_hypothesis/data/20200303_snp_hits.vcf.gz.tbi
+```
+
+## Import into R
+
+```{r}
+library(pegas)
+snp_hits <- read.vcf("~/Documents/Repositories/racist_hypothesis/data/20200303_snp_hits.vcf.gz")
+```
+
+## Import sample info
+
+From here: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx> (link embedded in this page: <www.internationalgenome.org/data>)
+
+```{r}
+library(tidyverse)
+library(readxl)
+meta <- read_xlsx("~/Documents/Repositories/racist_hypothesis/data/20130606_sample_info.xlsx", sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
+```
+
+## Attach population column to snp_hits
+
+```{r}
+populations <- unlist(lapply(rownames(snp_hits), function(sample){
+  meta$Population[meta$Sample == sample]
+}))
+snp_hits$population <- populations
+# reorder
+snp_hits <- snp_hits %>% dplyr::select(population, everything())
+# split by population
+snp_hits_split <- split(snp_hits, f = snp_hits$population)
+# remove population columns
+snp_hits_split <- lapply(snp_hits_split, function(x){
+  x$population <- NULL
+  return(x)
+})
+
+# get allele counts
+allele_counts <- lapply(snp_hits_split, function(population){
+  summary(population)
+})
+```
+
+## Import list of SNPs with alleles
+
+```{r}
+snp_al_nos <- read.delim("~/Documents/Repositories/racist_hypothesis/data/20200303_top_snps_with_alleles.txt", as.is = T)
+```
+
+## Create data frames with allele frequences
+
+```{r}
+# TEST
+test <- allele_counts[["ACB"]][["rs79582714"]]
+test2 <- data.frame("allele" = names(test$allele),
+                    "count" = test$allele)
+test2$al_freq <- test2$count / sum(test2$count)
+z_scores <- data.frame("allele" = c(snp_al_nos$Allele1[snp_al_nos$SNP == "rs79582714"],
+                                    snp_al_nos$Allele2[snp_al_nos$SNP == "rs79582714"]),
+                       "z_score" = c(0, snp_al_nos$Z.Score[snp_al_nos$SNP == "rs79582714"]))
+test3 <- dplyr::left_join(test2, z_scores, by = "allele")
+
+# Create function
+get_alfreq_table <- function(population, snp_effects_df){
+  counter <- 0
+  population <- lapply(population, function(snp_summary){
+    # set counter and extract SNP ID
+    counter <<- counter + 1
+    snp_id <- names(population)[counter]
+    # create final DF
+    final_df <- data.frame("allele" = names(snp_summary$allele),
+                           "count" = snp_summary$allele,
+                           stringsAsFactors = F)
+    # get allele frequency
+    final_df$al_freq <- final_df$count / sum(final_df$count)
+    # pull out z-scores and p-values from snp_effects_df
+    z_scores <- data.frame("allele" = c(snp_effects_df$Allele1[snp_effects_df$SNP == snp_id],
+                                        snp_effects_df$Allele2[snp_effects_df$SNP == snp_id]),
+                           "z_score" = c(0, snp_effects_df$Z.Score[snp_effects_df$SNP == snp_id]),
+                           "p_value" = c(0, snp_effects_df$P[snp_effects_df$SNP == snp_id]),
+                           stringsAsFactors = F)
+    # join DFs. Note that it only joins the two alleles in the snp_effects_df
+    final_df <- dplyr::left_join(z_scores, final_df, by = "allele")
+    return(final_df)
+  })
+  return(population)
+}
+
+# Run over list
+alcnt_df_lst <- lapply(allele_counts, function(x){
+  out <- get_alfreq_table(x, snp_al_nos)
+  final <- dplyr::bind_rows(out, .id = "rsid")
+  return(final)
+})
+
+# create final DF
+alcnt_df <- dplyr::bind_rows(alcnt_df_lst, .id = "population")
+
+# filter only for alleles with an efffect
+alcnt_df_filt <- alcnt_df[alcnt_df$z_score != 0, ]
+
+# set new rownames
+rownames(alcnt_df_filt) <- seq(1:nrow(alcnt_df_filt))
+```
+
+# Plot
+
+## Separate columns to plot on either axis
+
+```{r}
+# filter for just al_freq
+plot_df <- alcnt_df_filt %>% dplyr::select(-count, )
+plot_df <- tidyr::pivot_wider(data = plot_df,
+                              names_from = population,
+                              names_prefix = "al_freq_",
+                              values_from = al_freq)
+
+dplyr::filter(plot_df, z_score <= 0)
+```
+
+## Plot
+
+### YRI v CEU
+
+```{r}
+ggplot(data = dplyr::filter(plot_df, z_score <= 0), aes(al_freq_YRI, al_freq_CEU, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-negative alleles")
+
+ggplot(data = dplyr::filter(plot_df, z_score >= 0), aes(al_freq_YRI, al_freq_CEU, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-positive alleles")
+```
+
+### YRI v CHS
+
+```{r}
+ggplot(data = dplyr::filter(plot_df, z_score <= 0), aes(al_freq_YRI, al_freq_CHS, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-negative alleles")
+
+ggplot(data = dplyr::filter(plot_df, z_score >= 0), aes(al_freq_YRI, al_freq_CHS, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-positive alleles")
+```
+
+### CEU v CHS
+
+```{r}
+ggplot(data = dplyr::filter(plot_df, z_score <= 0), aes(al_freq_CEU, al_freq_CHS, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-negative alleles")
+
+ggplot(data = dplyr::filter(plot_df, z_score >= 0), aes(al_freq_CEU, al_freq_CHS, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-positive alleles")
+```
+
+## Run Fst
+
+```{r}
+fst_out <- as.data.frame(pegas::Fst(snp_hits, pop = populations))
+
+# make rownames into separate column
+fst_out$rsid <- rownames(fst_out)
+
+# join to snp_al_nos DF
+test <- dplyr::left_join(snp_al_nos,
+                         dplyr::select(fst_out, rsid, Fst),
+                         by = c("SNP" = "rsid"))
+
+# plot
+ggplot(test, aes(SNP, Fst)) +
+  geom_point() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Identify SNPs with Fst above 0.2
+
+```{r}
+high_fst_snps <- test$SNP[test$Fst > 0.2]
+```
+
+## Plot above with labels for these SNPs
+
+```{r}
+library(ggrepel)
+ggplot(data = dplyr::filter(plot_df, z_score <= 0), aes(al_freq_YRI, al_freq_CEU, colour = z_score, label = rsid)) +
+  geom_point() +
+  geom_label_repel(aes(label = ifelse(rsid %in% high_fst_snps, rsid, ''), )) +
+  #geom_text(aes(label = ifelse(rsid %in% high_fst_snps, rsid, '')), hjust = 0, vjust = 0, colour = "black") +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-negative alleles")
+
+ggplot(data = dplyr::filter(plot_df, z_score >= 0), aes(al_freq_YRI, al_freq_CEU, colour = z_score)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  coord_fixed() +
+  geom_smooth(se = F) +
+  geom_abline(intercept = 0, slope = 1) +
+  ggtitle("IQ-positive alleles")
+```
+
+# Run again on SNPs from *Lee et al (2019)*
+
+
+
+# Get more SNPs for height
+
+From the GWAS catalog here: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004339>. 
+
+Don't include child trait data. Leaves *4907* associations.
+
+Saved here: `~/Documents/Repositories/racist_hypothesis/data/20200304_raw_associations_height.csv`
+
+```{bash}
+# pull out rsIDs
+cat data/20200304_raw_associations_height.csv | cut -f1 -d'-' > tmp_rsid.txt 
+# pull out lines with risk alleles only 
+grep "<b>\w</b>" data/20200304_raw_associations_height.csv > data/20200304_raw_associations_height.csv
+# pull out risk alleles only 
+```
+
+
 
 
 
