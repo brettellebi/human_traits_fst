@@ -387,8 +387,26 @@ ggplot(data = dplyr::filter(plot_df, z_score >= 0), aes(al_freq_YRI, al_freq_CEU
   ggtitle("IQ-positive alleles")
 ```
 
-# Run again on SNPs from *Lee et al (2019)*
+# Run again on SNPs from *Lee et al (2019) Gene discovery and polygenic prediction from a genome-wide association study of educational attainment in 1.1 million individuals*
 
+## Pull out SNPs from paper
+
+```{r}
+# extract from excel doc
+snps_eduyrs <- read_xlsx("~/Documents/Repositories/racist_hypothesis/data/20180723_Lee-et-al_supp-tables.xlsx", sheet = "2. EduYears Lead SNPs", skip = 1, n_max = 1271)
+# write table of SNPs
+write.table(snps_eduyrs[["SNP"]], "~/Documents/Repositories/racist_hypothesis/data/20200316_snps_eduyears.list", quote = F, row.names = F, col.names = F)
+```
+
+## Select those SNPs from the VCF
+
+```{bash}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200316_snps_eduyears.list \
+  -O vcfs/snphits_eduyrs.vcf.gz
+```
 
 
 # Get more SNPs for height
@@ -403,9 +421,45 @@ Saved here: `~/Documents/Repositories/racist_hypothesis/data/20200304_raw_associ
 # pull out rsIDs
 cat data/20200304_raw_associations_height.csv | cut -f1 -d'-' > tmp_rsid.txt 
 # pull out lines with risk alleles only 
-grep "<b>\w</b>" data/20200304_raw_associations_height.csv > data/20200304_raw_associations_height.csv
-# pull out risk alleles only 
+grep "<b>\w</b>" data/20200304_raw_associations_height.csv > data/20200316_raw_associations_height_edited.csv
+# pull out rsIDs and paste into edited doc
+cut -f1 -d'-' data/20200316_raw_associations_height_edited.csv
+# note: split "Variant and risk allele" column into two manually
 ```
+
+*20200316* 
+
+## Obtain data
+
+A bit messy. Try getting the height SNPs from this paper instead:
+
+Yengo et al. (2018) *Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry*
+
+Data downloaded from here:
+<https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files>
+More specifically: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
+
+```{bash}
+cd racist_hypothesis/data
+# download
+wget https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
+# unzip
+gunzip Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
+# rename
+mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181015_Yengo-et-al_snps_height.txt
+
+```
+
+## Pull out list of SNPs
+
+```{bash}
+cut -f1 20181015_Yengo-et-al_snps_height.txt | tail -n+2 > 
+```
+
+
+*20200318*
+
+Get SNPs for IBD.
 
 
 
