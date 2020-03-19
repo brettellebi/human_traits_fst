@@ -169,8 +169,7 @@ cp vcfs/snp_hits.vcf.gz.tbi racist_hypothesis/data/20200303_snp_hits.vcf.gz.tbi
 ## Import into R
 
 ```{r}
-library(pegas)
-snp_hits <- read.vcf("~/Documents/Repositories/racist_hypothesis/data/20200303_snp_hits.vcf.gz")
+snp_hits <- pegas::read.vcf(here::here("data", "20200303_snp_hits.vcf.gz"))
 ```
 
 ## Import sample info
@@ -178,9 +177,7 @@ snp_hits <- read.vcf("~/Documents/Repositories/racist_hypothesis/data/20200303_s
 From here: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx> (link embedded in this page: <www.internationalgenome.org/data>)
 
 ```{r}
-library(tidyverse)
-library(readxl)
-meta <- read_xlsx("~/Documents/Repositories/racist_hypothesis/data/20130606_sample_info.xlsx", sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
+meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
 ```
 
 ## Attach population column to snp_hits
@@ -487,9 +484,14 @@ Saved here: `data/20170628_Huang-et-al_supp-table-1.xlsx`
 
 ```{r}
 # extract from excel doc
-snps_eduyrs <- read_xlsx("~/Documents/Repositories/racist_hypothesis/data/20180723_Lee-et-al_supp-tables.xlsx", sheet = "2. EduYears Lead SNPs", skip = 1, n_max = 1271)
+snps_ibd <- read_xlsx(path = here::here("data", "20170628_Huang-et-al_supp-table-1.xlsx"),
+                      sheet = "list of variants", )
 # write table of SNPs
-write.table(snps_eduyrs[["SNP"]], "~/Documents/Repositories/racist_hypothesis/data/20200316_snps_eduyears.list", quote = F, row.names = F, col.names = F)
+write.table(x = snps_ibd$variant,
+            file = here::here("data", "20200319_snps_ibd.list"),
+            quote = F,
+            row.names = F,
+            col.names = F)
 ```
 
 
