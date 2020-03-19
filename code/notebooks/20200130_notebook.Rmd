@@ -5,6 +5,13 @@ editor_options:
   chunk_output_type: inline
 ---
 
+# Source packages and functions
+
+```{r}
+library(here)
+source(here::here("code", "scripts", "20200318_notebook_source.R"))
+```
+
 *20200130*
 
 # Data
@@ -453,13 +460,38 @@ mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181
 ## Pull out list of SNPs
 
 ```{bash}
-cut -f1 20181015_Yengo-et-al_snps_height.txt | tail -n+2 > 
+cut -f1 20181015_Yengo-et-al_snps_height.txt | tail -n+2 > 20200318_snps_height.list
 ```
 
+## Extract calls for those SNPs from VCF
+
+```{bash}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200318_snps_height.list \
+  -O vcfs/snphits_height.vcf.gz
+```
 
 *20200318*
 
 Get SNPs for IBD.
+
+*Huang et al. (2017) Fine-mapping inflammatory bowel disease loci to single-variant resolution*
+
+Data downloaded here: <https://www.nature.com/articles/nature22969#Sec29>.
+More specifically, Supplementary Table 1: <https://static-content.springer.com/esm/art%3A10.1038%2Fnature22969/MediaObjects/41586_2017_BFnature22969_MOESM2_ESM.xlsx>
+Saved here: `data/20170628_Huang-et-al_supp-table-1.xlsx`
+
+## Pull out SNPs from paper
+
+```{r}
+# extract from excel doc
+snps_eduyrs <- read_xlsx("~/Documents/Repositories/racist_hypothesis/data/20180723_Lee-et-al_supp-tables.xlsx", sheet = "2. EduYears Lead SNPs", skip = 1, n_max = 1271)
+# write table of SNPs
+write.table(snps_eduyrs[["SNP"]], "~/Documents/Repositories/racist_hypothesis/data/20200316_snps_eduyears.list", quote = F, row.names = F, col.names = F)
+```
+
 
 
 
