@@ -8,7 +8,6 @@ editor_options:
 # Source packages and functions
 
 ```{r}
-library(here)
 source(here::here("code", "scripts", "20200318_notebook_source.R"))
 ```
 
@@ -987,7 +986,7 @@ Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
 • '20080516_Han-et-al': **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2. 
 
   
-## Create list of target SNPs
+### Create list of target SNPs
   
 ```{r}
 pig_snps <- list()
@@ -1001,7 +1000,7 @@ pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-
 pig_snps[["adhikari_tbl_1"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
                                                    sheet = "Table 1",
                                                    skip = 1) %>% 
-  dplyr::select(rsid = "rsID", everything) %>% 
+  dplyr::select(rsid = "rsID", everything()) %>% 
   dplyr::filter(!is.na(rsid))
 
 pig_snps[["adhikari_supp_6"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
@@ -1029,14 +1028,14 @@ names(compiled_snps) <- sheet_names
 pig_snps <- c(pig_snps, compiled_snps)
 ```
 
-## Get summary stats
+### Get summary stats
 
 ```{r}
 # How many total SNPs
 sum(unlist(lapply(pig_snps, nrow)))
 ```
 
-## Pull out unique SNPs
+### Pull out unique SNPs
 
 ```{r}
 pig_df <- lapply(pig_snps, function(x) dplyr::select(x, rsid))
@@ -1046,7 +1045,7 @@ pig_df <- unique(pig_df)
 nrow(pig_df)
 ```
 
-## Write table
+### Write table
 
 ```{r}
 write.table(x = pig_df$rsid,
@@ -1056,19 +1055,87 @@ write.table(x = pig_df$rsid,
             col.names = F)
 ```
 
-## Extract calls for those SNPs from VCF
+### Extract calls for those SNPs from VCF
 
 ```{bash}
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200319_snps_ibd.list \
-  -O vcfs/snphits_pig_full.vcf.gz
+  --keep-ids racist_hypothesis/data/20200622_snps_pig.list \
+  -O vcfs/snphits_pig.vcf.gz
 ```
 
-## Copy back to data folder
+### Copy back to data folder
 
 ```{bash, eval = F}
-cp vcfs/snphits_pig_full.vcf.gz* racist_hypothesis/data/
+cp vcfs/snphits_pig.vcf.gz* racist_hypothesis/data/
+```
+
+
+## Get metadata
+
+```{r}
+meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
+```
+
+## Read in VCFs and obtain allele counts for target SNPs
+
+```{r}
+# list target VCFs
+target_vcfs <- list.files(here::here("data"),
+                          pattern = glob2rx("snphits_*.gz"), 
+                          full.names = T)
+# remove the shorter IBD list
+target_vcfs <- target_vcfs[c(1, 2)]
+
+# read in VCFs and get allele counts
+vcf_list <- lapply(target_vcfs, function(vcf_file){
+  # read in VCFs
+  vcf_out <- pegas::read.vcf(vcf_file)
+  # create population column
+  populations <- unlist(lapply(rownames(vcf_out), function(sample){
+    meta$Population[meta$Sample == sample]
+  }))
+  vcf_out$population <- populations
+  # reorder
+  vcf_out <- vcf_out %>% dplyr::select(population, everything())
+  # split by population
+  vcf_out_split <- split(vcf_out, f = vcf_out$population)
+  # remove population columns
+  vcf_out_split <- lapply(vcf_out_split, function(x){
+    x$population <- NULL
+    return(x)
+  })
+#  # get allele counts
+#  allele_counts <- lapply(vcf_out_split, function(population){
+#    summary(population)
+#  })
+#  return(allele_counts)
+})
+
+test <- lapply(vcf_list[1], function(vcf_out){
+  # get allele counts
+  allele_counts <- lapply(vcf_out, function(population){
+    summary(population)
+  })
+  return(allele_counts)
+})
+
+test <- lapply(vcf_list, function(vcf_out){
+  # create population column
+  populations <- unlist(lapply(rownames(vcf_out), function(sample){
+    meta$Population[meta$Sample == sample]
+  }))
+})
+
+# set names
+names(vcf_list) <- gsub("snphits_|.vcf.gz", "", list.files(here::here("data"), pattern = glob2rx("snphits_*.gz"))[1:3])
+```
+
+## Not working well. Try `vcfR`
+
+```{r}
+test <- vcfR::read.vcfR(target_vcfs[1])
+
 ```
 
