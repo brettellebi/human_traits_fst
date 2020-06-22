@@ -1,0 +1,15 @@
+PLINK v1.90b6.12 64-bit (28 Oct 2019)
+Options in effect:
+  --freq
+  --loop-cats population
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt
+  --vcf vcfs/snphits_pig.vcf.gz
+
+Hostname: hx-noah-13-07.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/rac_hyp/racist_hypothesis
+Start time: Mon Jun 22 16:53:59 2020
+
+Error: Unrecognized flag ('--loop-cats').
+For more information, try "plink --help <flag name>" or "plink --help | more".
+
+End time: Mon Jun 22 16:53:59 2020

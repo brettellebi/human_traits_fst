@@ -1,0 +1,133 @@
+PLINK v2.00a2.3LM AVX2 Intel (24 Jan 2020)
+Options in effect:
+  --freq
+  --loop-cats PHENO1
+  --max-alleles 2
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt
+  --vcf vcfs/snphits_height.vcf.gz
+
+Hostname: hx-noah-13-07.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/rac_hyp
+Start time: Mon Jun 22 17:17:45 2020
+
+Random number seed: 1592842665
+256288 MiB RAM detected; reserving 128144 MiB for main workspace.
+Allocated 72081 MiB successfully, after larger attempt(s) failed.
+Using up to 80 threads (change this with --threads).
+--vcf: 3277 variants scanned.
+--vcf: racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei-temporary.pgen +
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei-temporary.pvar +
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei-temporary.psam written.
+2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei-temporary.psam.
+3263 out of 3277 variants loaded from
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei-temporary.pvar.
+1 categorical phenotype loaded (2504 values).
+--loop-cats: 26 categories present.
+--loop-cats: Processing category 'GBR' (91 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.GBR.afreq .
+--loop-cats: Processing category 'FIN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.FIN.afreq .
+--loop-cats: Processing category 'CHS' (105 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.CHS.afreq .
+--loop-cats: Processing category 'PUR' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.PUR.afreq .
+--loop-cats: Processing category 'CDX' (93 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.CDX.afreq .
+--loop-cats: Processing category 'CLM' (94 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.CLM.afreq .
+--loop-cats: Processing category 'IBS' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.IBS.afreq .
+--loop-cats: Processing category 'PEL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.PEL.afreq .
+--loop-cats: Processing category 'PJL' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.PJL.afreq .
+--loop-cats: Processing category 'KHV' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.KHV.afreq .
+--loop-cats: Processing category 'ACB' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.ACB.afreq .
+--loop-cats: Processing category 'GWD' (113 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.GWD.afreq .
+--loop-cats: Processing category 'ESN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.ESN.afreq .
+--loop-cats: Processing category 'BEB' (86 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.BEB.afreq .
+--loop-cats: Processing category 'MSL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.MSL.afreq .
+--loop-cats: Processing category 'STU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.STU.afreq .
+--loop-cats: Processing category 'ITU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.ITU.afreq .
+--loop-cats: Processing category 'CEU' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.CEU.afreq .
+--loop-cats: Processing category 'YRI' (108 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.YRI.afreq .
+--loop-cats: Processing category 'CHB' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.CHB.afreq .
+--loop-cats: Processing category 'JPT' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.JPT.afreq .
+--loop-cats: Processing category 'LWK' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.LWK.afreq .
+--loop-cats: Processing category 'ASW' (61 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.ASW.afreq .
+--loop-cats: Processing category 'MXL' (64 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.MXL.afreq .
+--loop-cats: Processing category 'TSI' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.TSI.afreq .
+--loop-cats: Processing category 'GIH' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei.GIH.afreq .
+
+End time: Mon Jun 22 17:17:46 2020
