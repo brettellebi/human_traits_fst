@@ -976,13 +976,15 @@ Instead, pull tables directly from paper and supplementary materials, and put he
   - *Table 1*: 18 lead SNPs from paper, each with a different p-value for one of the 6 phenotypes.
   - *supp_table_6*: 11 SNPs associated with combined traits.
   - *supp_table_12*: 161 SNPs collagted from published association studies on pigmentation. See table for references, which were used to identify other pigmentation GWAS studies.
-• **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed popuilations, *Scientific Reports*: <https://www.nature.com/articles/srep44548>. 9 hits with genome-wide significance here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
+• **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed populations, *Scientific Reports*: <https://www.nature.com/articles/srep44548>. 9 hits with genome-wide significance here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
 
 Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
-• '20190322_Jonnalagadda-et-al': **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution"
+• '20190321_Jonnalagadda-et-al': **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution*: <https://academic.oup.com/gbe/article/11/4/1066/5416147>. Took 9 SNPs associated with iris colour from Table 1, and 14 SNPs described in previous studies from Table 2.
 • '20171130_Martin-et-al': **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. Took all 42 SNPs from Table S6A in Supplemental Information here: <https://www.cell.com/cms/10.1016/j.cell.2017.11.015/attachment/eccead83-1a96-4444-9032-f968ee481d15/mmc2.xlsx>.
+• '20150512_Liu-et-al': **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. Took all 9 SNPs from Table 1.
 • '20121031_Candille-et-al': **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. Took all 8 SNPs from Table 2.
 • '20100614_Gerstenblith-et-al': **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>. Took all 39 SNPs from Table 4.
+• '20080516_Han-et-al': **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2. 
 
   
 ## Create list of target SNPs
@@ -1016,25 +1018,57 @@ pig_snps[["adhikari_supp_12"]] <- readxl::read_excel(here("data", "20190121_Adhi
 pig_snps[["hernandez-pacheco"]] <- readxl::read_excel(here("data", "20170316_Hernandez-Pacheco-et-al.xlsx"))
 
 # Doc with SNPs from multiple studies
-test <- lapply(seq(1:3), function(x){
-  readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
-                     sheet = x)
-})
-
 sheet_names <- readxl::excel_sheets(here("data", "20200622_pigmentation_snps.xlsx"))
-test <- lapply(sheet_names, function(x){
-  readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
+compiled_snps <- lapply(sheet_names, function(x){
+  x <- readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
                      sheet = x)
 })
-names(test) <- sheet_names
+names(compiled_snps) <- sheet_names
+
+# Combine
+pig_snps <- c(pig_snps, compiled_snps)
 ```
 
 ## Get summary stats
 
 ```{r}
+# How many total SNPs
 sum(unlist(lapply(pig_snps, nrow)))
 ```
 
+## Pull out unique SNPs
 
+```{r}
+pig_df <- lapply(pig_snps, function(x) dplyr::select(x, rsid))
+pig_df <- dplyr::bind_rows(pig_df)
+pig_df <- unique(pig_df)
 
+nrow(pig_df)
+```
+
+## Write table
+
+```{r}
+write.table(x = pig_df$rsid,
+            file = here::here("data", "20200622_snps_pig.list"),
+            quote = F,
+            row.names = F,
+            col.names = F)
+```
+
+## Extract calls for those SNPs from VCF
+
+```{bash}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200319_snps_ibd.list \
+  -O vcfs/snphits_pig_full.vcf.gz
+```
+
+## Copy back to data folder
+
+```{bash, eval = F}
+cp vcfs/snphits_pig_full.vcf.gz* racist_hypothesis/data/
+```
 
