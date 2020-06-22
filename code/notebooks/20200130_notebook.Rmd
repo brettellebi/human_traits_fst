@@ -183,9 +183,12 @@ meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Samp
 ## Attach population column to snp_hits
 
 ```{r}
+# create population vector
 populations <- unlist(lapply(rownames(snp_hits), function(sample){
   meta$Population[meta$Sample == sample]
 }))
+
+# add to snp_hits
 snp_hits$population <- populations
 # reorder
 snp_hits <- snp_hits %>% dplyr::select(population, everything())
@@ -508,6 +511,12 @@ gatk SelectVariants \
   -V vcfs/1gk_all.vcf.gz \
   --keep-ids racist_hypothesis/data/20200319_snps_ibd_csl.list \
   -O vcfs/snphits_ibd.vcf.gz
+  
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200319_snps_ibd.list \
+  -O vcfs/snphits_ibd_full.vcf.gz
 ```
 
 ## Copy VCFs for all into data folder
@@ -535,6 +544,8 @@ meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Samp
 target_vcfs <- list.files(here::here("data"),
                           pattern = glob2rx("snphits_*.gz"), 
                           full.names = T)
+# remove the shorter IBD list
+target_vcfs <- target_vcfs[1:3]
 
 # read in VCFs and get allele counts
 vcf_list <- lapply(target_vcfs, function(vcf_file){
@@ -561,8 +572,7 @@ vcf_list <- lapply(target_vcfs, function(vcf_file){
   return(allele_counts)
 })
 # set names
-names(vcf_list) <- gsub("snphits_|.vcf.gz", "", list.files(here::here("data"), pattern = glob2rx("snphits_*.gz")))
-
+names(vcf_list) <- gsub("snphits_|.vcf.gz", "", list.files(here::here("data"), pattern = glob2rx("snphits_*.gz"))[1:3])
 
 ```
 
@@ -593,6 +603,14 @@ snps_list[["height"]] <- read_delim(here::here("data", "20181015_Yengo-et-al_snp
                 other_allele = "Other_Allele", 
                 effect_size = "BETA", 
                 p_value = "P")
+# add ibd SNPs (full list)
+snps_list[["ibd_full"]] <- read_xlsx(here::here("data", "20170628_Huang-et-al_supp-table-1.xlsx"), sheet = "list of variants") %>% 
+  dplyr::mutate(mean_or = (OR_CD + OR_UC) / 2) %>% 
+  dplyr::select(snp = "variant", 
+                tested_allele = "A1", 
+                other_allele = "A0", 
+                effect_size =  "mean_or",
+                p_value = "P_mean_95")
 # add ibd SNPS - note the "effect size" here is the mean odds ratio across both CD and UC
 snps_list[["ibd"]] <- read_xlsx(here::here("data", "20170628_Huang-et-al_supp-table-1.xlsx"), sheet = "list of credible sets") %>% 
   dplyr::mutate(mean_or = (OR_CD + OR_UC) / 2) %>% 
@@ -601,9 +619,22 @@ snps_list[["ibd"]] <- read_xlsx(here::here("data", "20170628_Huang-et-al_supp-ta
                 other_allele = "A0", 
                 effect_size =  "mean_or",
                 p_value = "p_multi")
+
 ```
 
-## Create data frames with allel frequencies
+### Filter out indels from full IBD list
+
+```{r}
+# create vector of indels
+indel_tested <- which(nchar(snps_list[["ibd_full"]]$tested_allele) > 1)
+indel_other <- which(nchar(snps_list[["ibd_full"]]$other_allele) > 1)
+ibd_indels <- unique(sort(c(indel_tested, indel_other)))
+      
+# filter
+snps_list[["ibd_full"]] <- dplyr::slice(snps_list[["ibd_full"]], (ibd_indels * -1))
+```
+
+## Create data frames with allele frequencies
 
 ```{r}
 # TEST
@@ -734,10 +765,10 @@ get_alfreq_table <- function(population, snp_df){
                                "p_value" = c(0, snp_df$p_value[snp_df$snp == snp_id]),
                                stringsAsFactors = F)
     # join DFs. Note that it only joins the two alleles in the snp_df
-    final_df <- dplyr::left_join(final_df, effect_sizes, by = "allele")
+    final_df <- dplyr::left_join(effect_sizes, final_df, by = "allele")
     # remove any rows with NA (caused by having a third allele)
     final_df <- final_df[complete.cases(final_df), ]
-    # turn all negative effects sizes into positive ones
+    # convert negative effects sizes into positive ones by flipping the allele
     if(any(final_df$effect_size < 0)){
       final_df$effect_size[final_df$effect_size == 0] <- final_df$effect_size[final_df$effect_size < 0] * (-1)
       final_df$effect_size[final_df$effect_size < 0] <- 0
@@ -755,6 +786,15 @@ alcnt_df_lst <- lapply(vcf_list, function(pheno){
     out <- get_alfreq_table(population = x, snp_df = snps_list[[counter_new]])
     final <- dplyr::bind_rows(out, .id = "snp")
     return(final)
+  })
+})
+
+### Creating some errors with full IBD list. Troubleshoot:
+alcnt_df_lst <- lapply(vcf_list[[3]], function(pheno){
+  lapply(pheno, function(x){
+    try(get_alfreq_table(population = x, snp_df = snps_list[[3]]))
+    #final <- dplyr::bind_rows(out, .id = "snp")
+    #return(final)
   })
 })
 
@@ -785,7 +825,6 @@ plot_df_lst <- lapply(alcnt_df_filt, function(pheno){
 
 ```
 
-
 ## Plot
 
 ### Set up vectors for phenotype-specific parameters
@@ -793,9 +832,15 @@ plot_df_lst <- lapply(alcnt_df_filt, function(pheno){
 ```{r}
 # Colour palettes
 colour_pals <- c("viridis", "inferno", "plasma")
+# Line colours
+line_cols <- c("red", "red", "blue")
 # Titles
-titles <- c("Education in years", "")
+titles <- c("Educational Attainment", "Height", "Inflammatory Bowel Disease")
+# Legend title for effect size
+legend_title <- c("Effect size (Beta)", "Effect size (Beta)", "Mean odds ratio\n(CD and UC)")
 ```
+
+### YRI v CEU
 
 ```{r}
 counter <- 0
@@ -805,19 +850,190 @@ lapply(plot_df_lst, function(pheno){
     geom_point() +
     scale_color_viridis_c(option = colour_pals[counter]) +
     coord_fixed() +
-    geom_smooth(se = F) +
-    geom_abline(intercept = 0, slope = 1) +
+    geom_smooth(se = F, colour = line_cols[counter]) +
+    geom_abline(intercept = 0, slope = 1, colour = "blue") +
     xlab("Allele frequency in YRI") +
-    ylab("Allele frequency in CEU")
+    ylab("Allele frequency in CEU") +
+    labs(title = titles[counter],
+         colour = legend_title[counter])
 })
 ```
 
+### YRI v CHS
 
+```{r}
+counter <- 0
+lapply(plot_df_lst, function(pheno){
+  counter <<- counter + 1
+  ggplot(pheno, aes(al_freq_YRI, al_freq_CHS, colour = effect_size)) +
+    geom_point() +
+    scale_color_viridis_c(option = colour_pals[counter]) +
+    coord_fixed() +
+    geom_smooth(se = F, colour = line_cols[counter]) +
+    geom_abline(intercept = 0, slope = 1, colour = "blue") +
+    xlab("Allele frequency in YRI") +
+    ylab("Allele frequency in CHS") +
+    labs(title = titles[counter],
+         colour = legend_title[counter])
+})
+```
 
+# Fst
 
+## Create data frames
 
+```{r}
+# Create list of VCFs but without allele counts
+vcf_list_raw <- lapply(target_vcfs, function(vcf_file){
+  # read in VCFs
+  vcf_out <- pegas::read.vcf(vcf_file)
+  # create population column
+  populations <- unlist(lapply(rownames(vcf_out), function(sample){
+  meta$Population[meta$Sample == sample]
+  }))
+  vcf_out$population <- populations
+  # reorder
+  vcf_out <- vcf_out %>% dplyr::select(population, everything())
+})
+names(vcf_list_raw) <- titles
 
+# Create list of VCFs with summaries
+vcf_list_summary <- lapply(target_vcfs, function(vcf_file){
+  # read in VCFs
+  vcf_out <- pegas::read.vcf(vcf_file)
+  # get summary
+  summary(vcf_out)
+})
 
+# Find out which ones aren't biallelic to remove
+biallelics <- lapply(vcf_list_summary, function(pheno){
+  out <- which(lapply(pheno, function(snp){
+    length(snp$allele) == 2
+  }) == T)
+  # plus one to account for the population column in vcf_list_raw
+  out + 1
+})
+
+# Remove
+counter <- 0
+vcf_list_raw <- lapply(vcf_list_raw, function(pheno){
+  counter <<- counter + 1
+  pheno <- pheno[c(1, biallelics[[counter]])] # add "1" to start of vector to keep population column
+})
+
+# Try without population column
+vcf_list_raw <- lapply(target_vcfs, function(vcf_file){
+  vcf_out <- pegas::read.vcf(vcf_file)
+})
+# Create vector of populations
+populations <- unlist(lapply(rownames(vcf_list_raw[[1]]), function(sample){
+  meta$Population[meta$Sample == sample]
+}))
+
+# Generate Fst stats
+fst_out_lst <- lapply(vcf_list_raw, function(pheno){
+  as.data.frame(pegas::Fst(pheno, pop = populations))
+})
+
+# make rownames into separate column
+fst_out_lst <- lapply(fst_out_lst, function(pheno){
+  pheno$snp <- rownames(pheno)
+  return(pheno)
+})
+names(fst_out_lst) <- titles
+# 
+fst_out_df <- dplyr::bind_rows(fst_out_lst, .id = "phenotype")
+```
+
+## Plot
+
+```{r}
+ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
+  geom_density(alpha = 0.7) +
+  labs(fill = "Phenotype") +
+  ylab("Density") +
+  theme_bw()
+```
+
+*20200330*
+
+From EB: "We need a stronger positive control - perhaps can you get skin pigmentation loci?"
+
+# Re-do with skin pigmentation positive control
+
+## Find papers with associated SNPs
+
+• **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://science.sciencemag.org/content/358/6365/eaan8433.abstract?casa_token=6tGEjct1nUQAAAAA:IL7LCz-xQ9l6rLhxBk5VcGBjwTrEa5UpAlC-nCl2mvcASu4iZbWMiu_Uj8YUHIISgCibOd1ya25sOQ>. Take table 1, and manually transform 'Ancestral>Divided' column into new columns titled 'tested_allele' (the allele in bold) and 'other_allele'. Save here: `data/20171117_Crawford-et-al_Table-1.xlsx`
+• **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://www.nature.com/articles/s41467-018-08147-0>. "Summary statistics from the GWAS analyses is deposited at GWAS central with the link <http://www.gwascentral.org/study/HGVST3308>". Under the 'Association results' tab, there is one dataset for each of the 6 phenotypes tested:  
+  - Melanin index
+  - Hair color
+  - Eye color
+  - Digital eye color: L (lightness)
+  - Digital eye color: C (chroma)
+  - Digital eye color: cosH (cosine of hue)
+Difficult to ascertain which ones had genome-wide significance.
+Instead, pull tables directly from paper and supplementary materials, and put here in different sheets: `data/20190121_Adhikari-et-al_snps.xlsx`
+  - *Table 1*: 18 lead SNPs from paper, each with a different p-value for one of the 6 phenotypes.
+  - *supp_table_6*: 11 SNPs associated with combined traits.
+  - *supp_table_12*: 161 SNPs collagted from published association studies on pigmentation. See table for references, which were used to identify other pigmentation GWAS studies.
+• **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed popuilations, *Scientific Reports*: <https://www.nature.com/articles/srep44548>. 9 hits with genome-wide significance here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
+
+Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
+• '20190322_Jonnalagadda-et-al': **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution"
+• '20171130_Martin-et-al': **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. Took all 42 SNPs from Table S6A in Supplemental Information here: <https://www.cell.com/cms/10.1016/j.cell.2017.11.015/attachment/eccead83-1a96-4444-9032-f968ee481d15/mmc2.xlsx>.
+• '20121031_Candille-et-al': **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. Took all 8 SNPs from Table 2.
+• '20100614_Gerstenblith-et-al': **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>. Took all 39 SNPs from Table 4.
+
+  
+## Create list of target SNPs
+  
+```{r}
+pig_snps <- list()
+# Crawford
+pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-al_Table-1.xlsx")) %>% 
+  dplyr::select(rsid = "RSID", everything()) %>% 
+  dplyr::filter(!is.na(rsid),
+                !rsid == ".")
+
+# Adhikari
+pig_snps[["adhikari_tbl_1"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "Table 1",
+                                                   skip = 1) %>% 
+  dplyr::select(rsid = "rsID", everything) %>% 
+  dplyr::filter(!is.na(rsid))
+
+pig_snps[["adhikari_supp_6"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "supp_table_6") %>% 
+  dplyr::select(rsid = "SNP", everything()) %>% 
+  dplyr::filter(!is.na(rsid))  
+
+pig_snps[["adhikari_supp_12"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "supp_table_12") %>% 
+  dplyr::select(rsid = "SNP", everything()) %>% 
+  dplyr::filter(!is.na(rsid))
+
+# Hernandez-Pacheco
+pig_snps[["hernandez-pacheco"]] <- readxl::read_excel(here("data", "20170316_Hernandez-Pacheco-et-al.xlsx"))
+
+# Doc with SNPs from multiple studies
+test <- lapply(seq(1:3), function(x){
+  readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
+                     sheet = x)
+})
+
+sheet_names <- readxl::excel_sheets(here("data", "20200622_pigmentation_snps.xlsx"))
+test <- lapply(sheet_names, function(x){
+  readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
+                     sheet = x)
+})
+names(test) <- sheet_names
+```
+
+## Get summary stats
+
+```{r}
+sum(unlist(lapply(pig_snps, nrow)))
+```
 
 
 
