@@ -1314,7 +1314,7 @@ lapply(al_freq_df_shuff, function(pheno){
   counter <<- counter + 1
   ggplot(pheno,
          aes(YRI, CHS)) +
-    geom_point() +
+    geom_point(size = 0.5) +
 #    scale_color_viridis_c(option = colour_pals[counter]) +
     coord_fixed() +
     geom_smooth(se = F, colour = "red") +
@@ -1387,7 +1387,22 @@ ggplot() +
   ylab(label = NULL) +
   theme_bw()
 ```
+```{r}
+# factorise 
+fst_out_df$phenotype <- factor(fst_out_df$phenotype,
+                                    levels = c("Pigmentation", "Height", "Educational Attainment"))
 
+ggplot() +
+  geom_density_ridges2(data = fst_out_df,
+                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                       scale = 2) +
+  scale_fill_manual(values = c("#FC4E07", "#00AFBB", "#E7B800")) +
+  ylab(label = NULL) +
+  theme_bw() +
+  guides(fill = guide_legend(reverse=T, 
+                             title = "Phenotype")) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+```
 
 ### Try with just YRI, CEU, and CHS
 
@@ -1440,12 +1455,13 @@ fst_out_df_3pop$phenotype <- factor(fst_out_df_3pop$phenotype,
 ggplot() +
   geom_density_ridges2(data = fst_out_df_3pop,
                        mapping = aes(x = Fst, y = phenotype, fill = phenotype),
-                       scale = 0.5,
-                       alpha = 0.8) +
+                       scale = 2) +
   scale_fill_manual(values = c("#FC4E07", "#00AFBB", "#E7B800")) +
   ylab(label = NULL) +
-  theme_bw() #+
-  theme_ridges(center = T)
+  theme_bw() +
+  guides(fill = guide_legend(reverse=T, 
+                             title = "Phenotype")) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 ```
 ```{r}
 plot_ly(x = al_freq_df$edu$CEU,
