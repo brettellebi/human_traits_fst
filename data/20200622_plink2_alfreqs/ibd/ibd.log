@@ -5,22 +5,22 @@ Options in effect:
   --max-alleles 2
   --out racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd
   --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt
-  --vcf vcfs/snphits_ibd.vcf.gz
+  --vcf vcfs/snphits_ibd_full.vcf.gz
 
 Hostname: hx-noah-12-06.ebi.ac.uk
 Working directory: /hps/research1/birney/users/ian/rac_hyp
-Start time: Thu Jul  2 20:05:55 2020
+Start time: Thu Jul  2 20:25:35 2020
 
-Random number seed: 1593716755
+Random number seed: 1593717935
 256288 MiB RAM detected; reserving 128144 MiB for main workspace.
 Using up to 80 threads (change this with --threads).
---vcf: 142 variants scanned.
+--vcf: 4039 variants scanned.
 --vcf: racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd-temporary.pgen +
 racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd-temporary.pvar +
 racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd-temporary.psam written.
 2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
 racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd-temporary.psam.
-142 variants loaded from
+4006 out of 4039 variants loaded from
 racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd-temporary.pvar.
 1 categorical phenotype loaded (2504 values).
 --loop-cats: 26 categories present.
@@ -129,4 +129,4 @@ Calculating allele frequencies... done.
 --freq: Allele frequencies (founders only) written to
 racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd.GIH.afreq .
 
-End time: Thu Jul  2 20:05:56 2020
+End time: Thu Jul  2 20:25:37 2020
