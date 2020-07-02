@@ -82,14 +82,6 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 
 ## Obtain GWAS data
 
-### Educational attainment
-
-From **Lee et al. (2019)** Gene discovery and polygenic prediction from a genome-wide association study of educational attainment in 1.1 million individuals, *Nature*: <https://www.nature.com/articles/s41588-018-0147-3>.
-
-Data download link: <https://static-content.springer.com/esm/art%3A10.1038%2Fs41588-018-0147-3/MediaObjects/41588_2018_147_MOESM3_ESM.xlsx>
-
-Saved here: `data/20180723_Lee-et-al_supp-tables.xlsx`
-
 ### Height
 
 From **Yengo et al. (2018)** Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>.
@@ -109,6 +101,14 @@ mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181
 ```
 
 Saved here: `data/20181015_Yengo-et-al_snps_height.txt`
+
+### Educational attainment
+
+From **Lee et al. (2019)** Gene discovery and polygenic prediction from a genome-wide association study of educational attainment in 1.1 million individuals, *Nature*: <https://www.nature.com/articles/s41588-018-0147-3>.
+
+Data download link: <https://static-content.springer.com/esm/art%3A10.1038%2Fs41588-018-0147-3/MediaObjects/41588_2018_147_MOESM3_ESM.xlsx>
+
+Saved here: `data/20180723_Lee-et-al_supp-tables.xlsx`
 
 ### IBD
 
@@ -199,6 +199,24 @@ head(pig_df)
 
 ## Filter 1GK VCF for target SNPs
 
+### Height
+
+#### Create list of target SNPs
+
+```{bash, eval = F}
+cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > racist_hypothesis/data/20200318_snps_height.list
+```
+
+#### Extract calls for those SNPs from VCF
+
+```{bash, eval = F}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200318_snps_height.list \
+  -O vcfs/snphits_height.vcf.gz
+```
+
 ### EA
 
 #### Create list of target SNPs
@@ -218,24 +236,6 @@ gatk SelectVariants \
   -V vcfs/1gk_all.vcf.gz \
   --keep-ids racist_hypothesis/data/20200316_snps_eduyears.list \
   -O vcfs/snphits_eduyrs.vcf.gz
-```
-
-### Height
-
-#### Create list of target SNPs
-
-```{bash, eval = F}
-cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > racist_hypothesis/data/20200318_snps_height.list
-```
-
-#### Extract calls for those SNPs from VCF
-
-```{bash, eval = F}
-gatk SelectVariants \
-  -R refs/hs37d5.fa.gz \
-  -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200318_snps_height.list \
-  -O vcfs/snphits_height.vcf.gz
 ```
 
 ### IBD
@@ -322,15 +322,6 @@ mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
 ### Run Plink2
 
 ```{bash, eval = F}
-# Edu Years
-/nfs/software/birney/plink2.3/plink2 \
-  --vcf vcfs/snphits_eduyrs.vcf.gz \
-  --freq \
-  --max-alleles 2 \
-  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
-  --loop-cats PHENO1 \
-  --out racist_hypothesis/data/20200622_plink2_alfreqs/edu/edu
-
 # Height
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_height.vcf.gz \
@@ -340,9 +331,18 @@ mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
   --loop-cats PHENO1 \
   --out racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei
   
+# Edu Years
+/nfs/software/birney/plink2.3/plink2 \
+  --vcf vcfs/snphits_eduyrs.vcf.gz \
+  --freq \
+  --max-alleles 2 \
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --loop-cats PHENO1 \
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/edu/edu
+
 # IBD
 /nfs/software/birney/plink2.3/plink2 \
-  --vcf vcfs/snphits_ibd.vcf.gz \
+  --vcf vcfs/snphits_ibd_full.vcf.gz \
   --freq \
   --max-alleles 2 \
   --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
@@ -377,7 +377,7 @@ al_freq_lst <- lapply(target_dirs, function(x){
                comment.char = "")
   })
   # fix names of populations
-  names(data_lst) <- gsub(pattern = "edu.|hei.|pig.|.afreq",
+  names(data_lst) <- gsub(pattern = "edu.|hei.|ibd.|pig.|.afreq",
                           replacement = "",
                           x = list.files(x, pattern = ".afreq"))
   return(data_lst)
@@ -385,6 +385,9 @@ al_freq_lst <- lapply(target_dirs, function(x){
 
 # set names
 names(al_freq_lst) <- basename(target_dirs)
+
+# reorder for (1) height, (2) eduyears, (3) ibd, (4) pigmentation
+al_freq_lst <- al_freq_lst[c(2, 1, 3, 4)]
 ```
 
 ### Turn into single table for each pheno
@@ -402,7 +405,7 @@ al_freq_df <- lapply(al_freq_lst, function(pheno){
 
 ```{r}
 set.seed(65)
-rdm_sds <- sample(1:100, 3)
+rdm_sds <- sample(1:100, 4)
 
 counter <- 0
 al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
@@ -422,7 +425,7 @@ al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
 
 ```{r}
 # Set up titles vector
-titles <- c("Educational Attainment", "Height", "Pigmentation")
+titles <- c("Height", "Educational Attainment", "Inflammatory Bowel Disease", "Pigmentation")
 ```
 
 #### 2D
@@ -466,8 +469,8 @@ lapply(al_freq_df_shuff, function(pheno){
 #### 3D
 
 ```{r, message=F, warning=F}
-colourscales <- c("Viridis", "Hot", "Electric")
-titles <- c("Educational Attainment", "Height", "Skin/hair pigmentation")
+colourscales <- c("Viridis", "Hot", "Bluered", "Electric")
+titles <- c("Height", "Educational Attainment", "IBD", "Skin/hair pigmentation")
 
 counter <- 0
 plts <- lapply(al_freq_df_shuff, function(pheno){
@@ -504,8 +507,9 @@ plts <- lapply(al_freq_df_shuff, function(pheno){
   return(plt)
 })
 
-plts$edu
 plts$hei
+plts$edu
+plts$ibd
 plts$pig
 ```
 
@@ -519,8 +523,8 @@ target_vcfs <- list.files(here::here("data"),
                           pattern = glob2rx("snphits_*.gz"), 
                           full.names = T)
 
-# filter for the three we want
-target_vcfs <- target_vcfs[grep("eduyrs|height|pig", target_vcfs)]
+# filter for the four we want
+target_vcfs <- target_vcfs[grep("eduyrs|height|ibd_full|pig", target_vcfs)]
 
 
 ```
@@ -554,6 +558,10 @@ names(fst_out_lst) <- titles
 
 # bind into single DF
 fst_out_df <- dplyr::bind_rows(fst_out_lst, .id = "phenotype")
+
+# Set order of phenotypes
+fst_out_df$phenotype <- factor(fst_out_df$phenotype, levels = c("Height", "Educational Attainment", "IBD", "Skin/hair pigmentation"))
+
 head(fst_out_df)
 ```
 
@@ -567,27 +575,44 @@ ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
   labs(fill = "Phenotype") +
   ylab("Density") +
   theme_bw() +
-  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))
+  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
 ```
 
 ##### 3D
 
-```{r, warning = F}
+```{r, warning = F, message = F}
 # factorise 
-fst_out_df$phenotype <- factor(fst_out_df$phenotype,
-                                    levels = c("Skin/hair pigmentation", "Height", "Educational Attainment"))
+fst_out_df$phenotype_3d <- factor(fst_out_df$phenotype,
+                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
 
 ggplot() +
   geom_density_ridges2(data = fst_out_df,
-                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
                        scale = 2) +
-  scale_fill_manual(values = c("#FC4E07", "#00AFBB", "#E7B800")) +
+  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
   ylab(label = NULL) +
   theme_bw() +
   guides(fill = guide_legend(reverse=T, 
                              title = "Phenotype")) +
   scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 ```
+
+#### Run Kolmogorov-Smirnov Tests
+
+```{r, warning = F}
+# Height v EA
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "Educational Attainment"])
+
+# Height v IBD
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "IBD"])
+
+# Height v Pigmentation
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "Skin/hair pigmentation"])
+```
+
 
 ### With just YRI, CEU, and CHS
 
@@ -629,21 +654,21 @@ ggplot(fst_out_df_3pop, aes(Fst, fill = phenotype)) +
   labs(fill = "Phenotype") +
   ylab("Density") +
   theme_bw() +
-  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))
+  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
 ```
 
 ##### 3D
 
-```{r, warning=F}
+```{r, warning=F, message = F}
 # factorise 
-fst_out_df_3pop$phenotype <- factor(fst_out_df_3pop$phenotype,
-                                    levels = c("Skin/hair pigmentation", "Height", "Educational Attainment"))
+fst_out_df_3pop$phenotype_3d <- factor(fst_out_df$phenotype,
+                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
 
 ggplot() +
   geom_density_ridges2(data = fst_out_df_3pop,
-                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
                        scale = 2) +
-  scale_fill_manual(values = c("#FC4E07", "#00AFBB", "#E7B800")) +
+  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
   ylab(label = NULL) +
   theme_bw() +
   guides(fill = guide_legend(reverse=T, 
@@ -652,4 +677,19 @@ ggplot() +
 ```
 
 
+#### Run Kolmogorov-Smirnov Tests
+
+```{r, warning = F}
+# Height v EA
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Educational Attainment"])
+
+# Height v IBD
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "IBD"])
+
+# Height v Pigmentation
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Skin/hair pigmentation"])
+```
 

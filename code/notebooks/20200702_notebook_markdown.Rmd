@@ -1,0 +1,695 @@
+---
+title: "Race, genetics and IQ"
+author: "Ian Brettell"
+date: "2 July 2020"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    keep_md: true
+---
+
+# Setup
+
+* Working directory on EBI Cluster: `/hps/research1/birney/users/ian/rac_hyp`
+* GitHub repository: <https://github.com/Ian-Brettell/racist_hypothesis>
+
+## Load R packages on local
+
+```{r, message=FALSE}
+library(here)
+library(pegas)
+library(tidyverse)
+library(reshape2)
+library(readxl)
+library(plotly)
+library(ggridges)
+```
+
+## EBI cluster
+
+### Update GATK
+
+```{bash, eval = F}
+cd /nfs/software/birney
+wget https://github.com/broadinstitute/gatk/releases/download/4.1.4.1/gatk-4.1.4.1.zip
+unzip gatk-4.1.4.1.zip
+
+# amend aliases in ~/.bashrc and ~/.bash_profile
+export PATH=$PATH:/nfs/software/birney/gatk-4.1.4.1/
+```
+
+## Download 1GK data
+
+### Download from FTP
+
+```{bash, eval = F}
+wget -r -p -k --no-parent -cut-dirs=5 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+```
+
+### Put list of files into list
+
+```{bash, eval = F}
+find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz > racist_hypothesis/data/20200205_vcfs.list
+```
+
+### Merge VCFs
+
+```{bash, eval = F}
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
+
+# So remove that one from list above
+sed -i '/MT/d' racist_hypothesis/data/20200205_vcfs.list
+
+# run MergeVCFs again
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+  
+# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
+sed -i '/chrY/d' racist_hypothesis/data/20200205_vcfs.list
+
+# run MergeVCFs again
+java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
+  I=racist_hypothesis/data/20200205_vcfs.list \
+  O=vcfs/1gk_all.vcf.gz
+# SUCCESS
+```
+
+## Obtain GWAS data
+
+### Height
+
+From **Yengo et al. (2018)** Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>.
+
+Data downloaded from this webpage:
+<https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files>
+Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
+
+```{bash, eval = F}
+cd racist_hypothesis/data
+# download
+wget https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
+# unzip
+gunzip Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
+# rename
+mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181015_Yengo-et-al_snps_height.txt
+```
+
+Saved here: `data/20181015_Yengo-et-al_snps_height.txt`
+
+### Educational attainment
+
+From **Lee et al. (2019)** Gene discovery and polygenic prediction from a genome-wide association study of educational attainment in 1.1 million individuals, *Nature*: <https://www.nature.com/articles/s41588-018-0147-3>.
+
+Data download link: <https://static-content.springer.com/esm/art%3A10.1038%2Fs41588-018-0147-3/MediaObjects/41588_2018_147_MOESM3_ESM.xlsx>
+
+Saved here: `data/20180723_Lee-et-al_supp-tables.xlsx`
+
+### IBD
+
+From **Huang et al. (2017)** Fine-mapping inflammatory bowel disease loci to single-variant resolution, *Nature*: <https://www.nature.com/articles/nature22969#Sec29>.
+
+Data download link (Supplementary Table 1): <https://static-content.springer.com/esm/art%3A10.1038%2Fnature22969/MediaObjects/41586_2017_BFnature22969_MOESM2_ESM.xlsx>
+
+Saved here: `data/20170628_Huang-et-al_supp-table-1.xlsx`
+
+### Skin pigmentation
+
+* **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://science.sciencemag.org/content/358/6365/eaan8433.abstract?casa_token=6tGEjct1nUQAAAAA:IL7LCz-xQ9l6rLhxBk5VcGBjwTrEa5UpAlC-nCl2mvcASu4iZbWMiu_Uj8YUHIISgCibOd1ya25sOQ>. Take table 1, and manually transform 'Ancestral>Divided' column into new columns titled 'tested_allele' (the allele in bold) and 'other_allele'. Save here: `data/20171117_Crawford-et-al_Table-1.xlsx`
+* **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://www.nature.com/articles/s41467-018-08147-0>. "Summary statistics from the GWAS analyses is deposited at GWAS central with the link <http://www.gwascentral.org/study/HGVST3308>". Under the 'Association results' tab, there is one dataset for each of the 6 phenotypes tested:  
+  - Melanin index
+  - Hair color
+  - Eye color
+  - Digital eye color: L (lightness)
+  - Digital eye color: C (chroma)
+  - Digital eye color: cosH (cosine of hue)
+Difficult to ascertain which ones had genome-wide significance.
+Instead, pull tables directly from paper and supplementary materials, and put here in different sheets: `data/20190121_Adhikari-et-al_snps.xlsx`
+  - *Table 1*: 18 lead SNPs from paper, each with a different p-value for one of the 6 phenotypes.
+  - *supp_table_6*: 11 SNPs associated with combined traits.
+  - *supp_table_12*: 161 SNPs collagted from published association studies on pigmentation. See table for references, which were used to identify other pigmentation GWAS studies.
+* **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed populations, *Scientific Reports*: <https://www.nature.com/articles/srep44548>. 9 hits with genome-wide significance here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
+
+Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
+
+* 20190321_Jonnalagadda-et-al: **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution*: <https://academic.oup.com/gbe/article/11/4/1066/5416147>. Took 9 SNPs associated with iris colour from Table 1, and 14 SNPs described in previous studies from Table 2.
+* 20171130_Martin-et-al: **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. Took all 42 SNPs from Table S6A in Supplemental Information here: <https://www.cell.com/cms/10.1016/j.cell.2017.11.015/attachment/eccead83-1a96-4444-9032-f968ee481d15/mmc2.xlsx>.
+* 20150512_Liu-et-al: **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. Took all 9 SNPs from Table 1.
+* 20121031_Candille-et-al: **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. Took all 8 SNPs from Table 2.
+* 20100614_Gerstenblith-et-al: **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>. Took all 39 SNPs from Table 4.
+* 20080516_Han-et-al: **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2. 
+  
+### Create list of target SNPs
+  
+```{r}
+pig_snps <- list()
+# Crawford
+pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-al_Table-1.xlsx")) %>% 
+  dplyr::select(rsid = "RSID", everything()) %>% 
+  dplyr::filter(!is.na(rsid),
+                !rsid == ".")
+
+# Adhikari
+pig_snps[["adhikari_tbl_1"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "Table 1",
+                                                   skip = 1) %>% 
+  dplyr::select(rsid = "rsID", everything()) %>% 
+  dplyr::filter(!is.na(rsid))
+
+pig_snps[["adhikari_supp_6"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "supp_table_6") %>% 
+  dplyr::select(rsid = "SNP", everything()) %>% 
+  dplyr::filter(!is.na(rsid))  
+
+pig_snps[["adhikari_supp_12"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
+                                                   sheet = "supp_table_12") %>% 
+  dplyr::select(rsid = "SNP", everything()) %>% 
+  dplyr::filter(!is.na(rsid))
+
+# Hernandez-Pacheco
+pig_snps[["hernandez-pacheco"]] <- readxl::read_excel(here("data", "20170316_Hernandez-Pacheco-et-al.xlsx"))
+
+# Doc with SNPs from multiple studies
+sheet_names <- readxl::excel_sheets(here("data", "20200622_pigmentation_snps.xlsx"))
+compiled_snps <- lapply(sheet_names, function(x){
+  x <- readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
+                     sheet = x)
+})
+names(compiled_snps) <- sheet_names
+
+# Combine
+pig_snps <- c(pig_snps, compiled_snps)
+```
+
+#### Pull out unique SNPs
+
+```{r}
+pig_df <- lapply(pig_snps, function(x) dplyr::select(x, rsid))
+pig_df <- dplyr::bind_rows(pig_df)
+pig_df <- unique(pig_df)
+
+nrow(pig_df)
+head(pig_df)
+```
+
+## Filter 1GK VCF for target SNPs
+
+### Height
+
+#### Create list of target SNPs
+
+```{bash, eval = F}
+cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > racist_hypothesis/data/20200318_snps_height.list
+```
+
+#### Extract calls for those SNPs from VCF
+
+```{bash, eval = F}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200318_snps_height.list \
+  -O vcfs/snphits_height.vcf.gz
+```
+
+### EA
+
+#### Create list of target SNPs
+
+```{r, eval = F}
+# extract from excel doc
+snps_eduyrs <- read_xlsx(here::here("data", "20180723_Lee-et-al_supp-tables.xlsx"), sheet = "2. EduYears Lead SNPs", skip = 1, n_max = 1271)
+# write table of SNPs
+write.table(snps_eduyrs[["SNP"]], here::here("data", "20200316_snps_eduyears.list"), quote = F, row.names = F, col.names = F)
+```
+
+#### Create filtered VCF
+
+```{bash, eval = F}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200316_snps_eduyears.list \
+  -O vcfs/snphits_eduyrs.vcf.gz
+```
+
+### IBD
+
+#### Create list of target SNPs
+
+```{r, eval = F}
+# extract from excel doc
+snps_ibd <- read_xlsx(path = here::here("data", "20170628_Huang-et-al_supp-table-1.xlsx"),
+                      sheet = "list of variants", )
+# write tables of SNPs
+write.table(x = snps_ibd$variant,
+            file = here::here("data", "20200319_snps_ibd.list"),
+            quote = F,
+            row.names = F,
+            col.names = F)
+```
+
+#### Extract calls for those SNPs from VCF
+
+```{bash, eval = F}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200319_snps_ibd.list \
+  -O vcfs/snphits_ibd_full.vcf.gz
+```
+
+### Skin pigmentation
+
+#### Create list of target SNPs
+
+```{r, eval = F}
+write.table(x = pig_df$rsid,
+            file = here::here("data", "20200622_snps_pig.list"),
+            quote = F,
+            row.names = F,
+            col.names = F)
+```
+
+#### Extract calls for those SNPs from VCF
+
+```{bash, eval = F}
+gatk SelectVariants \
+  -R refs/hs37d5.fa.gz \
+  -V vcfs/1gk_all.vcf.gz \
+  --keep-ids racist_hypothesis/data/20200622_snps_pig.list \
+  -O vcfs/snphits_pig.vcf.gz
+```
+
+## Get allele frequencies with `Plink2`
+
+### Import 1GK metadata (for sample-population key)
+
+Downloded via this page: <http://www.internationalgenome.org/data>
+Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>. 
+
+```{r, warning=FALSE}
+meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
+meta
+```
+
+### Write population file for Plink2
+
+```{r, eval = F}
+write.table(meta[, 1:2],
+            here::here("data", "plink2_sample_popn_key.txt"),
+            quote = F,
+            sep = "\t",
+            row.names = F,
+            col.names = F)
+```
+
+### Set up directories on EBI cluster
+
+```{bash, eval = F}
+mkdir racist_hypothesis/data/20200622_plink2_alfreqs
+mkdir racist_hypothesis/data/20200622_plink2_alfreqs/hei
+mkdir racist_hypothesis/data/20200622_plink2_alfreqs/edu
+mkdir racist_hypothesis/data/20200622_plink2_alfreqs/ibd
+mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
+```
+
+### Run Plink2
+
+```{bash, eval = F}
+# Height
+/nfs/software/birney/plink2.3/plink2 \
+  --vcf vcfs/snphits_height.vcf.gz \
+  --freq \
+  --max-alleles 2 \
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --loop-cats PHENO1 \
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei
+  
+# Edu Years
+/nfs/software/birney/plink2.3/plink2 \
+  --vcf vcfs/snphits_eduyrs.vcf.gz \
+  --freq \
+  --max-alleles 2 \
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --loop-cats PHENO1 \
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/edu/edu
+
+# IBD
+/nfs/software/birney/plink2.3/plink2 \
+  --vcf vcfs/snphits_ibd_full.vcf.gz \
+  --freq \
+  --max-alleles 2 \
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --loop-cats PHENO1 \
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd
+
+# Pigmentation
+/nfs/software/birney/plink2.3/plink2 \
+  --vcf vcfs/snphits_pig.vcf.gz \
+  --freq \
+  --max-alleles 2 \
+  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --loop-cats PHENO1 \
+  --out racist_hypothesis/data/20200622_plink2_alfreqs/pig/pig
+```
+
+# Analysis
+
+## Compare allele frequencies
+
+### Read in data
+
+```{r}
+target_dirs <- list.dirs(here::here("data", "20200622_plink2_alfreqs"), recursive = F)
+
+al_freq_lst <- lapply(target_dirs, function(x){
+  target_files <- list.files(x, pattern = ".afreq", full.names = T)
+  # read in data
+  data_lst <- lapply(target_files, function(target_file){
+    read.table(target_file,
+               header = T,
+               comment.char = "")
+  })
+  # fix names of populations
+  names(data_lst) <- gsub(pattern = "edu.|hei.|ibd.|pig.|.afreq",
+                          replacement = "",
+                          x = list.files(x, pattern = ".afreq"))
+  return(data_lst)
+})
+
+# set names
+names(al_freq_lst) <- basename(target_dirs)
+
+# reorder for (1) height, (2) eduyears, (3) ibd, (4) pigmentation
+al_freq_lst <- al_freq_lst[c(2, 1, 3, 4)]
+```
+
+### Turn into single table for each pheno
+
+```{r}
+al_freq_df <- lapply(al_freq_lst, function(pheno){
+  out <- dplyr::bind_rows(pheno, .id = "population") %>% 
+    tidyr::pivot_wider(id_cols = c(X.CHROM, ID, REF, ALT),
+                       names_from = population,
+                       values_from = ALT_FREQS)
+})
+```
+
+### Randomly swap minor allele
+
+```{r}
+set.seed(65)
+rdm_sds <- sample(1:100, 4)
+
+counter <- 0
+al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
+  counter <<- counter + 1
+  # set seed
+  set.seed(rdm_sds[counter])
+  # select SNPs to swap (half of total)
+  tgt_indcs <- sample(nrow(pheno), nrow(pheno) /2)
+  # swap minor alleles
+  pheno[tgt_indcs, 5:ncol(pheno)] <- 1 - pheno[tgt_indcs, 5:ncol(pheno)]
+  # return pheno
+  return(pheno)
+})
+```
+
+### Plot
+
+```{r}
+# Set up titles vector
+titles <- c("Height", "Educational Attainment", "Inflammatory Bowel Disease", "Pigmentation")
+```
+
+#### 2D
+
+##### YRI v CHS
+
+```{r, message=F, warning=F}
+counter <- 0
+lapply(al_freq_df_shuff, function(pheno){
+  counter <<- counter + 1
+  ggplot(pheno,
+         aes(YRI, CHS)) +
+    geom_point(size = 0.5) +
+    coord_fixed() +
+    geom_smooth(se = F, colour = "red") +
+    geom_abline(intercept = 0, slope = 1, colour = "blue") +
+    xlab("Allele frequency in YRI") +
+    ylab("Allele frequency in CHS") +
+    labs(title = titles[counter])
+})
+```
+
+##### YRI v CEU
+
+```{r, message=F, warning=F}
+counter <- 0
+lapply(al_freq_df_shuff, function(pheno){
+  counter <<- counter + 1
+  ggplot(pheno,
+         aes(YRI, CEU)) +
+    geom_point(size = 0.5) +
+    coord_fixed() +
+    geom_smooth(se = F, colour = "red") +
+    geom_abline(intercept = 0, slope = 1, colour = "blue") +
+    xlab("Allele frequency in YRI") +
+    ylab("Allele frequency in CEU") +
+    labs(title = titles[counter])
+})
+```
+
+#### 3D
+
+```{r, message=F, warning=F}
+colourscales <- c("Viridis", "Hot", "Bluered", "Electric")
+titles <- c("Height", "Educational Attainment", "IBD", "Skin/hair pigmentation")
+
+counter <- 0
+plts <- lapply(al_freq_df_shuff, function(pheno){
+  counter <<- counter + 1
+  # set graph resolution
+  graph_reso <- 0.05
+  # get lm for data
+  loess_model <- loess(CEU ~ 0 + CHS + YRI, data = pheno)
+  # set up axes
+  axis_x <- seq(min(pheno$CHS), max(pheno$CHS), by = graph_reso)
+  axis_y <- seq(min(pheno$YRI), max(pheno$YRI), by = graph_reso)
+  # sample points
+  lm_surface <- expand.grid(CHS = axis_x,
+                            YRI = axis_y,
+                            KEEP.OUT.ATTRS = F)
+  lm_surface$CEU <- predict(loess_model, newdata = lm_surface)
+  lm_surface <- acast(lm_surface, YRI ~ CHS, value.var = "CEU")
+  # create plot
+  plt <- plot_ly(pheno,
+                 x = ~CHS,
+                 y = ~YRI,
+                 z = ~CEU,
+                 type = "scatter3d",
+                 mode = "markers",
+                 marker = list(size = 2),
+                 text = pheno$ID) 
+  plt <- add_trace(plt,
+                   z = lm_surface,
+              x = axis_x,
+              y = axis_y,
+              type = "surface",
+              colorscale = colourscales[counter]) %>% 
+    layout(title = titles[counter])
+  return(plt)
+})
+
+plts$hei
+plts$edu
+plts$ibd
+plts$pig
+```
+
+## Fst
+
+### Find target VCFs
+
+```{r}
+# list target VCFs
+target_vcfs <- list.files(here::here("data"),
+                          pattern = glob2rx("snphits_*.gz"), 
+                          full.names = T)
+
+# filter for the four we want
+target_vcfs <- target_vcfs[grep("eduyrs|height|ibd_full|pig", target_vcfs)]
+
+
+```
+
+### With all populations
+
+#### Get Fst stats
+
+```{r, message=F, warning=F, results=F}
+# Create raw list of variants
+vcf_list_raw <- lapply(target_vcfs, function(vcf_file){
+  vcf_out <- pegas::read.vcf(vcf_file)
+})
+
+# Create vector of populations
+populations <- unlist(lapply(rownames(vcf_list_raw[[1]]), function(sample){
+  meta$Population[meta$Sample == sample]
+}))
+
+# Generate Fst stats
+fst_out_lst <- lapply(vcf_list_raw, function(pheno){
+  as.data.frame(pegas::Fst(pheno, pop = populations))
+})
+
+# make rownames into separate column
+fst_out_lst <- lapply(fst_out_lst, function(pheno){
+  pheno$snp <- rownames(pheno)
+  return(pheno)
+})
+names(fst_out_lst) <- titles
+
+# bind into single DF
+fst_out_df <- dplyr::bind_rows(fst_out_lst, .id = "phenotype")
+
+# Set order of phenotypes
+fst_out_df$phenotype <- factor(fst_out_df$phenotype, levels = c("Height", "Educational Attainment", "IBD", "Skin/hair pigmentation"))
+
+head(fst_out_df)
+```
+
+#### Plot density
+
+##### 2D
+
+```{r, warning= F}
+ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
+  geom_density(alpha = 0.7) +
+  labs(fill = "Phenotype") +
+  ylab("Density") +
+  theme_bw() +
+  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
+```
+
+##### 3D
+
+```{r, warning = F, message = F}
+# factorise 
+fst_out_df$phenotype_3d <- factor(fst_out_df$phenotype,
+                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
+
+ggplot() +
+  geom_density_ridges2(data = fst_out_df,
+                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
+                       scale = 2) +
+  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
+  ylab(label = NULL) +
+  theme_bw() +
+  guides(fill = guide_legend(reverse=T, 
+                             title = "Phenotype")) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+```
+
+#### Run Kolmogorov-Smirnov Tests
+
+```{r, warning = F}
+# Height v EA
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "Educational Attainment"])
+
+# Height v IBD
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "IBD"])
+
+# Height v Pigmentation
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "Skin/hair pigmentation"])
+```
+
+
+### With just YRI, CEU, and CHS
+
+#### Get Fst stats
+
+```{r}
+# get samples from target popns only
+target_popns <- which(populations %in% c("YRI", "CEU", "CHS"))
+populations_3pop <- populations[target_popns]
+
+vcf_list_raw_3pop <- lapply(vcf_list_raw, function(pheno){
+  pheno[target_popns, ]
+})
+
+# Generate Fst stats
+fst_out_lst_3pop <- lapply(vcf_list_raw_3pop, function(pheno){
+  as.data.frame(pegas::Fst(pheno, pop = populations_3pop))
+})
+
+# make rownames into separate column
+fst_out_lst_3pop <- lapply(fst_out_lst_3pop, function(pheno){
+  pheno$snp <- rownames(pheno)
+  return(pheno)
+})
+names(fst_out_lst_3pop) <- titles
+
+# bind into single DF
+fst_out_df_3pop <- dplyr::bind_rows(fst_out_lst_3pop, .id = "phenotype")
+head(fst_out_df_3pop)
+```
+
+#### Plot density
+
+##### 2D
+
+```{r, warning=F}
+ggplot(fst_out_df_3pop, aes(Fst, fill = phenotype)) +
+  geom_density(alpha = 0.7) +
+  labs(fill = "Phenotype") +
+  ylab("Density") +
+  theme_bw() +
+  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
+```
+
+##### 3D
+
+```{r, warning=F, message = F}
+# factorise 
+fst_out_df_3pop$phenotype_3d <- factor(fst_out_df$phenotype,
+                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
+
+ggplot() +
+  geom_density_ridges2(data = fst_out_df_3pop,
+                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
+                       scale = 2) +
+  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
+  ylab(label = NULL) +
+  theme_bw() +
+  guides(fill = guide_legend(reverse=T, 
+                             title = "Phenotype")) +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+```
+
+
+#### Run Kolmogorov-Smirnov Tests
+
+```{r, warning = F}
+# Height v EA
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Educational Attainment"])
+
+# Height v IBD
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "IBD"])
+
+# Height v Pigmentation
+ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Skin/hair pigmentation"])
+```
+
