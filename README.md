@@ -1,2 +1,2 @@
 # racist_hypothesis
-Are differences in IQ between races attributable to genetics?
+Are differences in educational attainment between races attributable to genetics?
