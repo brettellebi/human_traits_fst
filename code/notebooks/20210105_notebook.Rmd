@@ -2,42 +2,44 @@
 title: "Race, genetics and IQ"
 author: "Ian Brettell"
 date: "5 January 2021"
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    number_sections: true
-    keep_md: true
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+#output:
+#  html_document:
+#    toc: true
+#    toc_float: true
+#    number_sections: true
+#    keep_md: true
 ---
 
 # 1. Setup
 
-* Working directory on EBI Cluster: `/hps/research1/birney/users/ian/rac_hyp`
-* GitHub repository: <https://github.com/Ian-Brettell/racist_hypothesis>
+* Working directory on EBI Cluster: `/hps/research1/birney/users/ian/hum_fst`
+* GitHub repository: <https://github.com/brettellebi/human_traits_fst>
+
+## Conda env
+
+```{r, engine='bash'}
+# Create env with mamba
+mamba create -y -n fst_env r
+conda activate fst_env
+mamba install -y -c r rstudio r-tidyverse 
+mamba install -y -c conda-forge r-here r-plotly r-ggridges r-pegas
+mamba install -y -c bioconda gatk4
+# Export
+conda env export --no-build -f envs/fst_env.yml
+```
+
 
 ## 1.1. Load R packages on local
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning = FALSE}
 library(here)
 library(pegas)
 library(tidyverse)
-library(reshape2
-library(readxl)
-library(plotly
+library(plotly)
 library(ggridges)
-```
-
-## 1.2. EBI cluster
-
-### 1.2.1. Update GATK
-
-```{r, engine='bash', eval = F}
-cd /nfs/software/birney
-wget https://github.com/broadinstitute/gatk/releases/download/4.1.4.1/gatk-4.1.4.1.zip
-unzip gatk-4.1.4.1.zip
-
-# amend aliases in ~/.bashrc and ~/.bash_profile
-export PATH=$PATH:/nfs/software/birney/gatk-4.1.4.1/
 ```
 
 ## 1.3. Download 1GK data
@@ -50,13 +52,13 @@ wget -r -p -k --no-parent -cut-dirs=5 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/r
 
 ### 1.3.2. Put list of files into list
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz > racist_hypothesis/data/20200205_vcfs.list
 ```
 
 ### 1.3.3. Merge VCFs
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=racist_hypothesis/data/20200205_vcfs.list \
   O=vcfs/1gk_all.vcf.gz
@@ -98,7 +100,7 @@ Data downloaded from this webpage:
 <https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files>
 Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 cd racist_hypothesis/data
 # download
 wget https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
@@ -212,7 +214,7 @@ write.table(snps_eduyrs[["SNP"]], here::here("data", "20200316_snps_eduyears.lis
 
 #### 1.5.1.2. Create filtered VCF
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
@@ -224,13 +226,13 @@ gatk SelectVariants \
 
 #### 1.5.2.1. Create list of target SNPs
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > racist_hypothesis/data/20200318_snps_height.list
 ```
 
 #### 1.5.2.2. Extract calls for those SNPs from VCF
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
@@ -256,7 +258,7 @@ write.table(x = snps_ibd$variant,
 
 #### 1.5.3.2. Extract calls for those SNPs from VCF
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
@@ -278,7 +280,7 @@ write.table(x = pig_df$rsid,
 
 #### 1.5.4.2. Extract calls for those SNPs from VCF
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
@@ -311,7 +313,7 @@ write.table(meta[, 1:2],
 
 ### 1.6.3. Set up directories on EBI cluster
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 mkdir racist_hypothesis/data/20200622_plink2_alfreqs
 mkdir racist_hypothesis/data/20200622_plink2_alfreqs/hei
 mkdir racist_hypothesis/data/20200622_plink2_alfreqs/edu
@@ -321,7 +323,7 @@ mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
 
 ### 1.6.4. Run Plink2
 
-```{bash, eval = F}
+```{r, engine='bash', eval = F}
 # Edu Years
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_eduyrs.vcf.gz \
