@@ -28,7 +28,7 @@ mamba install -y -c r rstudio r-tidyverse
 mamba install -y -c conda-forge r-here r-plotly r-ggridges r-pegas
 mamba install -y -c bioconda gatk4
 # Export
-conda env export --no-build -f envs/fst_env.yml
+conda env export --no-builds -f envs/fst_env.yml
 ```
 
 
