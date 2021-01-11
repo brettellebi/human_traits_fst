@@ -1,5 +1,5 @@
 ---
-title: "Race, genetics and IQ"
+title: "Human traits Fst"
 author: "Ian Brettell"
 date: "5 January 2021"
 output: html_notebook
@@ -15,24 +15,23 @@ editor_options:
 
 # 1. Setup
 
-* Working directory on EBI Cluster: `/hps/research1/birney/users/ian/hum_fst`
+* Working directory on EBI Cluster: `/hps/research1/birney/users/ian/hmn_fst`
 * GitHub repository: <https://github.com/brettellebi/human_traits_fst>
 
-## Conda env
+## `conda` env for cluster
 
-```{r, engine='bash'}
-# Create env with mamba
-mamba create -y -n fst_env r
-conda activate fst_env
-mamba install -y -c r rstudio r-tidyverse 
-mamba install -y -c conda-forge r-here r-plotly r-ggridges r-pegas
-mamba install -y -c bioconda gatk4
+```{r, engine='bash', eval = F}
+# Create env on cluster with mamba
+mamba create -y \
+  -n fst_env_rhel \
+  -c bioconda gatk4
 # Export
-conda env export --no-builds -f envs/fst_env.yml
+conda env export \
+  --no-builds \
+  -f envs/fst_env.yml
 ```
 
-
-## 1.1. Load R packages on local
+## 1.1. R packages
 
 ```{r, message=FALSE, warning = FALSE}
 library(here)
@@ -40,6 +39,14 @@ library(pegas)
 library(tidyverse)
 library(plotly)
 library(ggridges)
+library(renv)
+```
+
+```{r, eval = F}
+# Export env
+renv::init()
+# To install packages on new system: 
+renv::restore()
 ```
 
 ## 1.3. Download 1GK data
@@ -47,37 +54,41 @@ library(ggridges)
 ### 1.3.1. Download from FTP
 
 ```{r, engine='bash', eval = F}
-wget -r -p -k --no-parent -cut-dirs=5 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+wget \
+  -r -p -k \
+  --no-parent \
+  -cut-dirs=5 \
+  ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
 ```
 
 ### 1.3.2. Put list of files into list
 
 ```{r, engine='bash', eval = F}
-find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz > racist_hypothesis/data/20200205_vcfs.list
+find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz > human_traits_fst/data/20200205_vcfs.list
 ```
 
 ### 1.3.3. Merge VCFs
 
 ```{r, engine='bash', eval = F}
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=racist_hypothesis/data/20200205_vcfs.list \
+  I=human_traits_fst/data/20200205_vcfs.list \
   O=vcfs/1gk_all.vcf.gz
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
 
 # So remove that one from list above
-sed -i '/MT/d' racist_hypothesis/data/20200205_vcfs.list
+sed -i '/MT/d' human_traits_fst/data/20200205_vcfs.list
 
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=racist_hypothesis/data/20200205_vcfs.list \
+  I=human_traits_fst/data/20200205_vcfs.list \
   O=vcfs/1gk_all.vcf.gz
   
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
-sed -i '/chrY/d' racist_hypothesis/data/20200205_vcfs.list
+sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
 
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=racist_hypothesis/data/20200205_vcfs.list \
+  I=human_traits_fst/data/20200205_vcfs.list \
   O=vcfs/1gk_all.vcf.gz
 # SUCCESS
 ```
@@ -101,7 +112,7 @@ Data downloaded from this webpage:
 Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
 
 ```{r, engine='bash', eval = F}
-cd racist_hypothesis/data
+cd human_traits_fst/data
 # download
 wget https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
 # unzip
@@ -218,7 +229,7 @@ write.table(snps_eduyrs[["SNP"]], here::here("data", "20200316_snps_eduyears.lis
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200316_snps_eduyears.list \
+  --keep-ids human_traits_fst/data/20200316_snps_eduyears.list \
   -O vcfs/snphits_eduyrs.vcf.gz
 ```
 
@@ -227,7 +238,7 @@ gatk SelectVariants \
 #### 1.5.2.1. Create list of target SNPs
 
 ```{r, engine='bash', eval = F}
-cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > racist_hypothesis/data/20200318_snps_height.list
+cut -f1 human_traits_fst/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 > human_traits_fst/data/20200318_snps_height.list
 ```
 
 #### 1.5.2.2. Extract calls for those SNPs from VCF
@@ -236,7 +247,7 @@ cut -f1 racist_hypothesis/data/20181015_Yengo-et-al_snps_height.txt | tail -n+2 
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200318_snps_height.list \
+  --keep-ids human_traits_fst/data/20200318_snps_height.list \
   -O vcfs/snphits_height.vcf.gz
 ```
 
@@ -262,7 +273,7 @@ write.table(x = snps_ibd$variant,
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200319_snps_ibd.list \
+  --keep-ids human_traits_fst/data/20200319_snps_ibd.list \
   -O vcfs/snphits_ibd_full.vcf.gz
 ```
 
@@ -284,7 +295,7 @@ write.table(x = pig_df$rsid,
 gatk SelectVariants \
   -R refs/hs37d5.fa.gz \
   -V vcfs/1gk_all.vcf.gz \
-  --keep-ids racist_hypothesis/data/20200622_snps_pig.list \
+  --keep-ids human_traits_fst/data/20200622_snps_pig.list \
   -O vcfs/snphits_pig.vcf.gz
 ```
 
@@ -314,11 +325,11 @@ write.table(meta[, 1:2],
 ### 1.6.3. Set up directories on EBI cluster
 
 ```{r, engine='bash', eval = F}
-mkdir racist_hypothesis/data/20200622_plink2_alfreqs
-mkdir racist_hypothesis/data/20200622_plink2_alfreqs/hei
-mkdir racist_hypothesis/data/20200622_plink2_alfreqs/edu
-mkdir racist_hypothesis/data/20200622_plink2_alfreqs/ibd
-mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
+mkdir human_traits_fst/data/20200622_plink2_alfreqs
+mkdir human_traits_fst/data/20200622_plink2_alfreqs/hei
+mkdir human_traits_fst/data/20200622_plink2_alfreqs/edu
+mkdir human_traits_fst/data/20200622_plink2_alfreqs/ibd
+mkdir human_traits_fst/data/20200622_plink2_alfreqs/pig
 ```
 
 ### 1.6.4. Run Plink2
@@ -329,36 +340,36 @@ mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
   --vcf vcfs/snphits_eduyrs.vcf.gz \
   --freq \
   --max-alleles 2 \
-  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
   --loop-cats PHENO1 \
-  --out racist_hypothesis/data/20200622_plink2_alfreqs/edu/edu
+  --out human_traits_fst/data/20200622_plink2_alfreqs/edu/edu
 
 # Height
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_height.vcf.gz \
   --freq \
   --max-alleles 2 \
-  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
   --loop-cats PHENO1 \
-  --out racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei
+  --out human_traits_fst/data/20200622_plink2_alfreqs/hei/hei
   
 # IBD
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_ibd.vcf.gz \
   --freq \
   --max-alleles 2 \
-  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
   --loop-cats PHENO1 \
-  --out racist_hypothesis/data/20200622_plink2_alfreqs/ibd/ibd
+  --out human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd
 
 # Pigmentation
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_pig.vcf.gz \
   --freq \
   --max-alleles 2 \
-  --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
+  --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
   --loop-cats PHENO1 \
-  --out racist_hypothesis/data/20200622_plink2_alfreqs/pig/pig
+  --out human_traits_fst/data/20200622_plink2_alfreqs/pig/pig
 ```
 
 # 2. Analysis
