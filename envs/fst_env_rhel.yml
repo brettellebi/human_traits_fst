@@ -1,0 +1,31 @@
+name: fst_env_rhel
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1
+  - _openmp_mutex=4.5
+  - ca-certificates=2020.12.8
+  - certifi=2020.12.5
+  - gatk4=4.1.9.0
+  - ld_impl_linux-64=2.35.1
+  - libffi=3.3
+  - libgcc-ng=9.3.0
+  - libgomp=9.3.0
+  - libstdcxx-ng=9.3.0
+  - ncurses=6.2
+  - openjdk=8.0.265
+  - openssl=1.1.1i
+  - pip=20.3.3
+  - python=3.9.1
+  - python_abi=3.9
+  - readline=8.0
+  - setuptools=51.0.0
+  - sqlite=3.34.0
+  - tk=8.6.10
+  - tzdata=2020f
+  - wheel=0.36.2
+  - xz=5.2.5
+  - zlib=1.2.11
+prefix: /nfs/research1/birney/users/brettell/anaconda3/envs/fst_env_rhel
