@@ -28,7 +28,7 @@ mamba create -y \
   -n fst_env_rhel \
   -c bioconda gatk4
 conda activate fst_env_rhel
-mamba install bcftools plink2 r-base r-essentials r-tidyverse
+mamba install bcftools plink2 r-base r-essentials r-tidyverse r-units libgdal r-sf
 # Export
 conda env export \
   --no-builds \
@@ -354,11 +354,11 @@ Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/2013
 
 Saved here: `data/20130606_sample_info.xlsx`
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, results = 'asis'}
 meta = readxl::read_xlsx(here::here("data", "20130606_sample_info.xlsx"),
                           sheet = "Sample Info") %>%
   dplyr::select(Sample, Population, Gender)
-meta
+knitr::kable(meta)
 ```
 
 ### 1.6.2. Write population file for Plink2
@@ -408,21 +408,31 @@ Pull out random SNPs with the same allele frequencies as the GWAS SNP-hits
 
 ```{r, engine='bash', eval=F}
 # On cluster
-mkdir data
+mkdir -p big_data
 
 bcftools query \
-  --format '%CHROM\t%POS\t%ID\t%INFO/AF\t%INFO/AFR_AF\t%INFO/AMR_AF\t%INFO/EAS_AF\t%INFO/EUR_AF\t%INFO/SAS_AF\n' \
-  --output data/20210112_af_all.txt \
+  --format '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%INFO/AF\t%INFO/AFR_AF\t%INFO/AMR_AF\t%INFO/EAS_AF\t%INFO/EUR_AF\t%INFO/SAS_AF\n' \
+  --output big_data/20210112_af_all.txt \
   vcfs/1gk_all.vcf.gz
 ```
 
 ### Bin by allele frequency
 
 ```{r, eval = F}
-# On cluster
+# On cluster, from inside repo
+## Read in data
+df = read.table("big_data/20210112_af_all.txt",
+                nrows = 10000,
+                as.is = T)
+names(df) = c("chr", "pos", "id", "ref", "alt", "af", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas")
+## Check whether there are any variants without rsIDs
+df$id[which(!grepl("rs", df$id))]
+## Have IDs that look like this: esv3584976
+## Filter for rows with rsIDs
+df = df[grepl("rs", df$id), ]
+# Bin by 1% allele frequency
 
 ```
-
 
 # 2. Analysis
 
