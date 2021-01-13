@@ -389,50 +389,18 @@ done
 ```{r, engine='bash', eval = F}
 traits=$(echo edu hei bmi ibd pig)
 
-for i in $(echo $traits); do
-  /nfs/software/birney/plink2.3/plink2 \
-    --vcf vcfs/snphits_$i.vcf.gz \
+for trait in $(echo $traits); do
+  # make directory
+  mkdir -p human_traits_fst/data/20200622_plink2_alfreqs/$trait ;
+  # create allele-freq tables
+  plink2 \
+    --vcf vcfs/snphits_$trait.vcf.gz \
     --freq \
     --max-alleles 2 \
     --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
     --loop-cats PHENO1 \
-    --out human_traits_fst/data/20200622_plink2_alfreqs/$i/$i ;
+    --out human_traits_fst/data/20200622_plink2_alfreqs/$trait/$trait ;
 done  
-```
-
-## Set up negative controls
-
-Pull out random SNPs with the same allele frequencies as the GWAS SNP-hits
-
-### Create table of variants with allele frequences
-
-```{r, engine='bash', eval=F}
-# On cluster
-mkdir -p big_data
-
-bcftools query \
-  --format '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%INFO/AF\t%INFO/AFR_AF\t%INFO/AMR_AF\t%INFO/EAS_AF\t%INFO/EUR_AF\t%INFO/SAS_AF\n' \
-  --output big_data/20210112_af_all.txt \
-  vcfs/1gk_all.vcf.gz
-```
-
-### Bin by allele frequency
-
-```{r, eval = F}
-# On cluster, from inside repo
-## Read in data
-df = readr::read_tsv("big_data/20210112_af_all.txt",
-                col_names = c("chr", "pos", "id", "ref", "alt", "af", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas"),
-                col_types = "iicccnnnnnn",
-                n_max = 10000)
-names(df) = c("chr", "pos", "id", "ref", "alt", "af", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas")
-## Check whether there are any variants without rsIDs
-df$id[which(!grepl("rs", df$id))]
-## Have IDs that look like this: esv3584976
-## Filter for rows with rsIDs
-df = df[grepl("rs", df$id), ]
-# Bin by 1% allele frequency
-
 ```
 
 # 2. Analysis
@@ -453,7 +421,7 @@ al_freq_lst <- lapply(target_dirs, function(x){
                comment.char = "")
   })
   # fix names of populations
-  names(data_lst) <- gsub(pattern = "edu.|hei.|pig.|.afreq",
+  names(data_lst) <- gsub(pattern = "edu.|hei.|bmi.|ibd.|pig.|.afreq",
                           replacement = "",
                           x = list.files(x, pattern = ".afreq"))
   return(data_lst)
@@ -478,20 +446,70 @@ al_freq_df <- lapply(al_freq_lst, function(pheno){
 
 ```{r}
 set.seed(65)
-rdm_sds <- sample(1:100, 4)
+rdm_sds <- sample(1:100, 5)
 
 counter <- 0
-al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
+al_freq_df_shuff <- lapply(al_freq_df, function(pheno_df){
   counter <<- counter + 1
   # set seed
   set.seed(rdm_sds[counter])
   # select SNPs to swap (half of total)
-  tgt_indcs <- sample(nrow(pheno), nrow(pheno) /2)
+  tgt_indcs <- sample(nrow(pheno_df), nrow(pheno_df) /2)
   # swap minor alleles
-  pheno[tgt_indcs, 5:ncol(pheno)] <- 1 - pheno[tgt_indcs, 5:ncol(pheno)]
-  # return pheno
-  return(pheno)
+  pheno_df[tgt_indcs, 5:ncol(pheno_df)] <- 1 - pheno_df[tgt_indcs, 5:ncol(pheno_df)]
+  # return pheno_df
+  return(pheno_df)
 })
+```
+
+### Bind in to single data frame and save
+
+```{r, eval = F}
+final = dplyr::bind_rows(al_freq_df_shuff, .id = "phenotype")
+```
+
+```{r, eval = F}
+
+```
+
+## Set up negative controls
+
+Pull out random SNPs with the same allele frequencies as the GWAS SNP-hits
+
+### Create table of variants with allele frequences
+
+```{r, engine='bash', eval=F}
+# On cluster
+mkdir -p big_data
+
+bcftools query \
+  --format '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%INFO/AF\t%INFO/AFR_AF\t%INFO/AMR_AF\t%INFO/EAS_AF\t%INFO/EUR_AF\t%INFO/SAS_AF\n' \
+  --output big_data/20210112_af_all.txt \
+  vcfs/1gk_all.vcf.gz
+```
+
+### Bin by allele frequency
+
+```{r, eval = F}
+# On cluster, from inside repo
+## Read in data
+df = readr::read_tsv("../big_data/20210112_af_all.txt",
+                col_names = c("chr", "pos", "id", "ref", "alt", "af_alt", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas"),
+                col_types = "iicccnnnnnn",
+                n_max = 10000) %>%
+      # get allele frequencies for ref allele
+      dplyr::mutate(af_ref = 1  - af_alt) %>%
+      # re-order variables
+      dplyr::select(chr, pos, id, ref, alt, af_ref, af_alt, everything()) %>%
+      # filter for rows with rsIDs (some have "esv3584976"-type IDs)
+      dplyr::filter(grepl("rs", df$id))
+
+## Bin by 1% allele frequency
+df$bin_100_ref = cut(df$af_ref, breaks = 100, labels = F)
+df$bin_100_alt = cut(df$af_alt, breaks = 100, labels = F)
+
+## Load other allele-frequency tables
+
 ```
 
 ### 2.1.4. Plot

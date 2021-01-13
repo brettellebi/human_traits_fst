@@ -70,7 +70,7 @@ sed -i '/MT/d' racist_hypothesis/data/20200205_vcfs.list
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=racist_hypothesis/data/20200205_vcfs.list \
   O=vcfs/1gk_all.vcf.gz
-  
+
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
 sed -i '/chrY/d' racist_hypothesis/data/20200205_vcfs.list
 
@@ -101,7 +101,7 @@ From **Yengo et al. (2018)** Meta-analysis of genome-wide association studies fo
 
 Data downloaded from this webpage:
 <https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files>
-Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
+Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz>
 
 ```{bash, eval = F}
 cd racist_hypothesis/data
@@ -138,7 +138,7 @@ Saved here: `data/20170628_Huang-et-al_supp-table-1.xlsx`
 ### 1.4.4. Skin pigmentation
 
 * **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://science.sciencemag.org/content/358/6365/eaan8433.abstract?casa_token=6tGEjct1nUQAAAAA:IL7LCz-xQ9l6rLhxBk5VcGBjwTrEa5UpAlC-nCl2mvcASu4iZbWMiu_Uj8YUHIISgCibOd1ya25sOQ>. Take table 1, and manually transform 'Ancestral>Divided' column into new columns titled 'tested_allele' (the allele in bold) and 'other_allele'. Save here: `data/20171117_Crawford-et-al_Table-1.xlsx`
-* **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://www.nature.com/articles/s41467-018-08147-0>. "Summary statistics from the GWAS analyses is deposited at GWAS central with the link <http://www.gwascentral.org/study/HGVST3308>". Under the 'Association results' tab, there is one dataset for each of the 6 phenotypes tested:  
+* **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://www.nature.com/articles/s41467-018-08147-0>. "Summary statistics from the GWAS analyses is deposited at GWAS central with the link <http://www.gwascentral.org/study/HGVST3308>". Under the 'Association results' tab, there is one dataset for each of the 6 phenotypes tested:
   - Melanin index
   - Hair color
   - Eye color
@@ -159,33 +159,33 @@ Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
 * 20150512_Liu-et-al: **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. Took all 9 SNPs from Table 1.
 * 20121031_Candille-et-al: **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. Took all 8 SNPs from Table 2.
 * 20100614_Gerstenblith-et-al: **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>. Took all 39 SNPs from Table 4.
-* 20080516_Han-et-al: **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2. 
-  
+* 20080516_Han-et-al: **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2.
+
 ### 1.4.5. Create list of target SNPs
-  
+
 ```{r}
 pig_snps <- list()
 # Crawford
-pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-al_Table-1.xlsx")) %>% 
-  dplyr::select(rsid = "RSID", everything()) %>% 
+pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-al_Table-1.xlsx")) %>%
+  dplyr::select(rsid = "RSID", everything()) %>%
   dplyr::filter(!is.na(rsid),
                 !rsid == ".")
 
 # Adhikari
 pig_snps[["adhikari_tbl_1"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
                                                    sheet = "Table 1",
-                                                   skip = 1) %>% 
-  dplyr::select(rsid = "rsID", everything()) %>% 
+                                                   skip = 1) %>%
+  dplyr::select(rsid = "rsID", everything()) %>%
   dplyr::filter(!is.na(rsid))
 
 pig_snps[["adhikari_supp_6"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
-                                                   sheet = "supp_table_6") %>% 
-  dplyr::select(rsid = "SNP", everything()) %>% 
-  dplyr::filter(!is.na(rsid))  
+                                                   sheet = "supp_table_6") %>%
+  dplyr::select(rsid = "SNP", everything()) %>%
+  dplyr::filter(!is.na(rsid))
 
 pig_snps[["adhikari_supp_12"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
-                                                   sheet = "supp_table_12") %>% 
-  dplyr::select(rsid = "SNP", everything()) %>% 
+                                                   sheet = "supp_table_12") %>%
+  dplyr::select(rsid = "SNP", everything()) %>%
   dplyr::filter(!is.na(rsid))
 
 # Hernandez-Pacheco
@@ -324,7 +324,7 @@ gatk SelectVariants \
 ### 1.6.1. Import 1GK metadata (for sample-population key)
 
 Downloded via this page: <http://www.internationalgenome.org/data>
-Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>. 
+Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>.
 
 ```{r, warning=FALSE}
 meta <- read_xlsx(here::here("data", "20130606_sample_info.xlsx"), sheet = "Sample Info") %>% dplyr::select(Sample, Population, Gender)
@@ -363,7 +363,7 @@ mkdir racist_hypothesis/data/20200622_plink2_alfreqs/pig
   --pheno iid-only racist_hypothesis/data/plink2_sample_popn_key.txt \
   --loop-cats PHENO1 \
   --out racist_hypothesis/data/20200622_plink2_alfreqs/hei/hei
-  
+
 # Edu Years
 /nfs/software/birney/plink2.3/plink2 \
   --vcf vcfs/snphits_eduyrs.vcf.gz \
@@ -427,7 +427,7 @@ al_freq_lst <- al_freq_lst[c(2, 1, 3, 4)]
 
 ```{r}
 al_freq_df <- lapply(al_freq_lst, function(pheno){
-  out <- dplyr::bind_rows(pheno, .id = "population") %>% 
+  out <- dplyr::bind_rows(pheno, .id = "population") %>%
     tidyr::pivot_wider(id_cols = c(X.CHROM, ID, REF, ALT),
                        names_from = population,
                        values_from = ALT_FREQS)
@@ -529,13 +529,13 @@ plts <- lapply(al_freq_df_shuff, function(pheno){
                  type = "scatter3d",
                  mode = "markers",
                  marker = list(size = 2),
-                 text = pheno$ID) 
+                 text = pheno$ID)
   plt <- add_trace(plt,
                    z = lm_surface,
               x = axis_x,
               y = axis_y,
               type = "surface",
-              colorscale = colourscales[counter]) %>% 
+              colorscale = colourscales[counter]) %>%
     layout(title = titles[counter])
   return(plt)
 })
@@ -553,7 +553,7 @@ plts$pig
 ```{r}
 # list target VCFs
 target_vcfs <- list.files(here::here("data"),
-                          pattern = glob2rx("snphits_*.gz"), 
+                          pattern = glob2rx("snphits_*.gz"),
                           full.names = T)
 
 # filter for the four we want
@@ -614,7 +614,7 @@ ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
 ##### 2.2.2.2.2. D
 
 ```{r, warning = F, message = F}
-# factorise 
+# factorise
 fst_out_df$phenotype_3d <- factor(fst_out_df$phenotype,
                                     levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
 
@@ -625,7 +625,7 @@ ggplot() +
   scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
   ylab(label = NULL) +
   theme_bw() +
-  guides(fill = guide_legend(reverse=T, 
+  guides(fill = guide_legend(reverse=T,
                              title = "Phenotype")) +
   scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 ```
@@ -697,7 +697,7 @@ ggplot(fst_out_df_3pop, aes(Fst, fill = phenotype)) +
 ##### 2.2.3.2.2. D
 
 ```{r, warning=F, message = F}
-# factorise 
+# factorise
 fst_out_df_3pop$phenotype_3d <- factor(fst_out_df$phenotype,
                                     levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
 
@@ -708,9 +708,9 @@ ggplot() +
   scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
   ylab(label = NULL) +
   theme_bw() +
-  guides(fill = guide_legend(reverse=T, 
+  guides(fill = guide_legend(reverse=T,
                              title = "Phenotype")) +
-  scale_y_discrete(expand =p expand_scale(add = c(0.2, 2.3)))
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 ```
 
 
@@ -729,4 +729,3 @@ ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
 ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
         fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Skin/hair pigmentation"])
 ```
-
