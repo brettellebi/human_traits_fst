@@ -421,9 +421,10 @@ bcftools query \
 ```{r, eval = F}
 # On cluster, from inside repo
 ## Read in data
-df = read.table("big_data/20210112_af_all.txt",
-                nrows = 10000,
-                as.is = T)
+df = readr::read_tsv("big_data/20210112_af_all.txt",
+                col_names = c("chr", "pos", "id", "ref", "alt", "af", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas"),
+                col_types = "iicccnnnnnn",
+                n_max = 10000)
 names(df) = c("chr", "pos", "id", "ref", "alt", "af", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas")
 ## Check whether there are any variants without rsIDs
 df$id[which(!grepl("rs", df$id))]
