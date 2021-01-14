@@ -46,6 +46,13 @@ renv::init()
 renv::restore()
 ```
 
+Load libaries
+```{r, message = F, warning= F}
+library(tidyverse)
+library(pegas)
+library(knitr)
+```
+
 ## 1.3. Download 1GK data
 
 ### 1.3.1. Download from FTP
@@ -373,11 +380,12 @@ for i in $(echo $traits); do
 done   
 ```
 
-### 1.6.4. Run Plink2
+### 1.6.4. Run `Plink2`
 
 ```{r, engine='bash', eval = F}
 traits=$(echo edu hei bmi ibd pig)
 
+# Get AF per population
 for trait in $(echo $traits); do
   # make directory
   mkdir -p human_traits_fst/data/20200622_plink2_alfreqs/$trait ;
@@ -389,12 +397,116 @@ for trait in $(echo $traits); do
     --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
     --loop-cats PHENO1 \
     --out human_traits_fst/data/20200622_plink2_alfreqs/$trait/$trait ;
-done  
+done
+
+# Get global AF
+for trait in $(echo $traits); do
+  # make directory
+  mkdir -p human_traits_fst/data/20200622_plink2_alfreqs/$trait ;
+  # create allele-freq tables
+  bsub \
+    -o log/alfreq_global_$trait.out \
+    -e log/alfreq_global_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    plink2 \
+      --vcf vcfs/snphits_$trait.vcf.gz \
+      --freq \
+      --max-alleles 2 \
+      --out human_traits_fst/data/20200622_plink2_alfreqs/$trait/$trait.all
+    """;
+done
+
 ```
+
 
 # 2. Analysis
 
+## Set plotting parameters
+
+```{r}
+# Create factor levels for `trait`
+trait_levels = c("edu", "hei", "bmi", "ibd", "pig")
+# Create vector for recoding traits with full names
+recode_vec = c("edu" = "Educational attainment",
+               "hei" = "Height",
+               "bmi" = "BMI",
+               "ibd" = "IBD",
+               "pig" = "Pigmentation")
+# Colour palette
+fill_pal = c("Educational attainment" = "#00afbb",
+             "Height" = "#FFBF00",
+             "BMI" = "#0bc166",
+             "IBD" = "#360568",
+             "Pigmentation" = "#fc4e07")
+```
+
 ## 2.1. Compare allele frequencies
+
+### Histograms of the global MAF distributions (i.e. in all populations together)
+
+```{r}
+# Get list of files
+target_files = list.files(here::here("data", "20200622_plink2_alfreqs"),
+                          pattern = "all.afreq",
+                          recursive = T,
+                          full.names = T)
+
+# Read in data
+alfreq_list_glob = lapply(target_files, function(file){
+  trait_df = read.table(file,
+                        header = T,
+                        comment.char = "")
+
+})
+
+# Set names
+names(alfreq_list_glob) = gsub(pattern = ".all.afreq",
+                       replacement = "",
+                       basename(target_files))
+
+# Merge into single Df
+alfreq_glob_df = dplyr::bind_rows(alfreq_list_glob, .id = "trait")
+
+# Get major and minor alleles and frequency
+alfreq_glob_df = alfreq_glob_df %>% 
+  dplyr::mutate(MAJ = if_else(ALT_FREQS <= 0.5,
+                              REF,
+                              ALT),
+                MIN = ifelse(ALT_FREQS <= 0.5,
+                             ALT,
+                             REF),
+                MAF = ifelse(ALT_FREQS <= 0.5,
+                             ALT_FREQS,
+                             1 - ALT_FREQS))
+
+# Make `trait` a factor
+alfreq_glob_df$trait = factor(alfreq_glob_df$trait, levels = trait_levels)
+# Recode traits for plotting
+alfreq_glob_df$trait = dplyr::recode(alfreq_glob_df$trait, !!!recode_vec)
+```
+
+Plot
+```{r}
+alfreq_glob_df %>% 
+  ggplot(aes(MAF, fill = trait)) +
+    geom_histogram() +
+    scale_fill_manual(values = fill_pal) +
+    facet_wrap(~trait, nrow = 2) +
+    guides(fill = F) +
+    theme_bw() +
+    ggtitle("Global MAF distributions")
+```
+```{r}
+# Save
+ggsave(here("plots", "20210114_global_maf_distributions.svg"),
+       device = "svg",
+       units = "cm",
+       dpi = 400,
+       height = 12,
+       width = 19.5)
+```
+
 
 ### 2.1.1. Read in data
 
@@ -470,16 +582,6 @@ Pull out random SNPs with the same allele frequencies as the GWAS SNP-hits
 
 With `Plink2`
 ```{r, engine='bash', eval=F}
-# All
-bsub -M 10000 -o log/plink.out -e log/plink.err \
-  "plink2 \
-    --vcf vcfs/1gk_all.vcf.gz \
-    --freq \
-    --max-alleles 2 \
-    --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
-    --loop-cats PHENO1 \
-    --out big_data/20210114_alfreqs_all/ "
-
 # Per chromosome
 for chr in $(seq 1 24) ; do
   # make directory
@@ -500,32 +602,16 @@ for chr in $(seq 1 24) ; do
 done 
 ```
 
-```{r, engine='bash', eval=F}
-# On cluster
-mkdir -p big_data
-
-bcftools query \
-  --format '%CHROM\t%POS\t%ID\t%REF\t%ALT\t%INFO/AF\t%INFO/AFR_AF\t%INFO/AMR_AF\t%INFO/EAS_AF\t%INFO/EUR_AF\t%INFO/SAS_AF\n' \
-  --output big_data/20210112_af_all.txt \
-  vcfs/1gk_all.vcf.gz
-```
-
 ### Bin by allele frequency
 
 ```{r, eval = F}
 # On cluster, from inside repo
 ## Read in data
 ### Test
-target_files = "../big_data/20210114_alfreqs_all/by_chr/1"
-data_lst <- lapply(target_files, function(target_file){
-  read.table(target_file,
-              header = T,
-              comment.char = "")
+target_dirs <- list.dirs(here::here("data", "20200622_plink2_alfreqs"), recursive = F)
 
-target_dirs = list.dirs("../big_data/20210114_alfreqs_all/by_chr", recursive = F)
-
-al_freq_lst <- lapply(target_dirs, function(target_dir){
-  target_files <- list.files(target_dir, pattern = ".afreq", full.names = T)
+al_freq_lst <- lapply(target_dirs, function(x){
+  target_files <- list.files(x, pattern = ".afreq", full.names = T)
   # read in data
   data_lst <- lapply(target_files, function(target_file){
     read.table(target_file,
@@ -533,11 +619,47 @@ al_freq_lst <- lapply(target_dirs, function(target_dir){
                comment.char = "")
   })
   # fix names of populations
-#  names(data_lst) <- gsub(pattern = "edu.|hei.|bmi.|ibd.|pig.|.afreq",
-#                          replacement = "",
-#                          x = list.files(x, pattern = ".afreq"))
+  names(data_lst) <- gsub(pattern = "edu.|hei.|bmi.|ibd.|pig.|.afreq",
+                          replacement = "",
+                          x = list.files(x, pattern = ".afreq"))
   return(data_lst)
 })
+
+# set names
+names(al_freq_lst) <- basename(target_dirs)
+
+
+target_files = list.files("~/Documents/Data/20210114_hmn_fst/all_1",
+                          pattern = "CEU|CHS|YRI", 
+                          full.names = T)
+
+data_lst = lapply(target_files, function(target_file){
+  df = read.table(target_file,
+                  header = T,
+                  comment.char = "")
+  return(df)
+})
+
+# fix names of populations
+names(data_lst) = basename(target_files) %>% 
+  stringr::str_split("\\.", simplify = T) %>% 
+  subset(select = 2, drop = T)
+
+
+# change name of al_freq column to match population
+counter = 0
+test = lapply(data_lst, function(popn_df){
+  counter <<- counter + 1
+  target_popn = names(data_lst)[counter]
+  colnames(popn_df)[colnames(popn_df) == "ALT_FREQS"] = target_popn
+  return(popn_df)
+})
+
+# 
+
+
+target_files = list
+
 
 df = readr::read_tsv("~/Documents/Data/20210114_hmn_fst/20210112_af_all.txt.gz",# or if on cluster "../big_data/20210112_af_all.txt", 
                 col_names = c("chr", "pos", "id", "ref", "alt", "af_alt", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas"),
