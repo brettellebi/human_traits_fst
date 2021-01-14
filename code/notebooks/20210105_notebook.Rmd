@@ -37,20 +37,10 @@ conda env export \
 conda activate fst_env_rhel
 ```
 
-## 1.1. R packages on local
-
-```{r, message=FALSE, warning = FALSE}
-library(here)
-library(pegas)
-library(tidyverse)
-library(plotly)
-library(ggridges)
-library(renv)
-library(knitr)
-```
+## 1.1. `renv`
 
 ```{r, eval = F}
-# Export env
+# Export env (to renv.lock file)
 renv::init()
 # To install packages on new system, or 'activate' the env: 
 renv::restore()
@@ -283,7 +273,6 @@ knitr::kable(head(pig_df))
 #### EDU
 
 ```{r, eval = F}
-# EDU
 ## extract from excel doc
 snps_eduyrs <- readxl::read_xlsx(here::here("data", "20180723_Lee-et-al_supp-tables.xlsx"), sheet = "2. EduYears Lead SNPs", skip = 1, n_max = 1271)
 ## write table of SNPs
