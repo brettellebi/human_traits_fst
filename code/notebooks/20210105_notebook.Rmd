@@ -458,7 +458,8 @@ final = dplyr::bind_rows(al_freq_df_shuff, .id = "phenotype")
 ```
 
 ```{r, eval = F}
-write.table(final,
+final %>% 
+  readr::write_tsv(here("data", "20210114_pheno_alfreqs.txt.gz"))
 ```
 
 ## Set up negative controls
@@ -482,10 +483,9 @@ bcftools query \
 ```{r, eval = F}
 # On cluster, from inside repo
 ## Read in data
-df = readr::read_tsv("../big_data/20210112_af_all.txt",
+df = readr::read_tsv("~/Documents/Data/20210114_hmn_fst/20210112_af_all.txt.gz",# or if on cluster "../big_data/20210112_af_all.txt", 
                 col_names = c("chr", "pos", "id", "ref", "alt", "af_alt", "af_afr", "af_amr", "af_eas", "af_eur", "af_sas"),
-                col_types = "iicccnnnnnn",
-                n_max = 10000) %>%
+                col_types = "cicccnnnnnn") #%>%
       # get allele frequencies for ref allele
       dplyr::mutate(af_ref = 1  - af_alt) %>%
       # re-order variables
