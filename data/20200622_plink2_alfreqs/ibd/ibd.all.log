@@ -1,0 +1,29 @@
+PLINK v2.00a2.3LM 64-bit Intel (24 Jan 2020)
+Options in effect:
+  --freq
+  --max-alleles 2
+  --out human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all
+  --vcf vcfs/snphits_ibd.vcf.gz
+
+Hostname: hx-noah-10-15.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst
+Start time: Thu Jan 14 15:32:01 2021
+
+Random number seed: 1610638321
+256288 MiB RAM detected; reserving 128144 MiB for main workspace.
+Using up to 80 threads (change this with --threads).
+--vcf: 86 variants scanned.
+--vcf: human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all-temporary.pgen
++ human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all-temporary.pvar +
+human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all-temporary.psam
+written.
+2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
+human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all-temporary.psam.
+86 variants loaded from
+human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all-temporary.pvar.
+Note: No phenotype data present.
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+human_traits_fst/data/20200622_plink2_alfreqs/ibd/ibd.all.afreq .
+
+End time: Thu Jan 14 15:32:09 2021
