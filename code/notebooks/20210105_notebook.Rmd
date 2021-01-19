@@ -62,24 +62,27 @@ library(qqman)
 
 ```{r}
 # Create factor levels for `trait`
-trait_levels = c("hei", "bmi", "edu", "ibd", "pig")
+trait_levels = c("hei", "bmi", "edu", "int", "ibd", "pig")
 # Create vector for recoding traits with full names
 recode_vec = c("hei" = "Height",
                "bmi" = "BMI",
                "edu" = "Educational attainment",
+               "int" = "Intelligence",
                "ibd" = "IBD",
                "pig" = "Pigmentation")
 # Colour palette
-fill_pal_primary = c("Height" = "#FFBF00",
-                     "BMI" = "#0bc166",
-                     "Educational attainment" = "#00afbb",
-                     "IBD" = "#360568",
-                     "Pigmentation" = "#fc4e07")
-fill_pal_secondary = c("Height" = "#cc7e08",
-                       "BMI" = "#026a7a",
-                       "Educational attainment" = "#02395c",
-                       "IBD" = "#651375",
-                       "Pigmentation" = "#a11f1f")
+fill_pal_primary = c("Height" = "#FC4E07",
+                     "BMI" = "#FFBF00",
+                     "Educational attainment" = "#0BC166",
+                     "Intelligence" = "#00AFBB",
+                     "IBD" = "#D84797",
+                     "Pigmentation" = "#360568")
+fill_pal_secondary = c("Height" = "#D11F1F",
+                       "BMI" = "#cc7e08",
+                       "Educational attainment" = "#39BFA2",
+                       "Intelligence" = "#02395c",
+                       "IBD" = "#82043B",
+                       "Pigmentation" = "#960592")
 ```
 
 ## Download 1GK data
@@ -131,7 +134,9 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 
 ### Height
 
-From **Yengo et al. (2018)** Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>.
+#### **Yengo et al. (2018)** 
+
+[Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry]{colour="#ffbf00"}, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>.
 
 Notes:
 - European-ancestry cohort only.
@@ -157,6 +162,9 @@ mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181
 ```
 
 Saved here: `data/20181015_Yengo-et-al_snps_height.txt`
+
+___________________
+
 
 ### BMI
 
@@ -234,17 +242,34 @@ ___________________________
 
 [**NOTE**: All other traits have SNP-hits based on only European-ancestry populations. Here, the SNP hits come from various populations. Would we expect an even greater difference in Fst for this trait if we only used SNP-hits from European-cohort GWAS?]{colour = "red"}
 
-* **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://doi.org/10.1126/science.aan8433>.
+______________
+
+
+* **Lona-Durazo et al. (2019)** Meta-analysis of GWA studies provides new insights on the genetic architecture of skin pigmentation in recently admixed populations, *BMC Genetics*: <https://doi.org/10.1186/s12863-019-0765-5>
+
+Notes
+- *n* = 762 admixed from Cuba, and meta-analysis of 2104 admixed from Cape Verde, Puerto Rico, and African-Americans from San Francisco. 
+- Phenotype: M-index
+- Identified **7 SNPs** in 3 regions surpassing genome-wide significance, embedded in Table 2 so copied manually.
+
+Saved here: `data/20190717_Lona-Durazo-et-al_table-2.xlsx`
+
+______________
+
+
+* **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution*: <https://academic.oup.com/gbe/article/11/4/1066/5416147>. 
 
 Notes:
-- *n* = 1,570 African-ancestry
-- SNP panel: Illumina Infinium Omni5 Genotyping array (~4.2M SNPs)
-- Identified four regions with multiple significant associations (*P* < 5e-8), then imputed local genotypes with 1KGph3 and ranked potential causal variants within each locus using CAVIAR, a fine-mapping method that accounts for linkage disequilibrium (LD) and effect sizes.
-- Table 1: **59** hits. Embedded into paper, so copied manually.
+- *n* = 828 South-Asian-ancestry (348 living in Canada, 480 living in West Maharastra).
+- SNP panel (on the two cohorts respectively): Multi-Ethnic Global Array (MEGA) and Precision Medicine Research Array (PMRA).
+- Identified **9** SNPs associated with iris colour from Table 1, and reviewed **14** SNPs previously associated with skin pigmentation in Stokowski et al (2007), Liu et al (2015), and Crawford et al (2017) (none of those reaching genome-wide significance). Embedded in paper, so copied manually.
+- Carried out a meta-analysis and found a very strong signal from rs1426654 in *SLC24A5* (Table S5), so conditioned on that (Table S6). Haven't isolated the top SNPs, so will have to do that manually.
 
-Saved here: `data/20171117_Crawford-et-al_table-1.xlsx`
+Saved here: `data/20190321_Jonnalagadda-et-al.xlsx`
 
-_____________
+
+______________
+
 
 * **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://doi.org/10.1038/s41467-018-08147-0>. 
 
@@ -257,18 +282,8 @@ Saved here: `data/20190121_Adhikari-et-al_snps.xlsx`
 
 ______________
 
-* **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed populations, *Scientific Reports*: <https://doi.org/10.1038/srep44548>. 
 
-Notes:
-- *n* = 285 Hispanic/Latinxs from Puerto Rico plus 373 African Americans.
-- SNP panel: 14M imputed SNPs
-- Identified 14 SNPs in three regions associated with skin colour through meta analysis combining both cohorts (Table 2); **9** SNPs at *P* < 5e-8. Embedded into paper, so copied manually.
-
-Saved here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
-
-______________
-
-* 20171130_Martin-et-al: **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. 
+* **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. 
 
 Notes:
 - *n* = 479 African-ancestry (277 Khomani and 202 Nama).
@@ -281,18 +296,32 @@ Saved here: `data/20171130_Martin-et-al_table-S6.xlsx`
 
 ______________
 
-Others compiled into the single XLSX doc `data/20200622_pigmentation_snps.xlsx`:
 
-* 20190321_Jonnalagadda-et-al: **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution*: <https://academic.oup.com/gbe/article/11/4/1066/5416147>. 
+* **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://doi.org/10.1126/science.aan8433>.
 
 Notes:
-- *n* = 828 South-Asian-ancestry (348 living in Canada, 480 living in West Maharastra).
-- SNP panel (on the two cohorts respectively): Multi-Ethnic Global Array (MEGA) and Precision Medicine Research Array (PMRA).
-- Identified **9** SNPs associated with iris colour from Table 1. Embedded in paper, so copied manually.
+- *n* = 1,570 African-ancestry
+- SNP panel: Illumina Infinium Omni5 Genotyping array (~4.2M SNPs)
+- Identified four regions with multiple significant associations (*P* < 5e-8), then imputed local genotypes with 1KGph3 and ranked potential causal variants within each locus using CAVIAR, a fine-mapping method that accounts for linkage disequilibrium (LD) and effect sizes.
+- Table 1: **59** hits. Embedded into paper, so copied manually.
+
+Saved here: `data/20171117_Crawford-et-al_table-1.xlsx`
+
+_____________
+
+* **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed populations, *Scientific Reports*: <https://doi.org/10.1038/srep44548>. 
+
+Notes:
+- *n* = 285 Hispanic/Latinxs from Puerto Rico plus 373 African Americans.
+- SNP panel: 14M imputed SNPs
+- Identified 14 SNPs in three regions associated with skin colour through meta analysis combining both cohorts (Table 2); **9** SNPs at *P* < 5e-8. Embedded into paper, so copied manually.
+
+Saved here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
 
 ______________
 
-* : **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. 
+
+* **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. 
 
 Notes:
 - *n* = 17,262 European-ancestry from the International Visible Trait Genetics (VisiGen) Consortium, including 5857 from the Rotterdam Study in the Netherlands (RS),3459 from the Brisbane Twin Nevus Study (BTNS), and 2668 from the TwinsUK study, then further replicated in 5278 from the National Child Development Study NCDS.
@@ -304,15 +333,197 @@ Saved here: `data/20150512_Liu-et-al_table-1.xlsx`
 
 ______________
 
-* 20121031_Candille-et-al: **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. Took all 8 SNPs from Table 2.
+
+* **Belaza et al. (2013)** Genetic architecture of skin and eye color in an African-European admixed population, *PLoS Genetics*: <https://doi.org/10.1371/journal.pgen.1003372>
+
+Notes
+- *n* = 699 West-Africa/European admixed from Cape Verde.
+- Phenotypes: Melanin index for skin colour (reflectance spectroscopy on upper inner arm), and "T index" for eye colour, where RGB reflectance values projct onto an empirical curve beginning with light blue and ending with very dark brown eyes.
+- SNP panel: 903,837 autosomal SNPs.
+- Identified **6 SNPs** (4 skin colour, 2 eye colour) at *P* < 5.7e-08. Set out in Table 1 and S2 (same table). Copied S2 manually.
+
+Saved here: `data/20130321_Belaza-et-al_table-S2.xlsx`
 
 ______________
 
-* 20100614_Gerstenblith-et-al: **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>. Took all 39 SNPs from Table 4.
+
+* **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. 
+
+Notes
+- *n* = 176 women of European-ancestry from Ireland, Poland, Italy, and Portugal, replicated in 294 European men and women from the same countries. 
+- Phenotype: Melanin index from skin (inner upper arm), and hair (near the crown), and iris colour score from digital photographs.
+- Identified **8 SNPs** set out in Table 2 at *P* < 1e05. Embedded in paper so copied 'Combined' stats manually.
+
+Saved here: `data/20121031_Candille-et-al_table-2.xlsx`
 
 ______________
 
-* 20080516_Han-et-al: **Han et al. (2008)** A Genome-Wide Association Study Identifies Novel Alleles Associated with Hair Color and Skin Pigmentation, *PLOS Genetics*: <https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000074>. Took all 38 SNPs from Table 2. 
+* 20100614_Gerstenblith-et-al: **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>.
+
+Notes
+- Review and meta-analysis of GWAS.
+- Took Supporting Information Tables:
+  - S1: Light vs dark hair colour (excluding red hair)
+  - S2: Red vs non-red hair
+  - S3: Blue vs non-blue eye colour
+  - S4: Skin colour
+- Copied manually from .doc file.
+  
+Saved here: `data/20100614_Gerstenblith-et-al_supp-tables-S1-S4.xlsx`
+
+______________
+
+### Alternative method: take from GWAS Catalog
+
+All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210119_gwas-catalog.xlsx`
+
+#### Height
+
+* height: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004339>
+  - **4960 SNPs** from **54 studies**
+  
+#### BMI
+
+* bmi: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004340>
+  - **7801 SNPs** from **182 studies**
+  
+#### Educational attainment
+
+* self reported educational attainment: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004784>
+  - **3989 SNPs** from **24 studies**
+  
+#### Intelligence
+
+* intelligence: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004337>
+  - **2967 SNPs** from **27 studies**
+  
+#### IBD
+
+* inflammatory bowel disease: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003767>
+  - **1886 SNPs** from **110 studies**
+
+#### Pigmentation
+
+* skin pigmentation: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003784>
+  - **217 SNPs** from **15 studies**
+
+* skin pigmentation measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007009>
+  - **236 SNPs** from **10 studies**
+
+* eye color: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003949>
+  - **77 SNPs** from **13 studies**
+  
+* eye colour measurement:
+<https://www.ebi.ac.uk/gwas/efotraits/EFO_0009764>
+  - **202 SNPs** from **9 studies**
+  
+* hair color: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003924>
+  - **424 SNPs** from **18 studies**
+  
+* hair colour measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007822>
+  - **541 SNPs** from **6 studies**
+  
+* hair shape measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007824>
+  - **20 SNPs** from **2 studies**
+
+#### Read into data frame
+
+```{r}
+# Create vector of traits
+traits = c("hei", "bmi", "edu", "int", "ibd", "pig")
+names(traits) = traits
+# Assign sheets to traits
+sheets <- seq(1:11)
+names(sheets) <- c("hei", "bmi", "edu", "int", "ibd", rep("pig", 6))
+
+# get sheets
+sheet_names <- readxl::excel_sheets(here::here("data", "20210119_gwas-catalog.xlsx"))
+
+# Create function to read in data
+read_catalog_data <- function(path, target_sheet){
+  # Read in data
+  out = readxl::read_xlsx(path, sheet = target_sheet) %>% 
+    dplyr::select(CHR = CHR_ID, 
+                  POS = CHR_POS, 
+                  SNP_AL = `STRONGEST SNP-RISK ALLELE`, 
+                  P = `P-VALUE`, 
+                  OR_OR_BETA = `OR or BETA`, 
+                  MAPPED_TRAIT,
+                  STUDY = `STUDY ACCESSION`) %>% 
+    # Split SNP and risk allele into separate columns
+    dplyr::mutate(TOP_SNP = stringr::str_split(SNP_AL, "-", simplify = T)[, 1],
+                  RISK_ALLELE = stringr::str_split(SNP_AL, "-", simplify = T)[, 2]) %>% 
+    # Reorder and select
+    dplyr::select(CHR, POS, TOP_SNP, RISK_ALLELE, P, OR_OR_BETA, MAPPED_TRAIT, STUDY)
+  # Change variables to specific types
+  out$CHR <- as.integer(out$CHR)
+  out$POS <- as.numeric(out$POS)
+  out$P <- as.numeric(out$P)
+  # return DF
+  return(out)
+}
+
+# Read in data
+counter <- 0
+dat_lst = lapply(traits, function(trait){
+  # set counter 
+  counter <<- counter + 1
+  # set target file
+  target_file = here::here("data", "20210119_gwas-catalog.xlsx")
+  # get target sheet
+  target_sheet = sheets[names(sheets) == trait]
+  length(target_sheet)
+  # read in pigmentation data from multiple sheets and bind into single DF
+  if (length(target_sheet) > 1){
+    # loop over each sheet
+    df <- lapply(target_sheet, function(sheet){
+      out <- read_catalog_data(target_file,
+                               target_sheet = sheet)
+    })
+    # set name of each DF to name of sheet (replacing spaces with underscores)
+    names(df) = sheet_names[target_sheet] %>% 
+      stringr::str_replace_all(" ", "_")
+    # bind DFs into single DF
+    df <- dplyr::bind_rows(df, .id = "PIG_PHENO")
+  } 
+  else {
+    # read in other data
+    df <- read_catalog_data(target_file,
+                            target_sheet = target_sheet)
+  }
+  # Set PHENO column
+  df$PHENO <- trait
+  # Recode PHENO
+  df$PHENO = dplyr::recode(df$PHENO, !!!recode_vec)  
+  # Return DF
+  return(df)
+})
+
+# Clean data
+dat_lst = lapply(dat_lst, function(pheno_df){
+  # Remove rows with p-value of 0 (only 32 of them, associated with suntan)
+  pheno_df = pheno_df[pheno_df$P != 0, ]
+  # Remove rows with NA in CHR
+  pheno_df = pheno_df[!is.na(pheno_df$CHR), ]
+  return(pheno_df)
+})
+```
+
+#### Create list of target SNPs to extract from 1KG
+
+```{r, eval = F}
+counter <- 0
+lapply(dat_lst, function(pheno_df){
+  # Set counter
+  counter <<- counter + 1
+  # Set file basename
+  trait = names(dat_lst)[counter]
+  filename = paste("20210119_snps_", trait, ".list", sep = "")
+  # Write SNPs to file
+  readr::write_lines(pheno_df$TOP_SNP, here("data", filename))
+})
+
+```
 
 
 #### Create list of target SNPs
@@ -392,14 +603,12 @@ pig_df <- unique(pig_df)
 nrow(pig_df)
 ```
 
-### Create lists of target SNPs and generate Manhattan plots
+### Generate Manhattan plots
 
 Create function for Manhattan plotting
 
 ```{r}
 get_man <- function(df, trait, chr, bp, snp, p){
-  # Replace p-values of 0 with the next lowest (because it can't plot 0 on a negative-log scale)
-  df$P[df[[p]] == 0] = sort(df[[p]][df[[p]] != 0])[1]
   # Set title with number of SNPs
   title <- paste(trait, "\n", "SNP count:", nrow(df))
   # Plot
@@ -410,6 +619,19 @@ get_man <- function(df, trait, chr, bp, snp, p){
             main = title)
 }
 ```
+
+Plot
+
+```{r}
+lapply(dat_lst, function(pheno_df){
+  trait = unique(pheno_df$PHENO)
+  # Get title
+  title <- paste(trait, "\n", "SNP count:", nrow(pheno_df))
+  # Plot
+  get_man(pheno_df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
+})
+```
+
 
 #### HEI
 
