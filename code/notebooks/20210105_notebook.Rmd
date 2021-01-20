@@ -632,6 +632,13 @@ lapply(dat_lst, function(pheno_df){
 })
 ```
 
+#### How many have *P* < 1e-08?
+
+```{r}
+lapply(dat_lst, function(pheno_df){
+  length(which(pheno_df$P < 1e-08 ))
+})
+```
 
 #### HEI
 
@@ -775,15 +782,23 @@ get_man(snps_edu, trait = "Educational attainment", chr="Chr", bp="Position", sn
 ## Filter 1GK VCF for target SNPs
 
 ```{r, engine='bash', eval = F}
-traits=$(echo edu hei bmi ibd pig)
+
+traits=$(echo hei bmi edu int ibd pig)
 
 for trait in $(echo $traits ); do
-  gatk SelectVariants \
-    -R refs/hs37d5.fa.gz \
-    -V vcfs/1gk_all.vcf.gz \
-    --keep-ids human_traits_fst/data/snps_$trait.list \
-    -O vcfs/snphits_$trait.vcf.gz ;
-done    
+  bsub \
+    -M 10000 \
+    -o log/20210120_extract_snps_$trait.out \
+    -e log/20210120_extract_snps_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    gatk SelectVariants \
+      -R refs/hs37d5.fa.gz \
+      -V vcfs/1gk_all.vcf.gz \
+      --keep-ids human_traits_fst/data/20210119_snps_$trait.list \
+      -O vcfs/snphits_$trait.vcf.gz 
+    """ ;
+done
 ```
 
 ## Get allele frequencies with `Plink2`
@@ -828,7 +843,7 @@ done
 ### Run `Plink2`
 
 ```{r, engine='bash', eval = F}
-traits=$(echo edu hei bmi ibd pig)
+traits=$(echo hei bmi edu int ibd pig)
 
 # Get AF per population
 for trait in $(echo $traits); do
