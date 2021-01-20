@@ -130,250 +130,9 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 # SUCCESS
 ```
 
-## Obtain GWAS data
+## Obtain GWAS data from the GWAS Catalog <https://www.ebi.ac.uk/gwas>
 
-### Height
-
-#### **Yengo et al. (2018)** 
-
-[Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry]{colour="#ffbf00"}, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>.
-
-Notes:
-- European-ancestry cohort only.
-- Meta-analysis combining GIANT and UKBioBank cohorts from Wood et al. (2014) <https://doi.org/10.1038/ng.3097> (height) and Locke et al. (2015) <https://doi.org/10.1038/nature14177> (BMI).
-- *n* =  Up to 795,624 individuals (456426 from UKBioBank and the rest (339198?) from GIANT).
-- SNP panel: ~2.4M HM2 SNPs.
-- Identified **3290** (2388 main, 902 secondary; 712 loci) and **941** (656 main, 285 secondary; 536 loci) near-independent SNPs associated with height and BMI respectively, at a genome-wide significance threshold of *P* < 1e−8).
-- Analysed with COJO: <https://doi.org/10.1038/ng.2213>
-- Corrected by LD score regression: LD score intercept of 1.48 and 1.03 for height and BMI respectively.
-
-Data downloaded from this webpage:
-<https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files>
-Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/4/4b/Meta-analysis_Wood_et_al%2BUKBiobank_2018_top_3290_from_COJO_analysis.txt.gz> 
-
-```{r, engine='bash', eval = F}
-cd human_traits_fst/data
-# download
-wget https://portals.broadinstitute.org/collaboration/giant/images/4/4b/Meta-analysis_Wood_et_al%2BUKBiobank_2018_top_3290_from_COJO_analysis.txt.gz
-# unzip
-gunzip Meta-analysis_Wood_et_al%2BUKBiobank_2018_top_3290_from_COJO_analysis.txt.gz
-# rename
-mv Meta-analysis_Wood_et_al+UKBiobank_2018_top_3290_from_COJO_analysis.txt 20181015_Yengo-et-al_snps_height.txt
-```
-
-Saved here: `data/20181015_Yengo-et-al_snps_height.txt`
-
-___________________
-
-
-### BMI
-
-From **Yengo et al. (2018)** Meta-analysis of genome-wide association studies for height and body mass index in approximately 700000 individuals of European ancestry, *Human Molecular Genetics*: <https://academic.oup.com/hmg/article-abstract/27/20/3641/5067845>. (Same study as above.)
-
-Data download link: <https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz> 
-
-```{r, engine='bash', eval = F}
-# download
-wget -P data \
-  https://portals.broadinstitute.org/collaboration/giant/images/e/e2/Meta-analysis_Locke_et_al%2BUKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
-# unzip
-gunzip data/Meta-analysis_Locke_et_al+UKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt.gz
-# rename
-mv data/Meta-analysis_Locke_et_al+UKBiobank_2018_top_941_from_COJO_analysis_UPDATED.txt \
-  data/20181015_Yengo-et-al_snps_bmi.txt
-```
-
-### Educational attainment
-
-From **Lee et al. (2019)** Gene discovery and polygenic prediction from a genome-wide association study of educational attainment in 1.1 million individuals, *Nature*: <https://www.nature.com/articles/s41588-018-0147-3>.
-
-Data download link: <https://static-content.springer.com/esm/art%3A10.1038%2Fs41588-018-0147-3/MediaObjects/41588_2018_147_MOESM3_ESM.xlsx>
-
-Saved here: `data/20180723_Lee-et-al_supp-tables.xlsx`
-
-Notes:
-- European-ancestry cohort only.
-- *n* = 1,131,881 individuals.
-- SNP panel: ~10M from 1GKph3.
-- Phenotype: number of years of schooling that individuals completed (EduYears).
-- Identified **1271 independent SNPs** at the genome-wide significance level of 5e-8 (or **995** at *P* < 1e-8).
-- COJO: reduced to **765** at *P* < 5e-8: <https://doi.org/10.1038/ng.2213>
-- Corrected by LD score regression: only ~5% of inflation attributable to bias. LD score intercept of 1.11.
-
-### IBD
-
-At first considered **Huang et al. (2017)** Fine-mapping inflammatory bowel disease loci to single-variant resolution, *Nature*: <https://www.nature.com/articles/nature22969#Sec29>.
-
-However, that paper used Bayesian fine-mapping methods to identify the causal variants. We just want raw SNP hits, so instead we take the two papers they used to identify their loci.
-
-#### Jostins et al. (2012)
-
-From **Jostins et al. (2012)** Host–microbe interactions have shaped the genetic architecture of inflammatory bowel disease, *Nature*: <https://www.nature.com/articles/nature11582>
-
-Notes: 
-- European-ancestry cohort
-- *n* = 41,660 individuals
-- SNP panel: 1.23M imputed SNPs from HM3
-- Identified 193 independent SNPs associated with at least one of Crohn's, UC, or IBD, at genome-wide significance of *P* < 5e-8, merged into **163 loci**.
-
-Data download link (Supplementary Table 2):
-<https://static-content.springer.com/esm/art%3A10.1038%2Fnature11582/MediaObjects/41586_2012_BFnature11582_MOESM90_ESM.zip>
-
-Saved here: `data/20121031_Jostins-et-al_supp-table-2.xlsx`
-
-#### Liu et al. (2015)
-
-From **Liu et al. (2015)** Association analyses identify 38 susceptibility loci for inflammatory bowel disease and highlight shared genetic risk across populations, *Nature Genetics*:
-<https://www.nature.com/articles/ng.3359>
-
-Notes:
-- *n* = 86,640 European-ancestry + 9,846 individuals of East Asian, Indian or Iranian ancestry
-- Identified **38 additional loci**
-- Observed genetic heterogeneity between divergent populations at several established risk loci driven by differences in allele frequency (*NOD2*) or effect size (*TNFSF15* and *ATG16L1*) or a combination of these factors (*IL23R* and *IRGM*)
-
-Data download link (Supplementary Table 2):
-<https://static-content.springer.com/esm/art%3A10.1038%2Fng.3359/MediaObjects/41588_2015_BFng3359_MOESM22_ESM.xlsx>
-
-Saved here: `data/20150720_Liu-et-al_snps_ibd_supp-table-2.xlsx`
-
-___________________________
-
-### Skin pigmentation
-
-[**NOTE**: All other traits have SNP-hits based on only European-ancestry populations. Here, the SNP hits come from various populations. Would we expect an even greater difference in Fst for this trait if we only used SNP-hits from European-cohort GWAS?]{colour = "red"}
-
-______________
-
-
-* **Lona-Durazo et al. (2019)** Meta-analysis of GWA studies provides new insights on the genetic architecture of skin pigmentation in recently admixed populations, *BMC Genetics*: <https://doi.org/10.1186/s12863-019-0765-5>
-
-Notes
-- *n* = 762 admixed from Cuba, and meta-analysis of 2104 admixed from Cape Verde, Puerto Rico, and African-Americans from San Francisco. 
-- Phenotype: M-index
-- Identified **7 SNPs** in 3 regions surpassing genome-wide significance, embedded in Table 2 so copied manually.
-
-Saved here: `data/20190717_Lona-Durazo-et-al_table-2.xlsx`
-
-______________
-
-
-* **Jonnalagadda et al. (2019)** A Genome-Wide Association Study of Skin and Iris Pigmentation among Individuals of South Asian Ancestry, *Genome Biology and Evolution*: <https://academic.oup.com/gbe/article/11/4/1066/5416147>. 
-
-Notes:
-- *n* = 828 South-Asian-ancestry (348 living in Canada, 480 living in West Maharastra).
-- SNP panel (on the two cohorts respectively): Multi-Ethnic Global Array (MEGA) and Precision Medicine Research Array (PMRA).
-- Identified **9** SNPs associated with iris colour from Table 1, and reviewed **14** SNPs previously associated with skin pigmentation in Stokowski et al (2007), Liu et al (2015), and Crawford et al (2017) (none of those reaching genome-wide significance). Embedded in paper, so copied manually.
-- Carried out a meta-analysis and found a very strong signal from rs1426654 in *SLC24A5* (Table S5), so conditioned on that (Table S6). Haven't isolated the top SNPs, so will have to do that manually.
-
-Saved here: `data/20190321_Jonnalagadda-et-al.xlsx`
-
-
-______________
-
-
-* **Adhikari et al. (2019)** A GWAS in Latin Americans highlights the convergent evolution of lighter skin pigmentation in Eurasia, *Nature*: <https://doi.org/10.1038/s41467-018-08147-0>. 
-
-Notes:
-- *n* = 6357 Latin Americans (from CANDELA cohort in five countries: Brazil, Colombia, Chile, Mexico and Peru)
-- SNP panel: ~8.9M genotypes and imputed SNPs.
-- Identified **18** lead SNPs in 12 genomic regions (Table 1). Embedded into paper, so copied manually.
-
-Saved here: `data/20190121_Adhikari-et-al_snps.xlsx`
-
-______________
-
-
-* **Martin et al. (2017)** An Unexpectedly Complex Architecture for Skin Pigmentation in Africans, *Cell*: <https://www.cell.com/cell/fulltext/S0092-8674%2817%2931324-7>. 
-
-Notes:
-- *n* = 479 African-ancestry (277 Khomani and 202 Nama).
-- Phenotype: Melanin in upper inner arms (measured by narrow-band reflectometry).
-- Identified 42 SNPs, but only **2 SNPs** at *P* < 5e-8 (both in *SLC24A5*) (Table 6A).
-
-Took Table S6 in Supplemental Information here (contains tables S6A and S6B): <https://www.cell.com/cms/10.1016/j.cell.2017.11.015/attachment/eccead83-1a96-4444-9032-f968ee481d15/mmc2.xlsx>.
-
-Saved here: `data/20171130_Martin-et-al_table-S6.xlsx`
-
-______________
-
-
-* **Crawford et al. (2017)** Loci associated with skin pigmentation identified in African populations, *Science*: <https://doi.org/10.1126/science.aan8433>.
-
-Notes:
-- *n* = 1,570 African-ancestry
-- SNP panel: Illumina Infinium Omni5 Genotyping array (~4.2M SNPs)
-- Identified four regions with multiple significant associations (*P* < 5e-8), then imputed local genotypes with 1KGph3 and ranked potential causal variants within each locus using CAVIAR, a fine-mapping method that accounts for linkage disequilibrium (LD) and effect sizes.
-- Table 1: **59** hits. Embedded into paper, so copied manually.
-
-Saved here: `data/20171117_Crawford-et-al_table-1.xlsx`
-
-_____________
-
-* **Hernandez-Pacheco et al. (2017)** Identification of a novel locus associated with skin colour in African-admixed populations, *Scientific Reports*: <https://doi.org/10.1038/srep44548>. 
-
-Notes:
-- *n* = 285 Hispanic/Latinxs from Puerto Rico plus 373 African Americans.
-- SNP panel: 14M imputed SNPs
-- Identified 14 SNPs in three regions associated with skin colour through meta analysis combining both cohorts (Table 2); **9** SNPs at *P* < 5e-8. Embedded into paper, so copied manually.
-
-Saved here: `data/20170316_Hernandez-Pacheco-et-al.xlsx`.
-
-______________
-
-
-* **Liu et al. (2015)** Genetics of skin color variation in Europeans: genome-wide association studies with functional follow-up, *Human Genetics*: <https://link.springer.com/article/10.1007%2Fs00439-015-1559-0>. 
-
-Notes:
-- *n* = 17,262 European-ancestry from the International Visible Trait Genetics (VisiGen) Consortium, including 5857 from the Rotterdam Study in the Netherlands (RS),3459 from the Brisbane Twin Nevus Study (BTNS), and 2668 from the TwinsUK study, then further replicated in 5278 from the National Child Development Study NCDS.
-- Phenotypes: quantitative skin color saturation (S), perceived skin darkness (PSD), the Fitzpatrick scale (FPS) of skin sensitivity to sun, and self-reported skin color darkness.
-- Identified 5 gneomic regions at *P* < 5e-08, and all 5 were replicated in NCDS.
-- Top **9 SNPs** showed independent and significant effects on saturation and PSD. Set out in Table 1, which was embedded in paper, so copied manually.
-
-Saved here: `data/20150512_Liu-et-al_table-1.xlsx`
-
-______________
-
-
-* **Belaza et al. (2013)** Genetic architecture of skin and eye color in an African-European admixed population, *PLoS Genetics*: <https://doi.org/10.1371/journal.pgen.1003372>
-
-Notes
-- *n* = 699 West-Africa/European admixed from Cape Verde.
-- Phenotypes: Melanin index for skin colour (reflectance spectroscopy on upper inner arm), and "T index" for eye colour, where RGB reflectance values projct onto an empirical curve beginning with light blue and ending with very dark brown eyes.
-- SNP panel: 903,837 autosomal SNPs.
-- Identified **6 SNPs** (4 skin colour, 2 eye colour) at *P* < 5.7e-08. Set out in Table 1 and S2 (same table). Copied S2 manually.
-
-Saved here: `data/20130321_Belaza-et-al_table-S2.xlsx`
-
-______________
-
-
-* **Candille et al. (2012)** Genome-wide association studies of quantitatively measured skin, hair, and eye pigmentation in four European populations, *PLoS One*: <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0048294>. 
-
-Notes
-- *n* = 176 women of European-ancestry from Ireland, Poland, Italy, and Portugal, replicated in 294 European men and women from the same countries. 
-- Phenotype: Melanin index from skin (inner upper arm), and hair (near the crown), and iris colour score from digital photographs.
-- Identified **8 SNPs** set out in Table 2 at *P* < 1e05. Embedded in paper so copied 'Combined' stats manually.
-
-Saved here: `data/20121031_Candille-et-al_table-2.xlsx`
-
-______________
-
-* 20100614_Gerstenblith-et-al: **Gerstenblith et al. (2010)** Genome-wide association studies of pigmentation and skin cancer: a review and meta-analysis, *Pigment Cell Melanoma Research*: <https://onlinelibrary.wiley.com/doi/full/10.1111/j.1755-148X.2010.00730.x>.
-
-Notes
-- Review and meta-analysis of GWAS.
-- Took Supporting Information Tables:
-  - S1: Light vs dark hair colour (excluding red hair)
-  - S2: Red vs non-red hair
-  - S3: Blue vs non-blue eye colour
-  - S4: Skin colour
-- Copied manually from .doc file.
-  
-Saved here: `data/20100614_Gerstenblith-et-al_supp-tables-S1-S4.xlsx`
-
-______________
-
-### Alternative method: take from GWAS Catalog
+### Pull data for each trait
 
 All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210119_gwas-catalog.xlsx`
 
@@ -426,9 +185,10 @@ All documents downloaded via 'Download Catalog data' link, then collated and sav
 * hair shape measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007824>
   - **20 SNPs** from **2 studies**
 
-#### Read into data frame
+### Read into list
 
 ```{r}
+file_name = "20210119_gwas-catalog.xlsx"
 # Create vector of traits
 traits = c("hei", "bmi", "edu", "int", "ibd", "pig")
 names(traits) = traits
@@ -437,7 +197,7 @@ sheets <- seq(1:11)
 names(sheets) <- c("hei", "bmi", "edu", "int", "ibd", rep("pig", 6))
 
 # get sheets
-sheet_names <- readxl::excel_sheets(here::here("data", "20210119_gwas-catalog.xlsx"))
+sheet_names <- readxl::excel_sheets(here::here("data", file_name))
 
 # Create function to read in data
 read_catalog_data <- function(path, target_sheet){
@@ -469,7 +229,7 @@ dat_lst = lapply(traits, function(trait){
   # set counter 
   counter <<- counter + 1
   # set target file
-  target_file = here::here("data", "20210119_gwas-catalog.xlsx")
+  target_file = here::here("data", file_name)
   # get target sheet
   target_sheet = sheets[names(sheets) == trait]
   length(target_sheet)
@@ -540,8 +300,15 @@ dat_lst = lapply(dat_lst, function(pheno){
 })
 
 # New SNP count
-lapply(dat_lst, function(x) nrow(x$clean))
+lapply(dat_lst, function(x) nrow(x[["clean"]]))
 ```
+
+```{r}
+lapply(dat_lst, function(pheno){
+  knitr::kable(head(pheno[["clean"]]))
+})
+```
+
 
 #### Create list of target SNPs to extract from 1KG
 
@@ -574,83 +341,6 @@ lapply(dat_lst, function(pheno){
 ```
 
 
-#### Create list of target SNPs
-  
-```{r}
-pig_snps <- list()
-# Crawford
-pig_snps[["crawford"]] <- readxl::read_excel(here("data", "20171117_Crawford-et-al_table-1.xlsx")) %>% 
-  dplyr::select(rsid = "RSID", everything()) %>% 
-  dplyr::filter(!is.na(rsid),
-                !rsid == ".")
-
-test = readxl::read_excel(here("data", "20171117_Crawford-et-al_table-1.xlsx")) %>% 
-  dplyr::select(SNP = "RSID", 
-                beta_se = "Beta(SE)",
-                everything()) %>% 
-  dplyr::filter(!is.na(SNP),
-                !SNP == ".") %>% 
-  # Separate ancestral and derived alleles
-  dplyr::mutate(ANC = stringr::str_split(`Ancestral>Derived`, ">", simplify = T)[, 1],
-                DER = stringr::str_split(`Ancestral>Derived`, ">", simplify = T)[, 2]) %>% 
-  dplyr::mutate(DER = dplyr::if_else(grepl("/", ANC),
-                                     str_split(ANC, "/", simplify = T)[, 2],
-                                     DER),
-                ANC = dplyr::if_else(grepl("/", ANC),
-                                     str_split(ANC, "/", simplify = T)[, 1],
-                                     ANC)) %>% 
-  # Get CHR and POS
-  dplyr::mutate(CHR = stringr::str_split(Location, ":", simplify = T)[, 1],
-                POS = stringr::str_split(Location, ":", simplify = T)[, 2]) %>%
-    # Get BETA and SE  
-  dplyr::mutate(BETA = stringr::str_split(beta_se, "\\(", simplify = T)[, 1],
-                SE = stringr::str_split(beta_se, "\\(", simplify = T)[, 2] %>% 
-                  str_replace("\\)", ""))
-  
-
-
-# Adhikari
-pig_snps[["adhikari_tbl_1"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
-                                                   sheet = "Table 1",
-                                                   skip = 1) %>% 
-  dplyr::select(rsid = "rsID", everything()) %>% 
-  dplyr::filter(!is.na(rsid))
-
-pig_snps[["adhikari_supp_6"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
-                                                   sheet = "supp_table_6") %>% 
-  dplyr::select(rsid = "SNP", everything()) %>% 
-  dplyr::filter(!is.na(rsid))  
-
-pig_snps[["adhikari_supp_12"]] <- readxl::read_excel(here("data", "20190121_Adhikari-et-al_snps.xlsx"),
-                                                   sheet = "supp_table_12") %>% 
-  dplyr::select(rsid = "SNP", everything()) %>% 
-  dplyr::filter(!is.na(rsid))
-
-# Hernandez-Pacheco
-pig_snps[["hernandez-pacheco"]] <- readxl::read_excel(here("data", "20170316_Hernandez-Pacheco-et-al.xlsx"))
-
-# Doc with SNPs from multiple studies
-sheet_names <- readxl::excel_sheets(here("data", "20200622_pigmentation_snps.xlsx"))
-compiled_snps <- lapply(sheet_names, function(x){
-  x <- readxl::read_excel(here("data", "20200622_pigmentation_snps.xlsx"),
-                     sheet = x)
-})
-names(compiled_snps) <- sheet_names
-
-# Combine
-pig_snps <- c(pig_snps, compiled_snps)
-```
-
-#### Pull out unique SNPs
-
-```{r, results = 'asis'}
-pig_df <- lapply(pig_snps, function(x) dplyr::select(x, rsid))
-pig_df <- dplyr::bind_rows(pig_df)
-pig_df <- unique(pig_df)
-
-nrow(pig_df)
-```
-
 ### Generate Manhattan plots
 
 Create function for Manhattan plotting
@@ -671,12 +361,47 @@ get_man <- function(df, trait, chr, bp, snp, p){
 Plot
 
 ```{r}
+# Create function to plot
+counter = 0
 lapply(dat_lst, function(pheno_df){
-  trait = unique(pheno_df$PHENO)
+  # set counter
+  counter <<- counter + 1
+  df = pheno_df[["clean"]]
+  trait = unique(df$PHENO)
   # Get title
-  title <- paste(trait, "\n", "SNP count:", nrow(pheno_df))
+  title <- paste(trait, "\n", "SNP count:", nrow(df))
   # Plot
-  get_man(pheno_df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
+  get_man(df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
+})
+```
+
+Save
+
+```{r, eval = F}
+counter = 0
+lapply(dat_lst, function(pheno_df){
+
+  # set counter
+  counter <<- counter + 1
+  df = pheno_df[["clean"]]
+  trait = unique(df$PHENO)
+  # Get title
+  title <- paste(trait, "\n", "SNP count:", nrow(df))
+  # Set file name to save
+  file = file.path(here::here("plots"),
+                   paste("manhattan_",
+                         names(dat_lst)[counter],
+                         ".svg",
+                         sep = ""))
+  # Set up graphics device
+  svg(file,
+      width = 10,
+      height = 6)  
+  
+  # Plot
+  get_man(df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
+  
+  dev.off()
 })
 ```
 
@@ -686,145 +411,6 @@ lapply(dat_lst, function(pheno_df){
 lapply(dat_lst, function(pheno_df){
   length(which(pheno_df[["clean"]]$P < 1e-08 ))
 })
-```
-
-#### HEI
-
-[**NOTE**]{colour="red"}: We're taking only the raw p-values (not the COJO p-values), with *P* < 1e-08
-
-```{r, eval = F, message=F}
-snps_hei <- readr::read_tsv(here("data", "20181015_Yengo-et-al_snps_height.txt"),
-                            col_names = T) %>% 
-  # Filter for p-values < 1e-08
-  dplyr::filter(P < 1e-08)
-
-knitr::kable(head(snps_hei))
-```
-
-Number of unique SNPs: `r rnrow(snps_hei)`
-
-Write list:
-```{r, eval = F}
-readr::write_lines(snps_hei$SNP, here("data", "20210115_snps_hei.list"))
-```
-
-Manhattan plot
-
-```{r}
-get_man(snps_hei, trait = "Height", chr="CHR", bp="POS", snp="SNP", p="P")
-```
-
-#### BMI
-
-[**NOTE**]{colour="red"}: We're taking only the raw p-values (not the COJO p-values), with *P* < 1e-08
-
-```{r, eval = F, message=F}
-snps_bmi <- readr::read_tsv(here("data", "20181015_Yengo-et-al_snps_bmi.txt"),
-                            col_names = T) %>% 
-  # Filter for p-values < 1e-08
-  dplyr::filter(P < 1e-08)
-
-knitr::kable(head(snps_bmi))
-```
-
-Number of unique SNPs: `r rnrow(snps_bmi)`
-
-Write list:
-
-```{r}
-readr::write_lines(snps_bmi$SNP, here("data", "20210115_snps_bmi.list"))
-```
-
-Manhattan plot
-
-```{r}
-get_man(snps_bmi, trait = "BMI", chr="CHR", bp="POS", snp="SNP", p="P")
-```
-
-#### EDU
-
-```{r}
-## extract from excel doc
-snps_edu <- readxl::read_xlsx(here::here("data", "20180723_Lee-et-al_supp-tables.xlsx"),
-                                 sheet = "2. EduYears Lead SNPs", 
-                                 skip = 1, 
-                                 n_max = 1271) %>% 
-  dplyr::filter(`P-value` < 1e-08) %>% 
-  dplyr::rename(P = `P-value`)
-
-knitr::kable(head(snps_edu))
-```
-
-Number of unique SNPs: `r rnrow(snps_edu)`
-
-Write list:
-```{r, eval = F}
-readr::write_lines(snps_edu$SNP, here("data", "20210115_snps_edu.list"))
-```
-
-Manhattan plot
-
-```{r}
-get_man(snps_edu, trait = "Educational attainment", chr="Chr", bp="Position", snp="SNP", p="P")
-```
-
-#### IBD
-
-```{r, eval = F, message=F}
-# extract from Jostins et al.
-snps_ibd_jostin <- readxl::read_xlsx(path = here::here("data", "20121031_Jostins-et-al_supp-table-2.xlsx"),
-                      sheet = "Main Table",
-                      trim_ws = T,
-                      n_max = 167) %>% 
-  tidyr::drop_na() %>% 
-  dplyr::rename(P = `p-value`)
-  
-# extract from Liu et al.
-## This table includes the SNPs from the above study, so just use these so that the p-values are consistent
-## Take p-values from analysis of European cohort (not East Asian, Indian or Iranian)
-### SNPs from above study (n = 163)
-snps_ibd_liu_jostins <- readxl::read_xlsx(path = here::here("data", "20150720_Liu-et-al_snps_ibd_supp-table-2.xlsx"),
-                                          range = "A8:I171",
-                                          trim_ws = T) %>% 
-  dplyr::rename(SNP = `Originally reported SNP`)
-### SNPs from this study (n = 38)                                      
-snps_ibd_liu_liu <- readxl::read_xlsx(path = here::here("data", "20150720_Liu-et-al_snps_ibd_supp-table-2.xlsx"),
-                                      range = "A176:I214",
-                                      trim_ws = T) %>% 
-  tidyr::drop_na()
-
-# Combine into a single DF
-snps_ibd <- rbind(snps_ibd_liu_jostins, snps_ibd_liu_liu) %>% 
-  dplyr::rename(P = `P-value`,
-                position_original_snp = `BP (hg19/GRCh37)...3`,
-                position_top_popn_snp = `BP (hg19/GRCh37)...7`)
-
-knitr::kable(head(snps_ibd))
-```
-
-Write list:
-```{r, eval = F}
-readr::write_lines(snps_ibd$SNP, here("data", "20210115_snps_ibd.list"))
-```
-
-Manhattan plot
-
-**NOTE**: We're plotting the `Top SNP` (not the `Original SNP`) for the European cohort only (not East Asian, Indian or Iranian), and we're not filtering for p-values above any threshold (**only 168/201 SNPs have *P* < 5e-08 in the European population**), but we're keeping all of them in.
-```{r}
-get_man(snps_ibd, trait = "IBD", chr="Chr.", bp="position_top_popn_snp", snp="Top SNP", p="P")
-```
-
-#### PIG
-
-Write list:
-```{r, eval = F}
-readr::write_lines(snps_pig$SNP, here("data", "20210115_snps_edu.list"))
-```
-
-Manhattan plot
-
-```{r}
-get_man(snps_edu, trait = "Educational attainment", chr="Chr", bp="Position", snp="SNP", p="P")
 ```
 
 ## Filter 1KG VCF for target SNPs
@@ -881,7 +467,7 @@ done
 
 ```
 
-## Get allele frequencies with `Plink2`
+## Get allele frequencies of SNP hits with `Plink2`
 
 ### Import 1GK metadata (for sample-population key)
 
@@ -908,7 +494,7 @@ write.table(meta[, 1:2],
             col.names = F)
 ```
 
-### Run `Plink2`
+### Run `Plink2` for SNP hits
 
 ```{r, engine='bash', eval = F}
 
@@ -947,6 +533,97 @@ for trait in $(echo $traits); do
     --out $out_dir/$trait/$trait.all
 done
 
+```
+
+## Set up negative controls
+
+Pull out random SNPs with the same global allele frequencies as the GWAS SNP-hits
+
+### Get allele frequencies per chromosome
+
+With `Plink2`
+```{r, engine='bash', eval=F}
+# set output directory
+in_file=vcfs/1gk_all.vcf.gz
+out_dir=big_data/20210120_alfreqs_all
+
+# Per chromosome
+for chr in $(seq 1 24) ; do
+  # create allele-freq tables
+  bsub \
+    -M 10000 \
+    -o log/20210120_plink_alfreq_$chr.out \
+    -e log/20210120_plink_alfreq_$chr.err \
+    """
+    conda activate fst_env_rhel ;
+    plink2 \
+      --vcf $in_file \
+      --freq \
+      --chr $chr \
+      --max-alleles 2 \
+      --snps-only \
+      --out $out_dir/$chr ";
+done 
+```
+
+## Compare allele frequencies
+
+### Read in data
+
+```{r}
+target_dirs <- list.dirs(here::here("data", "20200622_plink2_alfreqs"), recursive = F)
+
+al_freq_lst <- lapply(target_dirs, function(x){
+  target_files <- list.files(x, pattern = ".afreq", full.names = T)
+  # read in data
+  data_lst <- lapply(target_files, function(target_file){
+    read.table(target_file,
+               header = T,
+               comment.char = "")
+  })
+  # fix names of populations
+  names(data_lst) <- gsub(pattern = "edu.|hei.|bmi.|ibd.|pig.|.afreq",
+                          replacement = "",
+                          x = list.files(x, pattern = ".afreq"))
+  return(data_lst)
+})
+
+# set names
+names(al_freq_lst) <- basename(target_dirs)
+
+# reorder for (1) height, (2) eduyears, (3) ibd, (4) pigmentation
+al_freq_lst <- al_freq_lst[c(2, 1, 3, 4)]
+```
+
+### Turn into single table for each pheno
+
+```{r}
+al_freq_df <- lapply(al_freq_lst, function(pheno){
+  out <- dplyr::bind_rows(pheno, .id = "population") %>% 
+    tidyr::pivot_wider(id_cols = c(X.CHROM, ID, REF, ALT),
+                       names_from = population,
+                       values_from = ALT_FREQS)
+})
+```
+
+### Randomly swap minor allele
+
+```{r}
+set.seed(65)
+rdm_sds <- sample(1:100, 4)
+
+counter <- 0
+al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
+  counter <<- counter + 1
+  # set seed
+  set.seed(rdm_sds[counter])
+  # select SNPs to swap (half of total)
+  tgt_indcs <- sample(nrow(pheno), nrow(pheno) /2)
+  # swap minor alleles
+  pheno[tgt_indcs, 5:ncol(pheno)] <- 1 - pheno[tgt_indcs, 5:ncol(pheno)]
+  # return pheno
+  return(pheno)
+})
 ```
 
 # Analysis
@@ -1158,98 +835,6 @@ final %>%
   readr::write_tsv(here("data", "20210114_pheno_alfreqs.txt.gz"))
 ```
 
-## Set up negative controls
-
-Pull out random SNPs with the same allele frequencies as the GWAS SNP-hits
-
-### Create table of variants with allele frequencies
-
-With `Plink2`
-```{r, engine='bash', eval=F}
-# set output directory
-in_file=vcfs/1gk_all.vcf.gz
-out_dir=big_data/20210114_alfreqs_all/by_chr/
-popn_key=human_traits_fst/data/plink2_sample_popn_key.txt
-  
-# Per chromosome
-for chr in $(seq 1 24) ; do
-  # make directory
-  mkdir -p $out_dir/$chr;
-  # create allele-freq tables
-  bsub \
-    -M 10000 \
-    -o log/20210114_plink_alfreq_$chr.out \
-    -e log/20210114_plink_alfreq_$chr.err \
-    "plink2 \
-      --vcf $in_file \
-      --freq \
-      --chr $chr \
-      --max-alleles 2 \
-      --pheno iid-only $popn_key \
-      --loop-cats PHENO1 \
-      --out $out_dir/$chr/$chr ";
-done 
-```
-
-## Compare allele frequencies
-
-### Read in data
-
-```{r}
-target_dirs <- list.dirs(here::here("data", "20200622_plink2_alfreqs"), recursive = F)
-
-al_freq_lst <- lapply(target_dirs, function(x){
-  target_files <- list.files(x, pattern = ".afreq", full.names = T)
-  # read in data
-  data_lst <- lapply(target_files, function(target_file){
-    read.table(target_file,
-               header = T,
-               comment.char = "")
-  })
-  # fix names of populations
-  names(data_lst) <- gsub(pattern = "edu.|hei.|bmi.|ibd.|pig.|.afreq",
-                          replacement = "",
-                          x = list.files(x, pattern = ".afreq"))
-  return(data_lst)
-})
-
-# set names
-names(al_freq_lst) <- basename(target_dirs)
-
-# reorder for (1) height, (2) eduyears, (3) ibd, (4) pigmentation
-al_freq_lst <- al_freq_lst[c(2, 1, 3, 4)]
-```
-
-### Turn into single table for each pheno
-
-```{r}
-al_freq_df <- lapply(al_freq_lst, function(pheno){
-  out <- dplyr::bind_rows(pheno, .id = "population") %>% 
-    tidyr::pivot_wider(id_cols = c(X.CHROM, ID, REF, ALT),
-                       names_from = population,
-                       values_from = ALT_FREQS)
-})
-```
-
-### Randomly swap minor allele
-
-```{r}
-set.seed(65)
-rdm_sds <- sample(1:100, 4)
-
-counter <- 0
-al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
-  counter <<- counter + 1
-  # set seed
-  set.seed(rdm_sds[counter])
-  # select SNPs to swap (half of total)
-  tgt_indcs <- sample(nrow(pheno), nrow(pheno) /2)
-  # swap minor alleles
-  pheno[tgt_indcs, 5:ncol(pheno)] <- 1 - pheno[tgt_indcs, 5:ncol(pheno)]
-  # return pheno
-  return(pheno)
-})
-```
 
 ### Plot
 
