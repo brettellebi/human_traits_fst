@@ -732,18 +732,23 @@ dat_lst = lapply(dat_lst, function(pheno){
 
 ```
 
+Extract key columns and write to file
+
 ```{r, eval = F}
 # Save list
-neg_cont_list = lapply(dat_lst, function(pheno){
+risk_afs = lapply(dat_lst, function(pheno){
   df = pheno[["consol"]]
-  
+  # extract key columns
   df = df %>% 
-    dplyr::select(TOP_SNP, RISK_ALLELE, RISK_AF, BIN_100)
+    dplyr::select(TOP_SNP, BIN_100)
   
   return(df)
-})
+}) %>% 
+  # bind into DF and drop NAs
+  dplyr::bind_rows() %>% 
+  tidyr::drop_na()
 
-saveRDS(neg_cont_list, here::here("data", "20210121_neg_cont_list.rds"))
+readr::write_tsv(risk_afs, here::here("data", "20210121_risk_afs.txt"))
 ```
 
 ### Bin 1KG SNPs 
@@ -819,6 +824,11 @@ readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
 
 ```{r}
 # On cluster
+
+## Load list of target SNPs
+neg_cont_list = saveRDS(neg_cont_list, here::here("data", "20210121_neg_cont_list.rds"))
+
+## Get flat list of unique risk allele frequency bins
 
 # Get variables
 in_file = "../big_data/20210120_alfreqs_all_binned/all.afreq"
