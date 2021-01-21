@@ -753,9 +753,10 @@ readr::write_tsv(risk_afs, here::here("data", "20210121_risk_afs.txt"))
 
 ### Bin 1KG SNPs 
 
-#### Get allele frequencies from 1KG per chromosome
+#### Get allele frequencies from 1KG
 
-With `Plink2`
+With `Plink2`, per chromosome for speed.
+
 ```{r, engine='bash', eval=F}
 # set output directory
 in_file=vcfs/1gk_all.vcf.gz
@@ -801,14 +802,10 @@ in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
 
 # Read in files, add bins, and write to output
 freq_list = lapply(in_files, function(chr_file){
-  # get chromosome name
-  chr = basename(chr_file) %>% 
-    str_split("\\.", simplify = T) %>% 
-    subset(select = 1)
   # read in file
   df = read.table(chr_file, header = T, comment.char = "")
   # add bins
-  df$bin_20 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
+  df$BIN_100 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
   # write file
   readr::write_tsv(df, file = file.path(out_dir, basename(chr_file)))
 })
@@ -825,19 +822,46 @@ readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
 ```{r}
 # On cluster
 
-## Load list of target SNPs
-neg_cont_list = saveRDS(neg_cont_list, here::here("data", "20210121_neg_cont_list.rds"))
-
-## Get flat list of unique risk allele frequency bins
-
-# Get variables
-in_file = "../big_data/20210120_alfreqs_all_binned/all.afreq"
+# Variables
+target_snp_df = here::here("data", "20210121_risk_afs.txt")
+all_1kg_bins = "../big_data/20210120_alfreqs_all_binned/all.afreq"
+initial_seed = 123
 
 # Load libraries
 library(tidyverse)
 
-# Read in 1KG data
-freq_df = readr::read_tsv(in_file)
+## Read in target SNP DF and split into list by bin
+risk_list = readr::read_tsv(target_snp_df,
+                            col_names = T) %>% 
+  split(., f = .$BIN_100)
+
+## Read in 1KG data
+freq_df = readr::read_tsv(all_1kg_bins)
+
+# For each bin in `risk_list`, pull out a random number of 1KG SNPs with the same bin
+
+## Set seed
+set.seed(initial_seed)
+
+## Get seeds for each bin
+seeds = sample(1:1000, length(risk_list))
+
+## Run over list
+counter <- 0
+test = lapply(risk_list[1:2], function(bin_df){
+  # set counter 
+  counter <<- counter + 1
+  # get target bin
+  target_bin = as.integer(names(risk_list)[counter])
+  # set seed
+  set.seed(seeds[counter])
+  # get number of matches required
+  hits_n = nrow(bin_df)
+  # filter 1kg DF for SNPs with same bin and get random 
+  random_hits = freq_df %>% 
+    dplyr::filter(BIN_100 == target_bin) %>% 
+    dplyr::sample_n()
+})
 ```
 
 
