@@ -252,9 +252,9 @@ dat_lst = lapply(traits, function(trait){
                             target_sheet = target_sheet)
   }
   # Set PHENO column
-  df$PHENO <- trait
+  df$PHENO <- factor(trait, levels = trait_levels)
   # Recode PHENO
-  df$PHENO = dplyr::recode(df$PHENO, !!!recode_vec)  
+  df$PHENO = dplyr::recode(df$PHENO, !!!recode_vec)
   # Create list
   out = list()
   # Return DF as "raw"
@@ -306,37 +306,6 @@ lapply(dat_lst, function(x) nrow(x[["clean"]]))
 ```{r}
 lapply(dat_lst, function(pheno){
   knitr::kable(head(pheno[["clean"]]))
-})
-```
-
-
-#### Create list of target SNPs to extract from 1KG
-
-```{r, eval = F}
-# Just SNPs
-counter <- 0
-lapply(dat_lst, function(pheno){
-  # Set counter
-  counter <<- counter + 1
-  # Set file basename
-  trait = names(dat_lst)[counter]
-  filename = paste("20210119_snps_", trait, ".list", sep = "")
-  # Write SNPs to file
-  readr::write_lines(pheno[["clean"]]$TOP_SNP, here("data", filename))
-})
-
-# SNP and P with header for `Plink`
-counter <- 0
-lapply(dat_lst, function(pheno){
-  # Set counter
-  counter <<- counter + 1
-  # Set file basename
-  trait = names(dat_lst)[counter]
-  filename = paste("20210120_snps_", trait, "_with_P.txt", sep = "")
-  # Write SNPs to file
-  pheno[["clean"]] %>% 
-    dplyr::select(SNP = TOP_SNP, P) %>% 
-    readr::write_tsv(here("data", filename))
 })
 ```
 
@@ -413,6 +382,38 @@ lapply(dat_lst, function(pheno_df){
 })
 ```
 
+#### Create list of target SNPs to extract from 1KG
+
+```{r, eval = F}
+# Just SNPs for extracting from 1KG
+counter <- 0
+lapply(dat_lst, function(pheno){
+  df = pheno[["clean"]]
+  # Set counter
+  counter <<- counter + 1
+  # Set file basename
+  trait = names(dat_lst)[counter]
+  filename = paste("20210119_snps_", trait, ".list", sep = "")
+  # Write SNPs to file
+  readr::write_lines(df$TOP_SNP, here("data", filename))
+})
+
+# SNP and P with header for clumping
+counter <- 0
+lapply(dat_lst, function(pheno){
+  df = pheno[["clean"]]
+  # Set counter
+  counter <<- counter + 1
+  # Set file basename
+  trait = names(dat_lst)[counter]
+  filename = paste("20210120_snps_", trait, "_with_P.txt", sep = "")
+  # Write SNPs to file
+  df %>% 
+    dplyr::select(SNP = TOP_SNP, P) %>% 
+    readr::write_tsv(here("data", filename))
+})
+```
+
 ## Filter 1KG VCF for target SNPs
 
 ```{r, engine='bash', eval = F}
@@ -454,15 +455,27 @@ mkdir -p $out_dir
 
 traits=$(echo hei bmi edu int ibd pig)
 
+# Run with different parameters
+
 for trait in $(echo $traits ); do
-  plink \
-    --vcf vcfs/snphits_$trait.vcf.gz \
-    --clump human_traits_fst/data/20210120_snps_$trait\_with_P.txt \
-    --clump-p1 0.00000001 \
-    --clump-p2 0.00000001 \
-    --clump-r2 0.5 \
-    --clump-kb 250 \
-    --out $out_dir/$trait
+  for r2 in $(echo 0.5 0.7 0.9 ) ; do
+    for kb in $(echo 250 500 1000 ) ; do
+      bsub \
+        -o log/20210120_clump_$trait\_$r2\_$kb.out \
+        -e log/20210120_clump_$trait\_$r2\_$kb.err \
+        """
+        conda activate fst_env_rhel ;
+        plink \
+          --vcf vcfs/snphits_$trait.vcf.gz \
+          --clump human_traits_fst/data/20210120_snps_$trait\_with_P.txt \
+          --clump-p1 0.00000001 \
+          --clump-p2 0.00000001 \
+          --clump-r2 $r2 \
+          --clump-kb $kb \
+          --out $out_dir/$trait\_r2-$r2\_kb-$kb 
+        """  ;
+    done ;
+  done;  
 done
 
 ```
@@ -535,11 +548,207 @@ done
 
 ```
 
+## Compare MAF distributions
+
+### Add clumped SNP files
+
+```{r}
+target_dir = here::here("data", "20210120_clumped")
+
+counter <- 0
+dat_lst = lapply(dat_lst, function(pheno){
+  # set counter 
+  counter <<- counter + 1
+  # get trait name
+  trait = names(dat_lst)[counter]
+  # get file path
+  target_path = file.path(target_dir, paste(trait, ".clumped", sep = ""))
+  # read in data
+  clumped_df = read.table(target_path,header = T)
+  # add to list
+  pheno[["clumped"]]  = clumped_df
+  
+  return(pheno)
+})
+```
+
+### Add allele frequency files
+
+```{r}
+target_dir = here::here("data", "20210120_plink2_alfreqs")
+
+counter <- 0
+dat_lst = lapply(dat_lst, function(pheno){
+  # set counter 
+  counter <<- counter + 1
+  # get trait name
+  trait = names(dat_lst)[counter]
+  # get file path
+  target_path = file.path(target_dir, trait, paste(trait, ".all.afreq", sep = ""))
+  # read in data
+  clean_af = read.table(target_path, header = T, comment.char = "")
+  # add to list
+  pheno[["clean_af"]] = clean_af
+  
+  return(pheno)
+})
+```
+
+### Convert to MAJ/MIN alleles to get MAF
+
+```{r}
+dat_lst = lapply(dat_lst, function(pheno){
+  df = pheno[["clean_af"]]
+  # convert to MAF
+  df = df %>% 
+    dplyr::mutate(MAJ = if_else(ALT_FREQS <= 0.5,
+                                REF,
+                                ALT),
+                  MIN = ifelse(ALT_FREQS <= 0.5,
+                               ALT,
+                               REF),
+                  MAF = ifelse(ALT_FREQS <= 0.5,
+                               ALT_FREQS,
+                               1 - ALT_FREQS))
+  pheno[["clean_af"]] = df
+  
+  return(pheno)
+})
+```
+
+
+### Histograms of the global MAF distributions (i.e. all 26 populations together)
+
+```{r}
+# Extract clean_af DFs
+alfreq_list_glob = lapply(dat_lst, function(pheno) pheno[["clean_af"]])
+
+# Merge into single Df
+alfreq_glob_df = dplyr::bind_rows(alfreq_list_glob, .id = "trait")
+
+# Make `trait` a factor
+alfreq_glob_df$trait = factor(alfreq_glob_df$trait, levels = trait_levels)
+# Recode traits for plotting
+alfreq_glob_df$trait = dplyr::recode(alfreq_glob_df$trait, !!!recode_vec)
+```
+
+Plot
+```{r, fig.height=4, fig.width=6.5}
+alfreq_glob_df %>% 
+  ggplot(aes(MAF, fill = trait)) +
+    geom_histogram(bins = 50) +
+    scale_fill_manual(values = fill_pal_primary) +
+    facet_wrap(~trait, nrow = 2) +
+    guides(fill = F) +
+    theme_bw() +
+    ggtitle("MAF distributions (all 1KG populations combined)")
+```
+
+```{r, eval = F}
+# Save
+ggsave(here("plots", "20210114_global_maf_distributions.svg"),
+       device = "svg",
+       units = "cm",
+       dpi = 400,
+       height = 12,
+       width = 19.5)
+```
+
 ## Set up negative controls
 
 Pull out random SNPs with the same global allele frequencies as the GWAS SNP-hits
 
-### Get allele frequencies per chromosome
+### Bin SNP hits by allele frequency
+
+Bind to clean DF to get AFs of risk allele
+
+```{r}
+dat_lst = lapply(dat_lst, function(pheno){
+  # join DFs
+  df = dplyr::left_join(pheno[["clean"]],
+                        dplyr::select(pheno[["clean_af"]],
+                                      -X.CHROM),
+                        by = c("TOP_SNP" = "ID"))
+  # get AF of risk allele
+  df$RISK_AF = dplyr::if_else(df$RISK_ALLELE == df$ALT,
+                              df$ALT_FREQS,
+                              1 - df$ALT_FREQS)
+  # add to list
+  pheno[["consol"]] = df
+  
+  return(pheno)
+})
+```
+
+Plot RISK_AF against OR_OR_BETA
+
+```{r}
+af_plot = lapply(dat_lst, function(pheno) pheno[["consol"]])
+af_plot  = dplyr::bind_rows(af_plot)
+```
+
+```{r}
+
+af_plot %>% 
+  ggplot() +
+    geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO)) +
+    scale_colour_manual(values = fill_pal_primary) +
+    facet_wrap(~PHENO, nrow = 2) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle("Risk allele frequency vs effect size (OR or beta)")
+
+# Zoom in
+af_plot %>% 
+  ggplot() +
+    geom_point(aes(RISK_AF, OR_OR_BETA,
+                   colour = PHENO,
+                   alpha = 0.1)) +
+    scale_colour_manual(values = fill_pal_primary) +
+    facet_wrap(~PHENO, nrow = 2) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle("Risk allele frequency vs effect size (OR or beta)") +
+    ylim(0,20)
+```
+Looks strange.
+
+Bin by risk allele frequency
+
+```{r}
+# 1% intervals
+breakpoints = seq(0, 1, 0.01)
+
+dat_lst = lapply(dat_lst, function(pheno){
+  # choose DF
+  df = pheno[["consol"]]
+  # add bins
+  df$BIN_100 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
+  # save back into list
+  pheno[["consol"]] = df
+  
+  return(pheno)
+})
+
+```
+
+```{r, eval = F}
+# Save list
+neg_cont_list = lapply(dat_lst, function(pheno){
+  df = pheno[["consol"]]
+  
+  df = df %>% 
+    dplyr::select(TOP_SNP, RISK_ALLELE, RISK_AF, BIN_100)
+  
+  return(df)
+})
+
+saveRDS(neg_cont_list, here::here("data", "20210121_neg_cont_list.rds"))
+```
+
+### Bin 1KG SNPs 
+
+#### Get allele frequencies from 1KG per chromosome
 
 With `Plink2`
 ```{r, engine='bash', eval=F}
@@ -548,7 +757,7 @@ in_file=vcfs/1gk_all.vcf.gz
 out_dir=big_data/20210120_alfreqs_all
 
 # Per chromosome
-for chr in $(seq 1 24) ; do
+for chr in $(seq 1 22) ; do
   # create allele-freq tables
   bsub \
     -M 10000 \
@@ -565,6 +774,62 @@ for chr in $(seq 1 24) ; do
       --out $out_dir/$chr ";
 done 
 ```
+
+#### Bin them and save to single file
+
+```{r, eval = F}
+# On cluster
+
+# Set variables
+in_dir = "../big_data/20210120_alfreqs_all"
+out_dir = "../big_data/20210120_alfreqs_all_binned"
+breakpoints = seq(0, 1, 0.01)
+
+# Load libreary
+library(tidyverse)
+
+# Create output directory
+dir.create(out_dir)
+
+# Get list of input files
+in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
+
+# Read in files, add bins, and write to output
+freq_list = lapply(in_files, function(chr_file){
+  # get chromosome name
+  chr = basename(chr_file) %>% 
+    str_split("\\.", simplify = T) %>% 
+    subset(select = 1)
+  # read in file
+  df = read.table(chr_file, header = T, comment.char = "")
+  # add bins
+  df$bin_20 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
+  # write file
+  readr::write_tsv(df, file = file.path(out_dir, basename(chr_file)))
+})
+
+# Combine into single DF
+freq_df = dplyr::bind_rows(freq_list)
+
+# Write to file
+readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
+```
+
+#### Pull out random SNPs with same AF as trait risk alleles
+
+```{r}
+# On cluster
+
+# Get variables
+in_file = "../big_data/20210120_alfreqs_all_binned/all.afreq"
+
+# Load libraries
+library(tidyverse)
+
+# Read in 1KG data
+freq_df = readr::read_tsv(in_file)
+```
+
 
 ## Compare allele frequencies
 
@@ -628,146 +893,7 @@ al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
 
 # Analysis
 
-## Compare allele frequencies
 
-### Add clumped SNP files
-
-```{r}
-target_dir = here::here("data", "20210120_clumped")
-
-counter <- 0
-dat_lst = lapply(dat_lst, function(pheno){
-  # set counter 
-  counter <<- counter + 1
-  # get trait name
-  trait = names(dat_lst)[counter]
-  # get file path
-  target_path = file.path(target_dir, paste(trait, ".clumped", sep = ""))
-  # read in data
-  clumped_df = read.table(target_path,header = T)
-  # add to list
-  pheno[["clumped"]]  = clumped_df
-  
-  return(pheno)
-})
-```
-
-### Add allele frequency files
-
-```{r}
-target_dir = here::here("data", "20210120_plink2_alfreqs")
-
-target_popns = c("CEU", "CHS", "YRI")
-
-counter <- 0
-test = lapply(dat_lst, function(pheno){
-  # set counter 
-  counter <<- counter + 1
-  # get trait name
-  trait = names(dat_lst)[counter]
-  # get paths to target files
-  target_path = file.path(target_dir, trait)
-  # read in data
-  clumped_df = read.table(target_path, header = T)
-  # add to list
-  pheno[["clumped"]]  = clumped_df
-  
-  return(pheno)
-})
-
-trait = "hei"
-  # get target paht
-  target_path = file.path(target_dir, trait)
-  # read in global AF file
-  global_AF = read.table(file.path(target_path, paste(trait, "all.afreq", sep = ".")),
-                         comment.char = "",
-                         header = T) %>% 
-    dplyr::mutate(POPN = "all")
-  # read in popn files
-  str_match = paste(target_popns, collapse = "|")
-  popn_files = list.files(target_path, pattern = str_match, full.names = T)
-  names(popn_files) = target_popns
-  popn_AF = lapply(popn_files, function(popn_file){
-    df = read.table(popn_file,
-                    comment.char = "",
-                    header = T)
-  }) %>% dplyr::bind_rows(.id = "POPN")
-  # bind `global_AF` and `popn_AF` and spread
-  df = rbind(global_AF, popn_AF) %>% 
-    tidyr::pivot_wider(id_cols = c(X.CHROM, ID, REF, ALT),
-                       names_from = POPN,
-                       values_from = ALT_FREQS)
-  # read in data
-  clumped_df = read.table(target_path, header = T)
-  # add to list
-  pheno[["clumped"]]  = clumped_df
-```
-
-
-### Histograms of the global MAF distributions (i.e. all 26 populations together)
-
-```{r}
-# Get list of files
-target_files = list.files(here::here("data", "20210120_plink2_alfreqs"),
-                          pattern = "all.afreq",
-                          recursive = T,
-                          full.names = T)
-
-# Read in data
-alfreq_list_glob = lapply(target_files, function(file){
-  trait_df = read.table(file,
-                        header = T,
-                        comment.char = "")
-
-})
-
-# Set names
-names(alfreq_list_glob) = gsub(pattern = ".all.afreq",
-                       replacement = "",
-                       basename(target_files))
-
-# Merge into single Df
-alfreq_glob_df = dplyr::bind_rows(alfreq_list_glob, .id = "trait")
-
-# Get major and minor alleles and frequency
-alfreq_glob_df = alfreq_glob_df %>% 
-  dplyr::mutate(MAJ = if_else(ALT_FREQS <= 0.5,
-                              REF,
-                              ALT),
-                MIN = ifelse(ALT_FREQS <= 0.5,
-                             ALT,
-                             REF),
-                MAF = ifelse(ALT_FREQS <= 0.5,
-                             ALT_FREQS,
-                             1 - ALT_FREQS))
-
-# Make `trait` a factor
-alfreq_glob_df$trait = factor(alfreq_glob_df$trait, levels = trait_levels)
-# Recode traits for plotting
-alfreq_glob_df$trait = dplyr::recode(alfreq_glob_df$trait, !!!recode_vec)
-```
-
-Plot
-```{r, fig.height=4, fig.width=6.5}
-alfreq_glob_df %>% 
-  ggplot(aes(MAF, fill = trait)) +
-    geom_histogram(bins = 50) +
-    scale_fill_manual(values = fill_pal_primary) +
-    facet_wrap(~trait, nrow = 2) +
-    guides(fill = F) +
-    theme_bw() +
-    ggtitle("MAF distributions (all 1KG populations combined)")
-```
-
-```{r, eval = F}
-# Save
-ggsave(here("plots", "20210114_global_maf_distributions.svg"),
-       device = "svg",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 19.5)
-```
 
 ### Read in population frequency data
 
