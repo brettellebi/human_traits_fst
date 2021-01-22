@@ -46,43 +46,12 @@ renv::init()
 renv::restore()
 ```
 
-## Load libaries
+## Source libraries, functions and plotting parameters
 
-```{r, message = F, warning= F}
+```{r, warning = F, message = F}
 library(here)
-library(tidyverse)
-library(pegas)
-library(knitr)
-library(plotly)
-library(ggridges)
-library(qqman)
-```
 
-## Set plotting parameters
-
-```{r}
-# Create factor levels for `trait`
-trait_levels = c("hei", "bmi", "edu", "int", "ibd", "pig")
-# Create vector for recoding traits with full names
-recode_vec = c("hei" = "Height",
-               "bmi" = "BMI",
-               "edu" = "Educational attainment",
-               "int" = "Intelligence",
-               "ibd" = "IBD",
-               "pig" = "Pigmentation")
-# Colour palette
-fill_pal_primary = c("Height" = "#FC4E07",
-                     "BMI" = "#FFBF00",
-                     "Educational attainment" = "#0BC166",
-                     "Intelligence" = "#00AFBB",
-                     "IBD" = "#D84797",
-                     "Pigmentation" = "#360568")
-fill_pal_secondary = c("Height" = "#D11F1F",
-                       "BMI" = "#cc7e08",
-                       "Educational attainment" = "#39BFA2",
-                       "Intelligence" = "#02395c",
-                       "IBD" = "#82043B",
-                       "Pigmentation" = "#960592")
+source(here::here("code", "scripts", "source.R"))
 ```
 
 ## Download 1GK data
@@ -134,17 +103,19 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 
 ### Pull data for each trait
 
-All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210119_gwas-catalog.xlsx`
+[**NOTE**]{colour = "red"}: Uncheck `Include child trait data` before downloading.
+
+All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210122_gwas_catalog.xlsx`
 
 #### Height
 
 * height: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004339>
-  - **4960 SNPs** from **54 studies**
+  - **4912 SNPs** from **51 studies**
   
 #### BMI
 
 * bmi: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004340>
-  - **7801 SNPs** from **182 studies**
+  - **7573 SNPs** from **155 studies**
   
 #### Educational attainment
 
@@ -159,15 +130,15 @@ All documents downloaded via 'Download Catalog data' link, then collated and sav
 #### IBD
 
 * inflammatory bowel disease: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003767>
-  - **1886 SNPs** from **110 studies**
+  - **536 SNPs** from **34 studies**
 
 #### Pigmentation
 
 * skin pigmentation: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003784>
-  - **217 SNPs** from **15 studies**
+  - **102 SNPs** from **6 studies**
 
 * skin pigmentation measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007009>
-  - **236 SNPs** from **10 studies**
+  - **233 SNPs** from **9 studies**
 
 * eye color: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003949>
   - **77 SNPs** from **13 studies**
@@ -181,14 +152,11 @@ All documents downloaded via 'Download Catalog data' link, then collated and sav
   
 * hair colour measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007822>
   - **541 SNPs** from **6 studies**
-  
-* hair shape measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007824>
-  - **20 SNPs** from **2 studies**
 
 ### Read into list
 
 ```{r}
-file_name = "20210119_gwas-catalog.xlsx"
+file_in = here::here("data", "20210122_gwas_catalog.xlsx")
 # Create vector of traits
 traits = c("hei", "bmi", "edu", "int", "ibd", "pig")
 names(traits) = traits
@@ -197,7 +165,7 @@ sheets <- seq(1:11)
 names(sheets) <- c("hei", "bmi", "edu", "int", "ibd", rep("pig", 6))
 
 # get sheets
-sheet_names <- readxl::excel_sheets(here::here("data", file_name))
+sheet_names <- readxl::excel_sheets(file_in)
 
 # Create function to read in data
 read_catalog_data <- function(path, target_sheet){
@@ -225,11 +193,11 @@ read_catalog_data <- function(path, target_sheet){
 
 # Read in data
 counter <- 0
-dat_lst = lapply(traits, function(trait){
+data_list = lapply(traits, function(trait){
   # set counter 
   counter <<- counter + 1
   # set target file
-  target_file = here::here("data", file_name)
+  target_file = file_in
   # get target sheet
   target_sheet = sheets[names(sheets) == trait]
   length(target_sheet)
@@ -264,10 +232,10 @@ dat_lst = lapply(traits, function(trait){
 })
 
 # How many SNPs in raw data
-lapply(dat_lst, function(x) nrow(x[["raw"]]))
+lapply(data_list, function(x) nrow(x[["raw"]]))
 
 # Clean data
-dat_lst = lapply(dat_lst, function(pheno){
+data_list = lapply(data_list, function(pheno){
   df_clean = pheno[["raw"]]
   # Remove rows with p-value of 0 (only 32 of them, associated with suntan)
   df_clean = df_clean[df_clean$P != 0, ]
@@ -300,39 +268,31 @@ dat_lst = lapply(dat_lst, function(pheno){
 })
 
 # New SNP count
-lapply(dat_lst, function(x) nrow(x[["clean"]]))
+lapply(data_list, function(x) nrow(x[["clean"]]))
 ```
 
 ```{r}
-lapply(dat_lst, function(pheno){
+lapply(data_list, function(pheno){
   knitr::kable(head(pheno[["clean"]]))
 })
 ```
 
-
-### Generate Manhattan plots
-
-Create function for Manhattan plotting
+Get unique mapped traits
 
 ```{r}
-get_man <- function(df, trait, chr, bp, snp, p){
-  # Set title with number of SNPs
-  title <- paste(trait, "\n", "SNP count:", nrow(df))
-  # Plot
-  manhattan(df, chr=chr, bp=bp, snp=snp, p=p,
-            cex = 0.6,
-            c(fill_pal_primary[names(fill_pal_primary) == trait],
-              fill_pal_secondary[names(fill_pal_secondary) == trait]),
-            main = title)
-}
+lapply(data_list, function(pheno){
+  unique(pheno$clean$MAPPED_TRAIT)
+})
 ```
+
+### Generate Manhattan plots
 
 Plot
 
 ```{r}
 # Create function to plot
 counter = 0
-lapply(dat_lst, function(pheno_df){
+lapply(data_list, function(pheno_df){
   # set counter
   counter <<- counter + 1
   df = pheno_df[["clean"]]
@@ -347,8 +307,10 @@ lapply(dat_lst, function(pheno_df){
 Save
 
 ```{r, eval = F}
+output_dir = here::here("plots", "20210122_manhattan_all_snps")
+
 counter = 0
-lapply(dat_lst, function(pheno_df){
+lapply(data_list, function(pheno_df){
 
   # set counter
   counter <<- counter + 1
@@ -357,9 +319,9 @@ lapply(dat_lst, function(pheno_df){
   # Get title
   title <- paste(trait, "\n", "SNP count:", nrow(df))
   # Set file name to save
-  file = file.path(here::here("plots"),
+  file = file.path(output_dir,
                    paste("manhattan_",
-                         names(dat_lst)[counter],
+                         names(data_list)[counter],
                          ".svg",
                          sep = ""))
   # Set up graphics device
@@ -377,7 +339,7 @@ lapply(dat_lst, function(pheno_df){
 #### How many have *P* < 1e-08?
 
 ```{r}
-lapply(dat_lst, function(pheno_df){
+lapply(data_list, function(pheno_df){
   length(which(pheno_df[["clean"]]$P < 1e-08 ))
 })
 ```
@@ -385,28 +347,34 @@ lapply(dat_lst, function(pheno_df){
 #### Create list of target SNPs to extract from 1KG
 
 ```{r, eval = F}
+date = "20210122"
+dest_dir = here::here("data", paste(date, "_snp_hit_lists", sep = ""))
+
+# Make directory
+dir.create(dest_dir)
+  
 # Just SNPs for extracting from 1KG
 counter <- 0
-lapply(dat_lst, function(pheno){
+lapply(data_list, function(pheno){
   df = pheno[["clean"]]
   # Set counter
   counter <<- counter + 1
   # Set file basename
-  trait = names(dat_lst)[counter]
-  filename = paste("20210119_snps_", trait, ".list", sep = "")
+  trait = names(data_list)[counter]
+  filename = paste(trait, ".list", sep = "")
   # Write SNPs to file
-  readr::write_lines(df$TOP_SNP, here("data", filename))
+  readr::write_lines(df$TOP_SNP, file.path(dest_dir, filename))
 })
 
-# SNP and P with header for clumping
+# SNPs and P-values with header for clumping with Plink
 counter <- 0
-lapply(dat_lst, function(pheno){
+lapply(data_list, function(pheno){
   df = pheno[["clean"]]
   # Set counter
   counter <<- counter + 1
   # Set file basename
-  trait = names(dat_lst)[counter]
-  filename = paste("20210120_snps_", trait, "_with_P.txt", sep = "")
+  trait = names(data_list)[counter]
+  filename = paste(target_snps_pref, trait, "_with_P.txt", sep = "")
   # Write SNPs to file
   df %>% 
     dplyr::select(SNP = TOP_SNP, P) %>% 
@@ -419,6 +387,10 @@ lapply(dat_lst, function(pheno){
 ```{r, engine='bash', eval = F}
 
 traits=$(echo hei bmi edu int ibd pig)
+ref=../refs/hs37d5.fa.gz
+in_vcf=../vcfs/1gk_all.vcf.gz
+snps_pref=data/20210122_snps
+out_pref=..vcfs/snphits
 
 for trait in $(echo $traits ); do
   bsub \
@@ -428,56 +400,12 @@ for trait in $(echo $traits ); do
     """
     conda activate fst_env_rhel ;
     gatk SelectVariants \
-      -R refs/hs37d5.fa.gz \
-      -V vcfs/1gk_all.vcf.gz \
-      --keep-ids human_traits_fst/data/20210119_snps_$trait.list \
-      -O vcfs/snphits_$trait.vcf.gz 
+      -R $ref \
+      -V $in_vcf \
+      --keep-ids $snps_pref\_$trait.list \
+      -O $out_pref\_$trait.vcf.gz 
     """ ;
 done
-```
-
-## Clump with `Plink1.9`
-
-From the `Plink1.7` documentation (<http://zzz.bwh.harvard.edu/plink/clump.shtml>):
-
-> The clumping procedure takes all SNPs that are significant at threshold p1 that have not already been clumped (denoting these as index SNPs) and forms clumps of all other SNPs that are within a certain kb distance from the index SNP (default 250kb) and that are in linkage disequilibrium with the index SNP, based on an r-squared threshold (default 0.50)... This is a greedy algorithm and so each SNP will only appear in a single clump, if at all. 
-
-> ...[t]he TOTAL field lists all SNPs that are clumped with the index SNP, irrespective of the p-value for those SNPs. This number is then split into those clumped SNPs that are not significant (p>0.05) and various other groups defined by significance thresholds. For SNPs that are significant at the p2 threshold, they are listed explicitly. The (1) after each SNP name refers to the results file they came from (in this case, there is only a single result file specified, so all values are 1).
-
-So here, we're taking all SNPs with *P* < 1e-08 as index SNPs, and it will explicitly list all SNPs within the clump that also meets that threshold. 
-
-```{bash}
-
-conda activate fst_env_rhel
-
-out_dir=human_traits_fst/data/20210120_clumped
-mkdir -p $out_dir
-
-traits=$(echo hei bmi edu int ibd pig)
-
-# Run with different parameters
-
-for trait in $(echo $traits ); do
-  for r2 in $(echo 0.5 0.7 0.9 ) ; do
-    for kb in $(echo 250 500 1000 ) ; do
-      bsub \
-        -o log/20210120_clump_$trait\_$r2\_$kb.out \
-        -e log/20210120_clump_$trait\_$r2\_$kb.err \
-        """
-        conda activate fst_env_rhel ;
-        plink \
-          --vcf vcfs/snphits_$trait.vcf.gz \
-          --clump human_traits_fst/data/20210120_snps_$trait\_with_P.txt \
-          --clump-p1 0.00000001 \
-          --clump-p2 0.00000001 \
-          --clump-r2 $r2 \
-          --clump-kb $kb \
-          --out $out_dir/$trait\_r2-$r2\_kb-$kb 
-        """  ;
-    done ;
-  done;  
-done
-
 ```
 
 ## Get allele frequencies of SNP hits with `Plink2`
@@ -490,17 +418,22 @@ Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/2013
 Saved here: `data/20130606_sample_info.xlsx`
 
 ```{r, warning=FALSE, results = 'asis'}
-meta = readxl::read_xlsx(here::here("data", "20130606_sample_info.xlsx"),
-                          sheet = "Sample Info") %>%
+samples_file = here::here("data", "20130606_sample_info.xlsx")
+
+meta = readxl::read_xlsx(samples_file,
+                         sheet = "Sample Info") %>%
   dplyr::select(Sample, Population, Gender)
+
 knitr::kable(head(meta))
 ```
 
 ### Write population file for Plink2
 
 ```{r, eval = F}
+sample_popn_key_file = here::here("data", "plink2_sample_popn_key.txt")
+
 write.table(meta[, 1:2],
-            here::here("data", "plink2_sample_popn_key.txt"),
+            sample_popn_key_file,
             quote = F,
             sep = "\t",
             row.names = F,
@@ -509,16 +442,22 @@ write.table(meta[, 1:2],
 
 ### Run `Plink2` for SNP hits
 
+(Take only biallelic SNPs.)
+
 ```{r, engine='bash', eval = F}
 
 conda activate fst_env_rhel
 
-# Set up directories
-mkdir -p human_traits_fst/data/20210120_plink2_alfreqs
-
-out_dir=human_traits_fst/data/20210120_plink2_alfreqs
+# Set variables
 
 traits=$(echo hei bmi edu int ibd pig)
+in_vcf=../vcfs/1gk_all.vcf.gz
+popn_file=data/plink2_sample_popn_key.txt
+target_snps_pref=data/20210119_snps_
+out_dir=data/20210120_plink2_alfreqs
+
+# Set up directories
+mkdir -p $out_dir
 
 for trait in $(echo $traits); do
   mkdir -p $out_dir/$trait; 
@@ -529,10 +468,12 @@ done
 ## Get AF per population
 for trait in $(echo $traits); do
   plink2 \
-    --vcf vcfs/snphits_$trait.vcf.gz \
+    --vcf $in_vcf \
+    --extract $target_snps_pref\_$trait.list \
     --freq \
     --max-alleles 2 \
-    --pheno iid-only human_traits_fst/data/plink2_sample_popn_key.txt \
+    --snps-only \
+    --pheno iid-only $popn_file \
     --loop-cats PHENO1 \
     --out $out_dir/$trait/$trait ;
 done
@@ -540,9 +481,11 @@ done
 ## Get global AF
 for trait in $(echo $traits); do
   plink2 \
-    --vcf vcfs/snphits_$trait.vcf.gz \
+    --vcf $in_vcf \
+    --extract $target_snps_pref\_$trait.list \
     --freq \
     --max-alleles 2 \
+    --snps-only \
     --out $out_dir/$trait/$trait.all
 done
 
@@ -550,26 +493,16 @@ done
 
 ## Compare MAF distributions
 
-### Add clumped SNP files
+Create function for reading `Plink` `.afreq` files
 
 ```{r}
-target_dir = here::here("data", "20210120_clumped")
-
-counter <- 0
-dat_lst = lapply(dat_lst, function(pheno){
-  # set counter 
-  counter <<- counter + 1
-  # get trait name
-  trait = names(dat_lst)[counter]
-  # get file path
-  target_path = file.path(target_dir, paste(trait, ".clumped", sep = ""))
-  # read in data
-  clumped_df = read.table(target_path,header = T)
-  # add to list
-  pheno[["clumped"]]  = clumped_df
+read_afreq <- function(file){
+  out = read.table(file, header = T, comment.char = "") %>% 
+    dplyr::rename(CHR = X.CHROM,
+                  SNP = ID)
   
-  return(pheno)
-})
+  return(out)
+}
 ```
 
 ### Add allele frequency files
@@ -578,15 +511,15 @@ dat_lst = lapply(dat_lst, function(pheno){
 target_dir = here::here("data", "20210120_plink2_alfreqs")
 
 counter <- 0
-dat_lst = lapply(dat_lst, function(pheno){
+data_list = lapply(data_list, function(pheno){
   # set counter 
   counter <<- counter + 1
   # get trait name
-  trait = names(dat_lst)[counter]
+  trait = names(data_list)[counter]
   # get file path
   target_path = file.path(target_dir, trait, paste(trait, ".all.afreq", sep = ""))
   # read in data
-  clean_af = read.table(target_path, header = T, comment.char = "")
+  clean_af = read_afreq(target_path)
   # add to list
   pheno[["clean_af"]] = clean_af
   
@@ -597,7 +530,7 @@ dat_lst = lapply(dat_lst, function(pheno){
 ### Convert to MAJ/MIN alleles to get MAF
 
 ```{r}
-dat_lst = lapply(dat_lst, function(pheno){
+data_list = lapply(data_list, function(pheno){
   df = pheno[["clean_af"]]
   # convert to MAF
   df = df %>% 
@@ -616,12 +549,11 @@ dat_lst = lapply(dat_lst, function(pheno){
 })
 ```
 
-
 ### Histograms of the global MAF distributions (i.e. all 26 populations together)
 
 ```{r}
 # Extract clean_af DFs
-alfreq_list_glob = lapply(dat_lst, function(pheno) pheno[["clean_af"]])
+alfreq_list_glob = lapply(data_list, function(pheno) pheno[["clean_af"]])
 
 # Merge into single Df
 alfreq_glob_df = dplyr::bind_rows(alfreq_list_glob, .id = "trait")
@@ -637,7 +569,7 @@ Plot
 alfreq_glob_df %>% 
   ggplot(aes(MAF, fill = trait)) +
     geom_histogram(bins = 50) +
-    scale_fill_manual(values = fill_pal_primary) +
+    scale_fill_manual(values = pal_primary) +
     facet_wrap(~trait, nrow = 2) +
     guides(fill = F) +
     theme_bw() +
@@ -663,7 +595,7 @@ Pull out random SNPs with the same global allele frequencies as the GWAS SNP-hit
 Bind to clean DF to get AFs of risk allele
 
 ```{r}
-dat_lst = lapply(dat_lst, function(pheno){
+data_list = lapply(data_list, function(pheno){
   # join DFs
   df = dplyr::left_join(pheno[["clean"]],
                         dplyr::select(pheno[["clean_af"]],
@@ -683,16 +615,15 @@ dat_lst = lapply(dat_lst, function(pheno){
 Plot RISK_AF against OR_OR_BETA
 
 ```{r}
-af_plot = lapply(dat_lst, function(pheno) pheno[["consol"]])
+af_plot = lapply(data_list, function(pheno) pheno[["consol"]])
 af_plot  = dplyr::bind_rows(af_plot)
 ```
 
 ```{r}
-
 af_plot %>% 
   ggplot() +
     geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO)) +
-    scale_colour_manual(values = fill_pal_primary) +
+    scale_colour_manual(values = pal_primary) +
     facet_wrap(~PHENO, nrow = 2) +
     guides(colour = F, alpha = F) +
     theme_bw() +
@@ -704,7 +635,7 @@ af_plot %>%
     geom_point(aes(RISK_AF, OR_OR_BETA,
                    colour = PHENO,
                    alpha = 0.1)) +
-    scale_colour_manual(values = fill_pal_primary) +
+    scale_colour_manual(values = pal_primary) +
     facet_wrap(~PHENO, nrow = 2) +
     guides(colour = F, alpha = F) +
     theme_bw() +
@@ -719,7 +650,7 @@ Bin by risk allele frequency
 # 1% intervals
 breakpoints = seq(0, 1, 0.01)
 
-dat_lst = lapply(dat_lst, function(pheno){
+data_list = lapply(data_list, function(pheno){
   # choose DF
   df = pheno[["consol"]]
   # add bins
@@ -736,11 +667,11 @@ Extract key columns and write to file
 
 ```{r, eval = F}
 # Save list
-risk_afs = lapply(dat_lst, function(pheno){
+risk_afs = lapply(data_list, function(pheno){
   df = pheno[["consol"]]
   # extract key columns
   df = df %>% 
-    dplyr::select(TOP_SNP, BIN_100)
+    dplyr::select(TOP_SNP, PHENO, BIN_100)
   
   return(df)
 }) %>% 
@@ -759,16 +690,17 @@ With `Plink2`, per chromosome for speed.
 
 ```{r, engine='bash', eval=F}
 # set output directory
+date=20210120
 in_file=vcfs/1gk_all.vcf.gz
-out_dir=big_data/20210120_alfreqs_all
+out_dir=big_data/$date\_alfreqs_all
 
 # Per chromosome
 for chr in $(seq 1 22) ; do
   # create allele-freq tables
   bsub \
     -M 10000 \
-    -o log/20210120_plink_alfreq_$chr.out \
-    -e log/20210120_plink_alfreq_$chr.err \
+    -o log/$date\_plink_alfreq_$chr.out \
+    -e log/$date\_plink_alfreq_$chr.err \
     """
     conda activate fst_env_rhel ;
     plink2 \
@@ -786,13 +718,13 @@ done
 ```{r, eval = F}
 # On cluster
 
+library(here)
+source(here::here("code", "scripts", "source.R"))
+
 # Set variables
 in_dir = "../big_data/20210120_alfreqs_all"
 out_dir = "../big_data/20210120_alfreqs_all_binned"
-breakpoints = seq(0, 1, 0.01)
-
-# Load libreary
-library(tidyverse)
+breakpoints = seq(0, 1, 0.01) # 1% bins
 
 # Create output directory
 dir.create(out_dir)
@@ -803,7 +735,7 @@ in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
 # Read in files, add bins, and write to output
 freq_list = lapply(in_files, function(chr_file){
   # read in file
-  df = read.table(chr_file, header = T, comment.char = "")
+  df = read_afreq(chr_file)
   # add bins
   df$BIN_100 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
   # write file
@@ -822,13 +754,15 @@ readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
 ```{r}
 # On cluster
 
+library(here)
+source(here::here("code", "scripts", "source.R"))
+
 # Variables
 target_snp_df = here::here("data", "20210121_risk_afs.txt")
 all_1kg_bins = "../big_data/20210120_alfreqs_all_binned/all.afreq"
 initial_seed = 123
-
-# Load libraries
-library(tidyverse)
+output_file = here::here("data", "20210121_risk_afs_with_random_snps.txt")
+random_snp_list_out = here::here("data", "20210121_random_snps.list")
 
 ## Read in target SNP DF and split into list by bin
 risk_list = readr::read_tsv(target_snp_df,
@@ -838,7 +772,7 @@ risk_list = readr::read_tsv(target_snp_df,
 ## Read in 1KG data
 freq_df = readr::read_tsv(all_1kg_bins)
 
-# For each bin in `risk_list`, pull out a random number of 1KG SNPs with the same bin
+# For each bin in `risk_list`, pull out the same number of random number 1KG SNPs with the same bin
 
 ## Set seed
 set.seed(initial_seed)
@@ -848,7 +782,7 @@ seeds = sample(1:1000, length(risk_list))
 
 ## Run over list
 counter <- 0
-test = lapply(risk_list[1:2], function(bin_df){
+out = lapply(risk_list, function(bin_df){
   # set counter 
   counter <<- counter + 1
   # get target bin
@@ -857,13 +791,160 @@ test = lapply(risk_list[1:2], function(bin_df){
   set.seed(seeds[counter])
   # get number of matches required
   hits_n = nrow(bin_df)
-  # filter 1kg DF for SNPs with same bin and get random 
+  # filter 1kg DF for SNPs with same bin and get random hits
   random_hits = freq_df %>% 
+    dplyr::select(SNP, BIN_100) %>% 
     dplyr::filter(BIN_100 == target_bin) %>% 
-    dplyr::sample_n()
-})
+    dplyr::slice_sample(n = hits_n) %>% 
+    dplyr::rename(RANDOM_SNP = SNP,
+                  RANDOM_BIN_100 = BIN_100)
+  # bind `random_hits` to target SNP df
+  df_out = cbind(bin_df, random_hits)
+  
+  return(df_out)
+}) %>% 
+  # bind into single data frame
+  dplyr::bind_rows()
+
+# Save matches to file
+readr::write_tsv(out, output_file)
+
+# Save just SNPs to file (for Plink)
+random_snps = out$RANDOM_SNP
+
+readr::write_lines(random_snps, random_snp_list_out)
 ```
 
+#### Get per-population allele frequencies of random SNPs 
+
+```{bash}
+
+conda activate fst_env_rhel 
+
+date=20210121
+random_snps_list=data/20210121_random_snps.list
+in_vcf=../vcfs/1gk_all.vcf.gz
+popn_key=data/plink2_sample_popn_key.txt
+out_dir=data/$date\_random_snps_plink/
+mkdir -p $out_dir
+out=$out_dir/random
+
+plink2 \
+  --vcf $in_vcf \
+  --extract $random_snps_list \
+  --freq \
+  --pheno iid-only $popn_key \
+  --loop-cats PHENO1 \
+  --out $out
+```
+
+#### Bind into single DF and save
+
+```{r}
+# On cluster
+## conda activate fst_env_rhel
+
+library(here)
+source(here::here("code", "scripts", "source.R"))
+
+in_file_random = here::here("data", "20210121_risk_afs_with_random_snps.txt")
+in_dir_afreq = here::here("data", "20210121_random_snps_plink")
+
+# Read in data
+
+## Random SNPs
+random_snps = readr::read_tsv(in_file_random)
+
+## Popn afreqs
+target_files = list.files(in_dir_afreq, pattern = ".afreq", full.names = T)
+
+names(target_files) = basename(target_files) %>% 
+  str_split("\\.", simplify = T) %>% 
+  subset(select = 2)
+
+popn_afreqs = lapply(target_files, function(popn){
+  df = read_afreq(popn)
+}) %>% 
+  dplyr::bind_rows(.id = "POPN") %>% 
+  dplyr::select(-OBS_CT) %>% 
+  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = ALT_FREQS)
+```
+
+## Clump to get lead SNPs
+
+Use `Plink1.9` (`Plink2.0` doesn't have a `clump` function.)
+
+From the `Plink1.7` documentation (<http://zzz.bwh.harvard.edu/plink/clump.shtml>), which applies to `Plink1.9`:
+
+> The clumping procedure takes all SNPs that are significant at threshold p1 that have not already been clumped (denoting these as index SNPs) and forms clumps of all other SNPs that are within a certain kb distance from the index SNP (default 250kb) and that are in linkage disequilibrium with the index SNP, based on an r-squared threshold (default 0.50)... This is a greedy algorithm and so each SNP will only appear in a single clump, if at all. 
+
+> ...[t]he TOTAL field lists all SNPs that are clumped with the index SNP, irrespective of the p-value for those SNPs. This number is then split into those clumped SNPs that are not significant (p>0.05) and various other groups defined by significance thresholds. For SNPs that are significant at the p2 threshold, they are listed explicitly. The (1) after each SNP name refers to the results file they came from (in this case, there is only a single result file specified, so all values are 1).
+
+Here, we're taking all SNPs with *P* < 1e-08 as index SNPs, and it will explicitly list all SNPs within the clump that also meet that threshold. 
+
+```{bash}
+
+# Activate environment
+conda activate fst_env_rhel
+
+# Set variables
+date=20210122
+traits=$(echo hei bmi edu int ibd pig)
+in_vcf=../vcfs/1gk_all.vcf.gz
+snp_p_pref=data/20210120_snps
+out_dir=data/$date\_clumped
+
+r2_params=$(echo 0.7 0.8 0.9)
+kb_params=$(echo 500 750 1000 )
+
+# Make directory
+mkdir -p $out_dir
+
+# Run with different parameters
+for trait in $(echo $traits ); do
+  for r2 in $r2_params ; do
+    for kb in $kb_params ; do
+      bsub \
+        -o ../log/$date\_clump_$trait\_$r2\_$kb.out \
+        -e ../log/$date\_clump_$trait\_$r2\_$kb.err \
+        """
+        conda activate fst_env_rhel ;
+        plink \
+          --vcf $in_vcf \
+          --clump $snp_p_pref\_$trait\_with_P.txt \
+          --clump-p1 0.00000001 \
+          --clump-p2 0.00000001 \
+          --clump-r2 $r2 \
+          --clump-kb $kb \
+          --out $out_dir/$trait\_r2-$r2\_kb-$kb 
+        """  ;
+    done ;
+  done;  
+done
+
+```
+
+### Add clumped SNP files
+
+```{r}
+target_dir = here::here("data", "20210120_clumped")
+
+counter <- 0
+data_list = lapply(data_list, function(pheno){
+  # set counter 
+  counter <<- counter + 1
+  # get trait name
+  trait = names(data_list)[counter]
+  # get file path
+  target_path = file.path(target_dir, paste(trait, ".clumped", sep = ""))
+  # read in data
+  clumped_df = read.table(target_path,header = T)
+  # add to list
+  pheno[["clumped"]]  = clumped_df
+  
+  return(pheno)
+})
+```
 
 ## Compare allele frequencies
 
