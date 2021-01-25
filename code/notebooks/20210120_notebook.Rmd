@@ -336,19 +336,11 @@ lapply(data_list, function(pheno_df){
 })
 ```
 
-#### How many have *P* < 1e-08?
-
-```{r}
-lapply(data_list, function(pheno_df){
-  length(which(pheno_df[["clean"]]$P < 1e-08 ))
-})
-```
-
 #### Create list of target SNPs to extract from 1KG
 
-```{r, eval = F}
-date = "20210122"
-dest_dir = here::here("data", paste(date, "_snp_hit_lists", sep = ""))
+```{r, eval = F, warning = F, results = "hide"}
+
+dest_dir = here::here("data", "20210122_snp_hit_lists")
 
 # Make directory
 dir.create(dest_dir)
@@ -374,11 +366,11 @@ lapply(data_list, function(pheno){
   counter <<- counter + 1
   # Set file basename
   trait = names(data_list)[counter]
-  filename = paste(target_snps_pref, trait, "_with_P.txt", sep = "")
+  filename = paste(trait, "_with_P.txt", sep = "")
   # Write SNPs to file
   df %>% 
     dplyr::select(SNP = TOP_SNP, P) %>% 
-    readr::write_tsv(here("data", filename))
+    readr::write_tsv(file.path(dest_dir, filename))
 })
 ```
 
@@ -389,21 +381,23 @@ lapply(data_list, function(pheno){
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
 in_vcf=../vcfs/1gk_all.vcf.gz
-snps_pref=data/20210122_snps
-out_pref=..vcfs/snphits
+snps_dir=data/20210122_snp_hit_lists
+out_dir=../vcfs/snp_hits_filtered
+
+mkdir -p $out_dir
 
 for trait in $(echo $traits ); do
   bsub \
     -M 10000 \
-    -o log/20210120_extract_snps_$trait.out \
-    -e log/20210120_extract_snps_$trait.err \
+    -o ../log/20210122_extract_snps_$trait.out \
+    -e ../log/20210122_extract_snps_$trait.err \
     """
     conda activate fst_env_rhel ;
     gatk SelectVariants \
       -R $ref \
       -V $in_vcf \
-      --keep-ids $snps_pref\_$trait.list \
-      -O $out_pref\_$trait.vcf.gz 
+      --keep-ids $snps_dir/$trait.list \
+      -O $out_dir/$trait.vcf.gz 
     """ ;
 done
 ```
@@ -451,10 +445,9 @@ conda activate fst_env_rhel
 # Set variables
 
 traits=$(echo hei bmi edu int ibd pig)
-in_vcf=../vcfs/1gk_all.vcf.gz
+in_vcf_dir=../vcfs/snp_hits_filtered
 popn_file=data/plink2_sample_popn_key.txt
-target_snps_pref=data/20210119_snps_
-out_dir=data/20210120_plink2_alfreqs
+out_dir=data/20210122_snp_hits_alfreqs
 
 # Set up directories
 mkdir -p $out_dir
@@ -468,8 +461,7 @@ done
 ## Get AF per population
 for trait in $(echo $traits); do
   plink2 \
-    --vcf $in_vcf \
-    --extract $target_snps_pref\_$trait.list \
+    --vcf $in_vcf_dir/$trait.vcf.gz \
     --freq \
     --max-alleles 2 \
     --snps-only \
@@ -481,8 +473,7 @@ done
 ## Get global AF
 for trait in $(echo $traits); do
   plink2 \
-    --vcf $in_vcf \
-    --extract $target_snps_pref\_$trait.list \
+    --vcf $in_vcf_dir/$trait.vcf.gz \
     --freq \
     --max-alleles 2 \
     --snps-only \
@@ -493,22 +484,10 @@ done
 
 ## Compare MAF distributions
 
-Create function for reading `Plink` `.afreq` files
-
-```{r}
-read_afreq <- function(file){
-  out = read.table(file, header = T, comment.char = "") %>% 
-    dplyr::rename(CHR = X.CHROM,
-                  SNP = ID)
-  
-  return(out)
-}
-```
-
 ### Add allele frequency files
 
 ```{r}
-target_dir = here::here("data", "20210120_plink2_alfreqs")
+target_dir = here::here("data", "20210122_snp_hits_alfreqs")
 
 counter <- 0
 data_list = lapply(data_list, function(pheno){
@@ -527,6 +506,7 @@ data_list = lapply(data_list, function(pheno){
 })
 ```
 
+<!--
 ### Convert to MAJ/MIN alleles to get MAF
 
 ```{r}
@@ -585,6 +565,8 @@ ggsave(here("plots", "20210114_global_maf_distributions.svg"),
        height = 12,
        width = 19.5)
 ```
+
+-->
 
 ## Set up negative controls
 
