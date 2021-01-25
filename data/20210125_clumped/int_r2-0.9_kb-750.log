@@ -1,0 +1,35 @@
+PLINK v1.90b6.18 64-bit (16 Jun 2020)
+Options in effect:
+  --clump data/20210122_snp_hit_lists/int_with_P.txt
+  --clump-kb 750
+  --clump-p1 0.00000001
+  --clump-p2 0.00000001
+  --clump-r2 0.9
+  --out data/20210125_clumped/int_r2-0.9_kb-750
+  --vcf ../vcfs/snp_hits_filtered/int.vcf.gz
+
+Hostname: hx-noah-02-04.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
+Start time: Mon Jan 25 10:35:17 2021
+
+Random number seed: 1611570917
+257545 MB RAM detected; reserving 128772 MB for main workspace.
+--vcf: data/20210125_clumped/int_r2-0.9_kb-750-temporary.bed +
+data/20210125_clumped/int_r2-0.9_kb-750-temporary.bim +
+data/20210125_clumped/int_r2-0.9_kb-750-temporary.fam written.
+2514 variants loaded from .bim file.
+2504 people (0 males, 0 females, 2504 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to data/20210125_clumped/int_r2-0.9_kb-750.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2504 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.999854.
+2514 variants and 2504 people pass filters and QC.
+Note: No phenotypes present.
+Warning: 'rs2451729' is missing from the main dataset, and is a top variant.
+Warning: 'rs10514303' is missing from the main dataset, and is a top variant.
+Warning: 'rs13184816' is missing from the main dataset, and is a top variant.
+--clump: 1148 clumps formed from 1289 top variants.
+Results written to data/20210125_clumped/int_r2-0.9_kb-750.clumped .
+
+End time: Mon Jan 25 10:35:30 2021

@@ -1,0 +1,64 @@
+PLINK v1.90b6.18 64-bit (16 Jun 2020)
+Options in effect:
+  --clump data/20210122_snp_hit_lists/hei_with_P.txt
+  --clump-kb 750
+  --clump-p1 0.00000001
+  --clump-p2 0.00000001
+  --clump-r2 0.8
+  --out data/20210125_clumped/hei_r2-0.8_kb-750
+  --vcf ../vcfs/snp_hits_filtered/hei.vcf.gz
+
+Hostname: hx-noah-23-01.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
+Start time: Mon Jan 25 10:35:14 2021
+
+Random number seed: 1611570914
+128260 MB RAM detected; reserving 64130 MB for main workspace.
+Allocated 36072 MB successfully, after larger attempt(s) failed.
+--vcf: data/20210125_clumped/hei_r2-0.8_kb-750-temporary.bed +
+data/20210125_clumped/hei_r2-0.8_kb-750-temporary.bim +
+data/20210125_clumped/hei_r2-0.8_kb-750-temporary.fam written.
+4263 variants loaded from .bim file.
+2504 people (0 males, 0 females, 2504 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to data/20210125_clumped/hei_r2-0.8_kb-750.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2504 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.99995.
+4263 variants and 2504 people pass filters and QC.
+Note: No phenotypes present.
+Warning: 'rs35424856' is missing from the main dataset, and is a top variant.
+Warning: 'rs201981153' is missing from the main dataset, and is a top variant.
+Warning: 'rs75975831' is missing from the main dataset, and is a top variant.
+Warning: 'rs398121251' is missing from the main dataset, and is a top variant.
+Warning: 'rs35374532' is missing from the main dataset, and is a top variant.
+Warning: 'rs2413143' is missing from the main dataset, and is a top variant.
+Warning: 'rs71555635' is missing from the main dataset, and is a top variant.
+Warning: 'rs28721484' is missing from the main dataset, and is a top variant.
+Warning: 'rs531184891' is missing from the main dataset, and is a top variant.
+Warning: 'rs12680655' is missing from the main dataset, and is a top variant.
+Warning: 'rs2941551' is missing from the main dataset, and is a top variant.
+Warning: 'rs398090202' is missing from the main dataset, and is a top variant.
+Warning: 'rs4883201' is missing from the main dataset, and is a top variant.
+Warning: 'rs397807524' is missing from the main dataset, and is a top variant.
+Warning: 'rs11323064' is missing from the main dataset, and is a top variant.
+Warning: 'rs376362701' is missing from the main dataset, and is a top variant.
+Warning: 'rs56937648' is missing from the main dataset, and is a top variant.
+Warning: 'rs199957421' is missing from the main dataset, and is a top variant.
+Warning: 'rs397831028' is missing from the main dataset, and is a top variant.
+Warning: 'rs200235318' is missing from the main dataset, and is a top variant.
+Warning: 'rs200267038' is missing from the main dataset, and is a top variant.
+Warning: 'rs565478760' is missing from the main dataset, and is a top variant.
+Warning: 'rs55768579' is missing from the main dataset, and is a top variant.
+Warning: 'rs34322845' is missing from the main dataset, and is a top variant.
+Warning: 'rs11380688' is missing from the main dataset, and is a top variant.
+Warning: 'rs397954080' is missing from the main dataset, and is a top variant.
+Warning: 'rs397812377' is missing from the main dataset, and is a top variant.
+Warning: 'rs2307857' is missing from the main dataset, and is a top variant.
+Warning: 'rs750884927' is missing from the main dataset, and is a top variant.
+Warning: 'rs771273709' is missing from the main dataset, and is a top variant.
+Warning: 'rs770307181' is missing from the main dataset, and is a top variant.
+--clump: 3002 clumps formed from 3271 top variants.
+Results written to data/20210125_clumped/hei_r2-0.8_kb-750.clumped .
+
+End time: Mon Jan 25 10:35:36 2021
