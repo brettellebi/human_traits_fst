@@ -285,12 +285,30 @@ lapply(data_list, function(pheno){
 })
 ```
 
+Are any of the OR_OR_BETAs negative? 
+
+```{r}
+lapply(data_list, function(pheno) {
+  any(pheno$clean$OR_OR_BETA < 0,na.rm = T)
+})
+```
+
+This must means that the `RISK_ALLELE` always affects the trait positively. 
+
+But for what proportion of SNPs is the `RISK_ALLELE` not stated?
+
+```{r}
+lapply(data_list, function(pheno) {
+  length(which(pheno$clean$RISK_ALLELE == "?")) / nrow(pheno$clean)
+})
+```
+
+
 ### Generate Manhattan plots
 
 Plot
 
 ```{r}
-# Create function to plot
 counter = 0
 lapply(data_list, function(pheno_df){
   # set counter
@@ -382,7 +400,7 @@ traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
 in_vcf=../vcfs/1gk_all.vcf.gz
 snps_dir=data/20210122_snp_hit_lists
-out_dir=../vcfs/snp_hits_filtered
+out_dir=data/20210125_snp_hits_filtered
 
 mkdir -p $out_dir
 
@@ -445,7 +463,7 @@ conda activate fst_env_rhel
 # Set variables
 
 traits=$(echo hei bmi edu int ibd pig)
-in_vcf_dir=../vcfs/snp_hits_filtered
+in_vcf_dir=data/20210125_snp_hits_filtered
 popn_file=data/plink2_sample_popn_key.txt
 out_dir=data/20210122_snp_hits_alfreqs
 
@@ -458,6 +476,16 @@ done
 
 # Run Plink2
 
+## Get global AF
+for trait in $(echo $traits); do
+  plink2 \
+    --vcf $in_vcf_dir/$trait.vcf.gz \
+    --freq \
+    --max-alleles 2 \
+    --snps-only \
+    --out $out_dir/$trait/$trait.all
+done
+
 ## Get AF per population
 for trait in $(echo $traits); do
   plink2 \
@@ -469,26 +497,14 @@ for trait in $(echo $traits); do
     --loop-cats PHENO1 \
     --out $out_dir/$trait/$trait ;
 done
-
-## Get global AF
-for trait in $(echo $traits); do
-  plink2 \
-    --vcf $in_vcf_dir/$trait.vcf.gz \
-    --freq \
-    --max-alleles 2 \
-    --snps-only \
-    --out $out_dir/$trait/$trait.all
-done
-
 ```
-
-## Compare MAF distributions
 
 ### Add allele frequency files
 
 ```{r}
 target_dir = here::here("data", "20210122_snp_hits_alfreqs")
 
+# Global
 counter <- 0
 data_list = lapply(data_list, function(pheno){
   # set counter 
@@ -499,8 +515,39 @@ data_list = lapply(data_list, function(pheno){
   target_path = file.path(target_dir, trait, paste(trait, ".all.afreq", sep = ""))
   # read in data
   clean_af = read_afreq(target_path)
+  # add POPN column
+  clean_af$POPN = "all"
   # add to list
   pheno[["clean_af"]] = clean_af
+  
+  return(pheno)
+})
+
+# Per population
+counter <- 0
+data_list = lapply(data_list, function(pheno){
+  # set counter
+  counter <<- counter + 1
+  # get trait name
+  trait = names(data_list)[counter]
+  # get file path
+  target_files = list.files(file.path(target_dir, trait),
+                            pattern = ".*[^all]\\.afreq",
+                            full.names = T)
+  # get popn names
+  names(target_files) = basename(target_files) %>% 
+    str_split("\\.", simplify = T) %>% 
+    subset(select = 2)
+  # read files and bind into single DF
+  popn_afreqs = lapply(target_files, function(popn){
+    df = read_afreq(popn)
+  }) %>% 
+    dplyr::bind_rows(.id = "POPN")# %>% 
+#    dplyr::select(-OBS_CT) %>% 
+#    tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = ALT_FREQS)
+  # combine with `clean_af`
+  pheno[["clean_af"]] = dplyr::bind_rows(pheno[["clean_af"]],
+                                         popn_afreqs)
   
   return(pheno)
 })
@@ -576,17 +623,23 @@ Pull out random SNPs with the same global allele frequencies as the GWAS SNP-hit
 
 Bind to clean DF to get AFs of risk allele
 
+[**NOTE**]{colour = "red"}: If `RISK_ALLELE` is unknown, set the allele frequency to `ALT_FREQS`
+
 ```{r}
 data_list = lapply(data_list, function(pheno){
   # join DFs
   df = dplyr::left_join(pheno[["clean"]],
                         dplyr::select(pheno[["clean_af"]],
-                                      -X.CHROM),
-                        by = c("TOP_SNP" = "ID"))
+                                      -CHR),
+                        by = c("TOP_SNP" = "SNP"))
   # get AF of risk allele
-  df$RISK_AF = dplyr::if_else(df$RISK_ALLELE == df$ALT,
+  df$RISK_AF = dplyr::if_else(df$RISK_ALLELE == "?",
                               df$ALT_FREQS,
-                              1 - df$ALT_FREQS)
+                              dplyr::if_else(df$RISK_ALLELE == df$ALT,
+                                             df$ALT_FREQS,
+                                             1 - df$ALT_FREQS))
+  # add `HIT_CONTROL` column
+  df$HIT_CONTROL = "hit"
   # add to list
   pheno[["consol"]] = df
   
@@ -598,7 +651,8 @@ Plot RISK_AF against OR_OR_BETA
 
 ```{r}
 af_plot = lapply(data_list, function(pheno) pheno[["consol"]])
-af_plot  = dplyr::bind_rows(af_plot)
+af_plot  = dplyr::bind_rows(af_plot) %>% 
+  dplyr::filter(POPN == "all")
 ```
 
 ```{r}
@@ -648,6 +702,8 @@ data_list = lapply(data_list, function(pheno){
 Extract key columns and write to file
 
 ```{r, eval = F}
+out_file = here::here("data", "20210125_risk_afs.txt")
+
 # Save list
 risk_afs = lapply(data_list, function(pheno){
   df = pheno[["consol"]]
@@ -661,7 +717,7 @@ risk_afs = lapply(data_list, function(pheno){
   dplyr::bind_rows() %>% 
   tidyr::drop_na()
 
-readr::write_tsv(risk_afs, here::here("data", "20210121_risk_afs.txt"))
+readr::write_tsv(risk_afs, out_file)
 ```
 
 ### Bin 1KG SNPs 
@@ -672,17 +728,18 @@ With `Plink2`, per chromosome for speed.
 
 ```{r, engine='bash', eval=F}
 # set output directory
-date=20210120
-in_file=vcfs/1gk_all.vcf.gz
-out_dir=big_data/$date\_alfreqs_all
+in_file=../vcfs/1gk_all.vcf.gz
+out_dir=../big_data/20210125_alfreqs_all
+
+mkdir -p $out_dir
 
 # Per chromosome
 for chr in $(seq 1 22) ; do
   # create allele-freq tables
   bsub \
     -M 10000 \
-    -o log/$date\_plink_alfreq_$chr.out \
-    -e log/$date\_plink_alfreq_$chr.err \
+    -o ../log/20210125_plink_alfreq_$chr.out \
+    -e ../log/20210125_plink_alfreq_$chr.err \
     """
     conda activate fst_env_rhel ;
     plink2 \
@@ -704,8 +761,8 @@ library(here)
 source(here::here("code", "scripts", "source.R"))
 
 # Set variables
-in_dir = "../big_data/20210120_alfreqs_all"
-out_dir = "../big_data/20210120_alfreqs_all_binned"
+in_dir = "../big_data/20210125_alfreqs_all"
+out_dir = "../big_data/20210125_alfreqs_all_binned"
 breakpoints = seq(0, 1, 0.01) # 1% bins
 
 # Create output directory
@@ -733,18 +790,18 @@ readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
 
 #### Pull out random SNPs with same AF as trait risk alleles
 
-```{r}
+```{r, eval = F}
 # On cluster
 
 library(here)
 source(here::here("code", "scripts", "source.R"))
 
 # Variables
-target_snp_df = here::here("data", "20210121_risk_afs.txt")
-all_1kg_bins = "../big_data/20210120_alfreqs_all_binned/all.afreq"
+target_snp_df = here::here("data", "20210125_risk_afs.txt")
+all_1kg_bins = "../big_data/20210125_alfreqs_all_binned/all.afreq"
 initial_seed = 123
-output_file = here::here("data", "20210121_risk_afs_with_random_snps.txt")
-random_snp_list_out = here::here("data", "20210121_random_snps.list")
+output_file = here::here("data", "20210125_risk_afs_with_random_snps.txt")
+random_snp_list_out = here::here("data", "20210125_random_snps.list")
 
 ## Read in target SNP DF and split into list by bin
 risk_list = readr::read_tsv(target_snp_df,
@@ -775,7 +832,7 @@ out = lapply(risk_list, function(bin_df){
   hits_n = nrow(bin_df)
   # filter 1kg DF for SNPs with same bin and get random hits
   random_hits = freq_df %>% 
-    dplyr::select(SNP, BIN_100) %>% 
+    #dplyr::select(SNP, ALT_FREQS, OBS_CT, BIN_100) %>% 
     dplyr::filter(BIN_100 == target_bin) %>% 
     dplyr::slice_sample(n = hits_n) %>% 
     dplyr::rename(RANDOM_SNP = SNP,
@@ -791,7 +848,7 @@ out = lapply(risk_list, function(bin_df){
 # Save matches to file
 readr::write_tsv(out, output_file)
 
-# Save just SNPs to file (for Plink)
+# Save just SNPs to file (for Plink to get per-population AFs)
 random_snps = out$RANDOM_SNP
 
 readr::write_lines(random_snps, random_snp_list_out)
@@ -799,15 +856,14 @@ readr::write_lines(random_snps, random_snp_list_out)
 
 #### Get per-population allele frequencies of random SNPs 
 
-```{bash}
+```{bash, eval = F}
 
 conda activate fst_env_rhel 
 
-date=20210121
-random_snps_list=data/20210121_random_snps.list
+random_snps_list=data/20210125_random_snps.list
 in_vcf=../vcfs/1gk_all.vcf.gz
 popn_key=data/plink2_sample_popn_key.txt
-out_dir=data/$date\_random_snps_plink/
+out_dir=data/20210125_random_snps_alfreqs/
 mkdir -p $out_dir
 out=$out_dir/random
 
@@ -820,22 +876,18 @@ plink2 \
   --out $out
 ```
 
-#### Bind into single DF and save
+#### Bind into single DF
 
-```{r}
-# On cluster
-## conda activate fst_env_rhel
-
-library(here)
-source(here::here("code", "scripts", "source.R"))
-
-in_file_random = here::here("data", "20210121_risk_afs_with_random_snps.txt")
-in_dir_afreq = here::here("data", "20210121_random_snps_plink")
+```{r, message = F}
+in_file_random = here::here("data", "20210125_risk_afs_with_random_snps.txt")
+in_dir_afreq = here::here("data", "20210125_random_snps_alfreqs")
 
 # Read in data
 
 ## Random SNPs
 random_snps = readr::read_tsv(in_file_random)
+# add `POPN` column
+random_snps$POPN = "all"
 
 ## Popn afreqs
 target_files = list.files(in_dir_afreq, pattern = ".afreq", full.names = T)
@@ -847,9 +899,43 @@ names(target_files) = basename(target_files) %>%
 popn_afreqs = lapply(target_files, function(popn){
   df = read_afreq(popn)
 }) %>% 
-  dplyr::bind_rows(.id = "POPN") %>% 
-  dplyr::select(-OBS_CT) %>% 
-  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = ALT_FREQS)
+  dplyr::bind_rows(.id = "POPN") # %>% 
+#  dplyr::select(-OBS_CT) %>% 
+#  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = c(ALT_FREQS, OBS_CT))
+
+# Bind `popn_afreqs` to `random_snps`
+random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, OBS_CT)),
+                                 popn_afreqs,
+                                 by = c("RANDOM_SNP" = "SNP", "REF", "ALT", "CHR"))
+# Bind `all` AFs
+random_afreqs = rbind(random_afreqs, random_snps)
+
+## Recode PHENO
+random_afreqs$PHENO = dplyr::recode(random_afreqs$PHENO, !!!rev_recode_vec)
+
+## Add `HIT_CONTROL` column
+random_afreqs$HIT_CONTROL = "control"
+```
+
+#### Add to `data_list`
+
+```{r}
+counter <- 0
+data_list = lapply(data_list, function(pheno){
+  # set counter
+  counter <<- counter + 1
+  # set target pheno
+  target_pheno = names(data_list)[counter]
+  # add random afreqs
+  random_af = random_afreqs %>% 
+    dplyr::filter(PHENO == target_pheno)
+  # recode PHENO
+  random_af$PHENO = dplyr::recode(random_af$PHENO, !!!recode_vec)
+  # add to list
+  pheno[["random_af"]] = random_af
+  
+  return(pheno)
+})
 ```
 
 ## Clump to get lead SNPs
@@ -864,19 +950,18 @@ From the `Plink1.7` documentation (<http://zzz.bwh.harvard.edu/plink/clump.shtml
 
 Here, we're taking all SNPs with *P* < 1e-08 as index SNPs, and it will explicitly list all SNPs within the clump that also meet that threshold. 
 
-```{bash}
+```{bash, eval = F}
 
 # Activate environment
 conda activate fst_env_rhel
 
 # Set variables
-date=20210122
 traits=$(echo hei bmi edu int ibd pig)
-in_vcf=../vcfs/1gk_all.vcf.gz
-snp_p_pref=data/20210120_snps
-out_dir=data/$date\_clumped
+in_vcf_dir=data/20210125_snp_hits_filtered
+snp_p_dir=data/20210122_snp_hit_lists
+out_dir=data/20210125_clumped
 
-r2_params=$(echo 0.7 0.8 0.9)
+r2_params=$(echo 0.1 0.2 0.3)
 kb_params=$(echo 500 750 1000 )
 
 # Make directory
@@ -884,21 +969,24 @@ mkdir -p $out_dir
 
 # Run with different parameters
 for trait in $(echo $traits ); do
+
+  mkdir -p $out_dir/$trait ;
+  
   for r2 in $r2_params ; do
     for kb in $kb_params ; do
       bsub \
-        -o ../log/$date\_clump_$trait\_$r2\_$kb.out \
-        -e ../log/$date\_clump_$trait\_$r2\_$kb.err \
+        -o ../log/20210125_clump_$trait\_$r2\_$kb.out \
+        -e ../log/20210125_clump_$trait\_$r2\_$kb.err \
         """
         conda activate fst_env_rhel ;
         plink \
-          --vcf $in_vcf \
-          --clump $snp_p_pref\_$trait\_with_P.txt \
+          --vcf $in_vcf_dir/$trait.vcf.gz \
+          --clump $snp_p_dir/$trait\_with_P.txt \
           --clump-p1 0.00000001 \
           --clump-p2 0.00000001 \
           --clump-r2 $r2 \
           --clump-kb $kb \
-          --out $out_dir/$trait\_r2-$r2\_kb-$kb 
+          --out $out_dir/$trait/r2-$r2\_kb-$kb 
         """  ;
     done ;
   done;  
@@ -906,28 +994,53 @@ done
 
 ```
 
-### Add clumped SNP files
+### Add clumped SNP files to `data_list`
 
 ```{r}
-target_dir = here::here("data", "20210120_clumped")
+target_dir = here::here("data", "20210125_clumped")
+
 
 counter <- 0
 data_list = lapply(data_list, function(pheno){
-  # set counter 
+  # set counter
   counter <<- counter + 1
   # get trait name
   trait = names(data_list)[counter]
   # get file path
-  target_path = file.path(target_dir, paste(trait, ".clumped", sep = ""))
-  # read in data
-  clumped_df = read.table(target_path,header = T)
-  # add to list
-  pheno[["clumped"]]  = clumped_df
+  target_files = list.files(file.path(target_dir, trait),
+                            pattern = ".clumped",
+                            full.names = T)
+  names(target_files) = gsub(".clumped", "", basename(target_files))
+  # read files as `clumped`
+  counter_clump <- 0
+  clumped = lapply(target_files, function(params){
+    # set counter
+    counter_clump <<- counter_clump + 1
+    # split params string
+    param_str = names(target_files)[counter_clump] %>% 
+      stringr::str_split("_", simplify = T) %>%
+      stringr::str_split("-", simplify = T)
+    # get params
+    r2 = as.numeric(param_str[1,2])
+    kb = as.integer(param_str[2,2])
+    # read files
+    df = read.table(params, header = T)
+    # add params to DF
+    df$r2 = r2
+    df$kb = kb
+    
+    return(df)
+  })
+  # add `clumped` list to `data_list`
+  pheno[["clumped"]] = clumped
+  # bind `clumped` into single DF and add to `data_list`
+  pheno[["clumped_all"]] = dplyr::bind_rows(clumped)
   
   return(pheno)
 })
 ```
 
+<!--
 ## Compare allele frequencies
 
 ### Read in data
@@ -988,9 +1101,173 @@ al_freq_df_shuff <- lapply(al_freq_df, function(pheno){
 })
 ```
 
+-->
+
+## Consolidate key data into single DF for analysis
+
+```{r}
+clump_param = "r2-0.1_kb-1000"
+
+data_list = lapply(data_list, function(pheno){
+  # Filter `consol` by the index SNPs in target `clump`
+  target_clump = pheno[["clumped"]][[clump_param]]
+  
+  final = pheno[["consol"]] %>% 
+    dplyr::rename(SNP = TOP_SNP) %>% 
+    dplyr::filter(SNP %in% target_clump$SNP) 
+  
+  # Add allele frequencies of SNP hits (global and per-population)
+  
+  # Add controls
+  controls = pheno[["random_af"]] %>%
+    # filter for SNPs in target_clump
+    dplyr::filter(TOP_SNP %in% target_clump$SNP) %>% 
+    dplyr::select(-c(TOP_SNP, BIN_100, RANDOM_BIN_100), 
+                  SNP = RANDOM_SNP) %>% 
+    dplyr::mutate(RISK_AF = ALT_FREQS)
+  
+  final = dplyr::bind_rows(final, controls)  
+  pheno[["final"]] = final
+  
+  return(pheno)
+})
+
+# Create final df
+final_df = lapply(data_list, function(pheno){
+  out = pheno[["final"]]
+  
+  return(out)
+}) %>% 
+  dplyr::bind_rows()
+
+# Set factors
+final_df$PHENO <- factor(final_df$PHENO, levels = trait_levels_verb)
+final_df$HIT_CONTROL = factor(final_df$HIT_CONTROL, levels = hit_control_levels)
+
+# Create DF for plotting
+final_plt = final_df %>% 
+  dplyr::select(SNP, PHENO, POPN, RISK_AF, HIT_CONTROL) %>% 
+  tidyr::pivot_wider(names_from = POPN, values_from = RISK_AF) 
+
+```
+
 # Analysis
 
+## Manhattan plots
 
+```{r, message = F}
+counter = 0
+lapply(unique(final_df$PHENO), function(pheno){
+  # set counter
+  counter <<- counter + 1
+  df = final_df %>% 
+    dplyr::filter(PHENO == pheno & HIT_CONTROL == "hit")
+  # Get number of SNPs
+  snp_n = length(unique(df$SNP))
+  # Get title
+  title <- paste(pheno, "\n", "SNP count:", snp_n)
+  # Plot
+  get_man(df, trait = pheno, title = title, chr = "CHR", bp = "POS", snp = "SNP", p = "P")
+})
+```
+
+## Allele frequency distributions of risk alleles
+
+```{r}
+final_df %>%
+  dplyr::filter(HIT_CONTROL == "hit") %>% 
+  ggplot(aes(RISK_AF, fill = PHENO)) +
+    geom_histogram(bins = 100) +
+    scale_fill_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO), nrow = 2) +
+    guides(fill = F) +
+    xlab("Risk allele frequency") +
+    ylab("Count") +
+    theme_bw() +
+    ggtitle("Frequency distribution of \"risk\" alleles (all 1KG populations combined)")
+```
+## Allele frequency vs effect size
+
+```{r}
+final_df %>% 
+  dplyr::filter(HIT_CONTROL == "hit" & POPN == "all") %>% 
+  ggplot() +
+    geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO),
+               alpha = 0.2) +
+    scale_colour_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO), nrow = 2) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle("Risk allele frequency vs effect size (OR or beta)")
+
+# Zoom in
+final_df %>% 
+  dplyr::filter(HIT_CONTROL == "hit" & POPN == "all") %>% 
+  ggplot() +
+    geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO),
+               alpha = 0.2) +
+    scale_colour_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO), nrow = 2) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle("Risk allele frequency vs effect size (OR or beta)") +
+    ylim(0,20)
+```
+
+## Allele frequencies comparing CEU, CHS, and YRI
+
+### 2D
+
+#### CEU vs CHS
+
+```{r}
+target_popns = c("CEU", "CHS")
+
+final_plt %>% 
+  ggplot() +
+    geom_point(aes_string(target_popns[1], target_popns[2], colour = "PHENO"),
+               alpha = 0.3, size = 2) + 
+    scale_colour_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO, HIT_CONTROL)) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle(paste(target_popns[1], "vs", target_popns[2], sep = " "))
+```
+
+#### CEU vs YRI
+
+```{r}
+target_popns = c("CEU", "YRI")
+
+final_plt %>% 
+  ggplot() +
+    geom_point(aes_string(target_popns[1], target_popns[2], colour = "PHENO"),
+               alpha = 0.3, size = 2) + 
+    scale_colour_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO, HIT_CONTROL)) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle(paste(target_popns[1], "vs", target_popns[2], sep = " "))
+```
+
+#### CHS vs YRI
+
+```{r}
+target_popns = c("CHS", "YRI")
+
+final_plt %>% 
+  ggplot() +
+    geom_point(aes_string(target_popns[1], target_popns[2], colour = "PHENO"),
+               alpha = 0.3, size = 2) + 
+    scale_colour_manual(values = pal_primary) +
+    facet_wrap(vars(PHENO, HIT_CONTROL)) +
+    guides(colour = F, alpha = F) +
+    theme_bw() +
+    ggtitle(paste(target_popns[1], "vs", target_popns[2], sep = " "))
+```
+
+
+<!--
 
 ### Read in population frequency data
 
@@ -1104,6 +1381,8 @@ lapply(al_freq_df_shuff, function(pheno){
 })
 ```
 
+-->
+
 #### 3D
 
 ```{r, message=F, warning=F}
@@ -1157,24 +1436,31 @@ plts$pig
 
 ```{r}
 # list target VCFs
-target_vcfs <- list.files(here::here("data"),
-                          pattern = glob2rx("snphits_*.gz"), 
+target_vcfs <- list.files(here::here("data", "20210125_snp_hits_filtered"),
+                          pattern = glob2rx("*.gz"), 
                           full.names = T)
-
-# filter for the four we want
-target_vcfs <- target_vcfs[grep("eduyrs|height|ibd_full|pig", target_vcfs)]
-
 
 ```
 
 ### With all populations
 
-#### Get Fst stats
+#### Get Fst stats for top SNPs
 
 ```{r, message=F, warning=F, results=F}
 # Create raw list of variants
-vcf_list_raw <- lapply(target_vcfs, function(vcf_file){
-  vcf_out <- pegas::read.vcf(vcf_file)
+target_dir = here::here("data", "20210125_snp_hits_filtered")
+
+vcf_list_raw <- lapply(trait_levels, function(trait){
+  target_file = file.path(target_dir, paste(trait, ".vcf.gz", sep = ""))
+  # read in file
+  vcf_out <- pegas::read.vcf(target_file)
+  # filter for clumped SNPs
+  ## get target SNP IDs
+  target_snps = data_list[[trait]]$clumped[[clump_param]]$SNP
+  ## filter VCF
+  vcf_out = vcf_out[, colnames(vcf_out) %in% target_snps]
+  
+  return(vcf_out)
 })
 
 # Create vector of populations
@@ -1192,42 +1478,50 @@ fst_out_lst <- lapply(fst_out_lst, function(pheno){
   pheno$snp <- rownames(pheno)
   return(pheno)
 })
-names(fst_out_lst) <- titles
 
 # bind into single DF
 fst_out_df <- dplyr::bind_rows(fst_out_lst, .id = "phenotype")
 
-# Set order of phenotypes
-fst_out_df$phenotype <- factor(fst_out_df$phenotype, levels = c("Height", "Educational Attainment", "IBD", "Skin/hair pigmentation"))
+# Recode phenotype
+fst_out_df$phenotype <- factor(fst_out_df$phenotype, levels = trait_levels)
+fst_out_df$phenotype = dplyr::recode(fst_out_df$phenotype, !!!recode_vec)
 
-head(fst_out_df)
+knitr::kable(head(fst_out_df))
+```
+#### *Fst* histograms
+
+```{r}
+fst_out_df %>% 
+  ggplot() +
+    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
+    facet_wrap(~phenotype) +
+    theme_bw() +
+    scale_fill_manual(values = pal_primary)
 ```
 
-#### Plot density
+
+#### *Fst* density
 
 ##### 2D
 
 ```{r, warning= F}
 ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
-  geom_density(alpha = 0.7) +
+  geom_density() +
   labs(fill = "Phenotype") +
+  facet_wrap(~phenotype) +
   ylab("Density") +
   theme_bw() +
-  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
+  scale_fill_manual(values = pal_primary)
 ```
 
 ##### 3D
 
 ```{r, warning = F, message = F}
-# factorise 
-fst_out_df$phenotype_3d <- factor(fst_out_df$phenotype,
-                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
-
 ggplot() +
   geom_density_ridges2(data = fst_out_df,
-                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
+                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                        scale = 2) +
-  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
+  scale_fill_manual(values = pal_primary) +
   ylab(label = NULL) +
   theme_bw() +
   guides(fill = guide_legend(reverse=T, 
@@ -1238,9 +1532,25 @@ ggplot() +
 #### Run Kolmogorov-Smirnov Tests
 
 ```{r, warning = F}
+test = lapply(trait_levels_verb, function(trait_a){
+  out = lapply(trait_levels_verb, function(trait_b){
+    ks.test(fst_out_df$Fst[fst_out_df$phenotype == trait_a],
+            fst_out_df$Fst[fst_out_df$phenotype == trait_b])
+  })
+  return(out)
+})
+
+# Height v BMI
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "BMI"])
+
 # Height v EA
 ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
-        fst_out_df$Fst[fst_out_df$phenotype == "Educational Attainment"])
+        fst_out_df$Fst[fst_out_df$phenotype == "Educational attainment"])
+
+# Height v Intelligence
+ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
+        fst_out_df$Fst[fst_out_df$phenotype == "Intelligence"])
 
 # Height v IBD
 ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
@@ -1248,7 +1558,7 @@ ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
 
 # Height v Pigmentation
 ks.test(fst_out_df$Fst[fst_out_df$phenotype == "Height"],
-        fst_out_df$Fst[fst_out_df$phenotype == "Skin/hair pigmentation"])
+        fst_out_df$Fst[fst_out_df$phenotype == "Pigmentation"])
 ```
 
 

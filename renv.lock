@@ -392,6 +392,13 @@
       "Repository": "CRAN",
       "Hash": "b00000a87b8a4a1e8a8fc413c1dbad03"
     },
+    "calibrate": {
+      "Package": "calibrate",
+      "Version": "1.7.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0240da64c75ec26bdf741e6891f333b0"
+    },
     "callr": {
       "Package": "callr",
       "Version": "3.5.1",
@@ -1110,6 +1117,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "97def703420c8ab10d8f0e6c72101e02"
+    },
+    "qqman": {
+      "Package": "qqman",
+      "Version": "0.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f17b8717a402bf666481d4886f23a61b"
     },
     "rappdirs": {
       "Package": "rappdirs",

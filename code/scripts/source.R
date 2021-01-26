@@ -9,6 +9,7 @@ library(knitr)
 library(plotly)
 library(ggridges)
 library(qqman)
+library(GGally)
 
 # Functions
 
@@ -22,9 +23,7 @@ read_afreq <- function(file){
 }
 
 ## Get manhattan plot
-get_man <- function(df, trait, chr, bp, snp, p){
-  # Set title with number of SNPs
-  title <- paste(trait, "\n", "SNP count:", nrow(df))
+get_man <- function(df, trait, title, chr, bp, snp, p){
   # Plot
   manhattan(df, chr=chr, bp=bp, snp=snp, p=p,
             cex = 0.6,
@@ -37,14 +36,23 @@ get_man <- function(df, trait, chr, bp, snp, p){
 
 # Create factor levels for `trait`
 trait_levels = c("hei", "bmi", "edu", "int", "ibd", "pig")
+trait_levels_verb =  c("Height",
+                       "BMI",
+                       "Educational attainment",
+                       "Intelligence",
+                       "IBD",
+                       "Pigmentation")
 
-# Create vector for recoding traits with full names
+# Create vectors for recoding traits with full names and vice versa
 recode_vec = c("hei" = "Height",
                "bmi" = "BMI",
                "edu" = "Educational attainment",
                "int" = "Intelligence",
                "ibd" = "IBD",
                "pig" = "Pigmentation")
+
+rev_recode_vec = names(recode_vec)
+names(rev_recode_vec) = recode_vec
 
 # Colour palettes
 pal_primary = c("Height" = "#FC4E07",
@@ -53,9 +61,9 @@ pal_primary = c("Height" = "#FC4E07",
                 "Intelligence" = "#00AFBB",
                 "IBD" = "#D84797",
                 "Pigmentation" = "#360568")
-pal_secondary = c("Height" = "#D11F1F",
-                  "BMI" = "#cc7e08",
-                  "Educational attainment" = "#39BFA2",
-                  "Intelligence" = "#02395c",
-                  "IBD" = "#82043B",
-                  "Pigmentation" = "#960592")
+pal_secondary = c("Height" = "#B63502",
+                  "BMI" = "#B88A00",
+                  "Educational attainment" = "#07743D",
+                  "Intelligence" = "#00727A",
+                  "IBD" = "#972062",
+                  "Pigmentation" = "#1F033A")
