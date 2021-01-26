@@ -34,14 +34,20 @@ get_man <- function(df, trait, title, chr, bp, snp, p){
 
 # Plotting parameters
 
-# Create factor levels for `trait`
+# Factor levels for `trait` (or `PHENO`)
 trait_levels = c("hei", "bmi", "edu", "int", "ibd", "pig")
+names(trait_levels) = trait_levels
+
 trait_levels_verb =  c("Height",
                        "BMI",
                        "Educational attainment",
                        "Intelligence",
                        "IBD",
                        "Pigmentation")
+names(trait_levels_verb) = trait_levels_verb
+
+# Factor levels for `HIT_CONTROL`
+hit_control_levels = c("hit", "control")
 
 # Create vectors for recoding traits with full names and vice versa
 recode_vec = c("hei" = "Height",

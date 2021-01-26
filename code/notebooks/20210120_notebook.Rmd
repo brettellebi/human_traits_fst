@@ -177,12 +177,13 @@ read_catalog_data <- function(path, target_sheet){
                   P = `P-VALUE`, 
                   OR_OR_BETA = `OR or BETA`, 
                   MAPPED_TRAIT,
-                  STUDY = `STUDY ACCESSION`) %>% 
+                  STUDY = `STUDY ACCESSION`,
+                  SAMPLE = `INITIAL SAMPLE SIZE`) %>% 
     # Split SNP and risk allele into separate columns
     dplyr::mutate(TOP_SNP = stringr::str_split(SNP_AL, "-", simplify = T)[, 1],
                   RISK_ALLELE = stringr::str_split(SNP_AL, "-", simplify = T)[, 2]) %>% 
     # Reorder and select
-    dplyr::select(CHR, POS, TOP_SNP, RISK_ALLELE, P, OR_OR_BETA, MAPPED_TRAIT, STUDY)
+    dplyr::select(CHR, POS, TOP_SNP, RISK_ALLELE, P, OR_OR_BETA, MAPPED_TRAIT, STUDY, SAMPLE)
   # Change variables to specific types
   out$CHR <- as.integer(out$CHR)
   out$POS <- as.numeric(out$POS)
@@ -288,9 +289,9 @@ lapply(data_list, function(pheno){
 Are any of the OR_OR_BETAs negative? 
 
 ```{r}
-lapply(data_list, function(pheno) {
+any(unlist(lapply(data_list, function(pheno) {
   any(pheno$clean$OR_OR_BETA < 0,na.rm = T)
-})
+})))
 ```
 
 This must means that the `RISK_ALLELE` always affects the trait positively. 
@@ -303,6 +304,7 @@ lapply(data_list, function(pheno) {
 })
 ```
 
+[**NOTE**]{colour = "red"}: In cases where `RISK_ALLELE` isn't provided, treat the `ALT` allele as `RISK_ALLELE`.
 
 ### Generate Manhattan plots
 
@@ -318,7 +320,7 @@ lapply(data_list, function(pheno_df){
   # Get title
   title <- paste(trait, "\n", "SNP count:", nrow(df))
   # Plot
-  get_man(df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
+  get_man(df, trait = trait, title = title, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
 })
 ```
 
@@ -647,6 +649,7 @@ data_list = lapply(data_list, function(pheno){
 })
 ```
 
+<!--
 Plot RISK_AF against OR_OR_BETA
 
 ```{r}
@@ -680,6 +683,8 @@ af_plot %>%
 ```
 Looks strange.
 
+-->
+
 Bin by risk allele frequency
 
 ```{r}
@@ -701,23 +706,31 @@ data_list = lapply(data_list, function(pheno){
 
 Extract key columns and write to file
 
-```{r, eval = F}
-out_file = here::here("data", "20210125_risk_afs.txt")
+```{r, eval = F, message=F}
+out_dir = here::here("data", "20210126_snp_risk_hits_binned")
+
+dir.create(out_dir)
 
 # Save list
+counter <- 0
 risk_afs = lapply(data_list, function(pheno){
+  # set counter 
+  counter <<- counter + 1
+  # get target DF
   df = pheno[["consol"]]
-  # extract key columns
+  # filter
   df = df %>% 
-    dplyr::select(TOP_SNP, PHENO, BIN_100)
-  
-  return(df)
-}) %>% 
-  # bind into DF and drop NAs
-  dplyr::bind_rows() %>% 
-  tidyr::drop_na()
+    dplyr::filter(POPN == "all") %>% # take only global AFs 
+    dplyr::select(TOP_SNP, BIN_100) %>% 
+    tidyr::drop_na() # drop NAs
+  # set output path
+  trait = names(data_list)[counter]
+  path_out = file.path(out_dir, paste(trait, ".txt", sep = ""))
+  # write to file
+  readr::write_tsv(df, path_out)
+})
 
-readr::write_tsv(risk_afs, out_file)
+
 ```
 
 ### Bin 1KG SNPs 
@@ -798,10 +811,14 @@ source(here::here("code", "scripts", "source.R"))
 
 # Variables
 target_snp_df = here::here("data", "20210125_risk_afs.txt")
+input_risk_snp_dir = here::here("data", "20210126_snp_risk_hits_binned")
 all_1kg_bins = "../big_data/20210125_alfreqs_all_binned/all.afreq"
 initial_seed = 123
 output_file = here::here("data", "20210125_risk_afs_with_random_snps.txt")
-random_snp_list_out = here::here("data", "20210125_random_snps.list")
+#random_snp_list_out = here::here("data", "20210125_random_snps.list")
+output_dir = here::here("data", "20210126_random_snps")
+
+dir.create(output_dir)
 
 ## Read in target SNP DF and split into list by bin
 risk_list = readr::read_tsv(target_snp_df,
@@ -840,18 +857,58 @@ out = lapply(risk_list, function(bin_df){
   # bind `random_hits` to target SNP df
   df_out = cbind(bin_df, random_hits)
   
+  # Save to file
+  readr::write_tsv(df_out, output_file)
   return(df_out)
 }) %>% 
   # bind into single data frame
   dplyr::bind_rows()
 
-# Save matches to file
-readr::write_tsv(out, output_file)
+
+# Save list of SNPs for each pheno
+new_list = out
+new_list$PHENO = dplyr::recode(out$PHENO, !!!rev_recode_vec)
+new_list$PHENO = factor(new_list$PHENO, levels = trait_levels)
+new_list = split(new_list, f = new_list$PHENO)
+counter <- 0
+lapply(new_list, function(pheno){
+  counter <<- counter + 1
+  trait = names(new_list)[counter]
+  out_path = file.path(output_dir, paste(trait, ".list", sep = ""))
+  readr::write_lines(pheno$RANDOM_SNP, out_path)
+})
 
 # Save just SNPs to file (for Plink to get per-population AFs)
 random_snps = out$RANDOM_SNP
 
 readr::write_lines(random_snps, random_snp_list_out)
+```
+
+#### Filter VCFs for random SNPs
+
+```{bash, eval = F}
+traits=$(echo hei bmi edu int ibd pig)
+ref=../refs/hs37d5.fa.gz
+in_vcf=../vcfs/1gk_all.vcf.gz
+snps_dir=data/20210126_random_snps
+out_dir=data/20210126_snp_rndm_filtered
+
+mkdir -p $out_dir
+
+for trait in $(echo $traits ); do
+  bsub \
+    -M 10000 \
+    -o ../log/20210126_extract_snps_$trait.out \
+    -e ../log/20210126_extract_snps_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    gatk SelectVariants \
+      -R $ref \
+      -V $in_vcf \
+      --keep-ids $snps_dir/$trait.list \
+      -O $out_dir/$trait.vcf.gz 
+    """ ;
+done
 ```
 
 #### Get per-population allele frequencies of random SNPs 
@@ -1470,17 +1527,22 @@ populations <- unlist(lapply(rownames(vcf_list_raw[[1]]), function(sample){
 
 # Generate Fst stats
 fst_out_lst <- lapply(vcf_list_raw, function(pheno){
-  as.data.frame(pegas::Fst(pheno, pop = populations))
-})
+  out = as.data.frame(pegas::Fst(pheno, pop = populations))
+  # put rownames into separate column
+  out$snp <- rownames(out)
+  
+  return(out)
+}) %>% 
+  # bind into single DF
+  dplyr::bind_rows(fst_out_lst, .id = "phenotype")
 
 # make rownames into separate column
 fst_out_lst <- lapply(fst_out_lst, function(pheno){
-  pheno$snp <- rownames(pheno)
+  pheno$
   return(pheno)
 })
 
-# bind into single DF
-fst_out_df <- dplyr::bind_rows(fst_out_lst, .id = "phenotype")
+
 
 # Recode phenotype
 fst_out_df$phenotype <- factor(fst_out_df$phenotype, levels = trait_levels)
@@ -1517,16 +1579,16 @@ ggplot(fst_out_df, aes(Fst, fill = phenotype)) +
 ##### 3D
 
 ```{r, warning = F, message = F}
-ggplot() +
-  geom_density_ridges2(data = fst_out_df,
-                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
-                       scale = 2) +
-  scale_fill_manual(values = pal_primary) +
-  ylab(label = NULL) +
-  theme_bw() +
-  guides(fill = guide_legend(reverse=T, 
-                             title = "Phenotype")) +
-  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+fst_out_df %>% 
+  ggplot() +
+    geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                         scale = 2) +
+    scale_fill_manual(values = pal_primary) +
+    ylab(label = NULL) +
+    theme_bw() +
+    guides(fill = guide_legend(reverse=T, 
+                               title = "Phenotype")) +
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 ```
 
 #### Run Kolmogorov-Smirnov Tests
@@ -1585,11 +1647,16 @@ fst_out_lst_3pop <- lapply(fst_out_lst_3pop, function(pheno){
   pheno$snp <- rownames(pheno)
   return(pheno)
 })
-names(fst_out_lst_3pop) <- titles
 
 # bind into single DF
 fst_out_df_3pop <- dplyr::bind_rows(fst_out_lst_3pop, .id = "phenotype")
-head(fst_out_df_3pop)
+
+# Recode phenotype
+fst_out_df_3pop$phenotype <- factor(fst_out_df_3pop$phenotype, levels = trait_levels)
+fst_out_df_3pop$phenotype = dplyr::recode(fst_out_df_3pop$phenotype, !!!recode_vec)
+
+knitr::kable(head(fst_out_df_3pop))
+
 ```
 
 #### Plot density
@@ -1602,21 +1669,17 @@ ggplot(fst_out_df_3pop, aes(Fst, fill = phenotype)) +
   labs(fill = "Phenotype") +
   ylab("Density") +
   theme_bw() +
-  scale_fill_manual(values = c("#E7B800", "#00AFBB", "#360568", "#FC4E07"))
+  scale_fill_manual(values = pal_primary)
 ```
 
 ##### 3D
 
 ```{r, warning=F, message = F}
-# factorise 
-fst_out_df_3pop$phenotype_3d <- factor(fst_out_df$phenotype,
-                                    levels = c("Skin/hair pigmentation", "IBD", "Educational Attainment", "Height"))
-
 ggplot() +
   geom_density_ridges2(data = fst_out_df_3pop,
-                       mapping = aes(x = Fst, y = phenotype_3d, fill = phenotype_3d),
+                       mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                        scale = 2) +
-  scale_fill_manual(values = c("#FC4E07", "#360568", "#00AFBB", "#E7B800")) +
+  scale_fill_manual(values = pal_primary) +
   ylab(label = NULL) +
   theme_bw() +
   guides(fill = guide_legend(reverse=T, 
@@ -1630,7 +1693,7 @@ ggplot() +
 ```{r, warning = F}
 # Height v EA
 ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
-        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Educational Attainment"])
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Educational attainment"])
 
 # Height v IBD
 ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
@@ -1638,6 +1701,6 @@ ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
 
 # Height v Pigmentation
 ks.test(fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Height"],
-        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Skin/hair pigmentation"])
+        fst_out_df_3pop$Fst[fst_out_df_3pop$phenotype == "Pigmentation"])
 ```
 
