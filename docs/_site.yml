@@ -1,16 +1,12 @@
-name: "MIKK panel genome"
+name: "Fst variation across human traits"
 output_dir: "."
 navbar:
-  title: "MIKK panel genome"
+  title: "Fst variation across human traits"
   left:
     - text: "Home"
+      href: index0.html
+    - text: "Analysis"
       href: index.html
-    - text: "Linkage Disequilibrium"
-      href: 20201120_markdown_ld-decay.html
-    - text: "Introgression"
-      href: 20201125_markdown_introgression.html
-    - text: "Repeat Elements"
-      href: 20201126_repeats.html
 output:
   html_document:
     theme: flatly

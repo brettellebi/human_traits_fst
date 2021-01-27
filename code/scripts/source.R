@@ -32,7 +32,9 @@ get_man <- function(df, trait, title, chr, bp, snp, p){
             main = title)
 }
 
-# Plotting parameters
+# Parameters
+
+clump_param = "r2-0.1_kb-1000"
 
 # Factor levels for `trait` (or `PHENO`)
 trait_levels = c("hei", "bmi", "edu", "int", "ibd", "pig")
