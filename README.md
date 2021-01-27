@@ -4,4 +4,4 @@ How do *Fst* distributions differ across human quantitative traits? Which ones s
 
 We investigate the differences in *Fst* distributions between GWAS SNP hits for diverse human traits including height, educational attainment, IBD, and skin colour, using the 1000 Genomes dataset.
 
-
+See the code and figures here:  <https://brettellebi.github.io/human_traits_fst/>
