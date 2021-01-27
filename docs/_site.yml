@@ -3,8 +3,6 @@ output_dir: "."
 navbar:
   title: "Fst variation across human traits"
   left:
-    - text: "Home"
-      href: index0.html
     - text: "Analysis"
       href: index.html
 output:
