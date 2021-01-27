@@ -1,5 +1,5 @@
 ---
-title: "MIKK panel genome"
+title: "Fst variation across human traits"
 author: "Ian Brettell"
 date: '`r format(Sys.Date())`'
 output:
