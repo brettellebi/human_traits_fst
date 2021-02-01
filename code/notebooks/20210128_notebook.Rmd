@@ -2,14 +2,17 @@
 title: "Fst variation across human traits"
 author: "Ian Brettell"
 date: '`r format(Sys.Date())`'
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    number_sections: true
-    keep_md: true
-    pandoc_args: --lua-filter=color-text.lua
-    highlight: pygments  
+editor_options: 
+  chunk_output_type: inline
+output: html_notebook
+#output:
+#  html_document:
+#    toc: true
+#    toc_float: true
+#    number_sections: true
+#    keep_md: true
+#    pandoc_args: --lua-filter=color-text.lua
+#    highlight: pygments  
 ---
 
 # Setup
@@ -51,7 +54,7 @@ library(here)
 source(here::here("code", "scripts", "source.R"))
 ```
 
-## Download 1GK data
+## Download 1KG data
 
 ### Download from FTP
 
@@ -75,7 +78,7 @@ find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz \
 ```{r, engine='bash', eval = F}
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
 
 # So remove that one from list above
@@ -84,7 +87,7 @@ sed -i '/MT/d' human_traits_fst/data/20200205_vcfs.list
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
   
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
 sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
@@ -92,7 +95,7 @@ sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
 # SUCCESS
 ```
 
@@ -397,7 +400,7 @@ lapply(data_list, function(pheno){
 
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
-in_vcf=../vcfs/1gk_all.vcf.gz
+in_vcf=../vcfs/1kg_all.vcf.gz
 snps_dir=data/20210122_snp_hit_lists
 out_dir=data/20210125_snp_hits_filtered
 
@@ -421,7 +424,7 @@ done
 
 ## Get allele frequencies of SNP hits with `Plink2`
 
-### Import 1GK metadata (for sample-population key)
+### Import 1KG metadata (for sample-population key)
 
 Downloded via this page: <http://www.internationalgenome.org/data>.
 
@@ -642,7 +645,7 @@ With `Plink2`, per chromosome for speed.
 
 ```{r, engine='bash', eval=F}
 # set output directory
-in_file=../vcfs/1gk_all.vcf.gz
+in_file=../vcfs/1kg_all.vcf.gz
 out_dir=../big_data/20210125_alfreqs_all
 
 mkdir -p $out_dir
@@ -800,7 +803,7 @@ lapply(risk_list, function(pheno){
 ```{bash, eval = F}
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
-in_vcf=../vcfs/1gk_all.vcf.gz
+in_vcf=../vcfs/1kg_all.vcf.gz
 snps_dir=data/20210126_random_snps_snp_ids
 out_dir=data/20210127_snp_rndm_filtered
 
@@ -1071,13 +1074,13 @@ data_list = lapply(data_list, function(pheno){
 
 ## Extract random SNPs filtered by those matching the clumped SNPs
 
-```{r}
+```{r, eval = F}
 out_dir = here::here("data", "20210128_random_snps")
 
 dir.create(out_dir)
 
 counter = 0
-lapply(data_list, function(pheno){
+out = lapply(data_list, function(pheno){
   # set counter
   counter <<- counter + 1
   # get name of trait
@@ -1087,11 +1090,44 @@ lapply(data_list, function(pheno){
   # gather SNPs
   snps = pheno[["random_af"]] %>% 
     dplyr::filter(TOP_SNP %in% clumped_snps) %>% 
-    dplyr::select(RANDOM_SNP)
+    dplyr::select(RANDOM_SNP) %>% 
+    unique(.)
   # write to file
   out_path = file.path(out_dir, paste(trait, ".list", sep = ""))
   readr::write_lines(snps$RANDOM_SNP, out_path)
 })
+rm(out)
+```
+
+## Make VCFs for random control SNPs
+
+```{bash, eval = F}
+# On cluster
+
+# Set variables
+traits=$(echo hei bmi edu int ibd pig)
+in_dir_snp_list=data/20210128_random_snps
+in_vcf=../vcfs/1kg_all.vcf.gz
+ref=../refs/hs37d5.fa.gz
+out_dir_vcfs=data/20210128_rndm_vcfs
+
+mkdir -p $out_dir_vcfs
+
+# Make new VCFs
+for trait in $(echo $traits ); do
+  bsub \
+    -M 20000 \
+    -o ../log/20210128_filter_vcfs_rndm_$trait.out \
+    -e ../log/20210128_filter_vcfs_rndm_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    gatk SelectVariants \
+      -R $ref \
+      -V $in_vcf \
+      --keep-ids $in_dir_snp_list/$trait.list \
+      -O $out_dir_vcfs/$trait.vcf.gz     
+    """ ;
+done    
 ```
 
 
@@ -1142,8 +1178,6 @@ final_plt = final_df %>%
   tidyr::pivot_wider(names_from = POPN, values_from = RISK_AF) 
 
 ```
-
-
 
 
 # Analysis
@@ -1257,15 +1291,15 @@ ggsave(here("plots", "20210127_af_v_effect_size", "20210127_hits_zoomed.png"),
 
 ```{r, message=F, warning=F, results=F, eval = F}
 # Create raw list of variants
-case = here::here("data", "20210125_snp_hits_filtered")
-control = here::here("data", "20210127_snp_rndm_filtered")
-target_dirs = c(case, control)
-names(target_dirs) = c("case", "control")
+hit = here::here("data", "20210128_hits_vcfs")
+control = here::here("data", "20210128_rndm_vcfs")
+target_dirs = c(hit, control)
+names(target_dirs) = c("hit", "control")
 
 # Set seed
-initial_seed = 53
-set.seed(initial_seed)
-seeds = sample(1:1000, size = length(target_dirs))
+#initial_seed = 53
+#set.seed(initial_seed)
+#seeds = sample(1:1000, size = length(target_dirs))
 
 # Run 
 counter = 0
@@ -1277,17 +1311,6 @@ fst_out = lapply(target_dirs, function(target_dir){
     target_file = file.path(target_dir, paste(trait, ".vcf.gz", sep = ""))
     # read in file
     vcf_out <- pegas::read.vcf(target_file)
-    # filter `cases` for clumped SNPs, and take same number of `control` SNPs
-    ## get target SNP IDs
-    target_snps = data_list[[trait]]$clumped[[clump_param]]$SNP
-    if (names(target_dirs)[counter] == "case"){
-      ## filter VCF
-      vcf_out = vcf_out[, colnames(vcf_out) %in% target_snps]
-      ## take sample of same number of `control` SNPs
-    } else if (names(target_dirs)[counter] == "control"){
-      set.seed(seeds[counter])
-      vcf_out = vcf_out[, sample(ncol(vcf_out), size = length(target_snps))]
-    }
     
     return(vcf_out)
   })
@@ -1312,7 +1335,7 @@ fst_out = lapply(target_dirs, function(target_dir){
   
   return(fst_out_df)
 }) %>% 
-  dplyr::bind_rows(.id = "case_control")
+  dplyr::bind_rows(.id = "hit_control")
 
 # Recode phenotype
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels)
@@ -1323,7 +1346,7 @@ Write to file
 
 ```{r, eval = F}
 out_dir = here::here("data", "20210127_results")
-out_path = file.path(out_dir, paste("20210127_fst", ".csv", sep = ""))
+out_path = file.path(out_dir, paste("20210128_fst", ".csv", sep = ""))
 
 dir.create(out_dir)
 
@@ -1332,7 +1355,7 @@ readr::write_csv(fst_out, out_path)
 
 Read back in 
 ```{r, message = F, results = 'asis'}
-fst_out = readr::read_csv(here::here("data", "20210127_results/20210127_fst.csv"))
+fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
 
 knitr::kable(head(fst_out))
@@ -1340,9 +1363,9 @@ knitr::kable(head(fst_out))
 
 #### *Fst* histograms
 
-```{r,fig.show="hold", out.width='50%', fig.cap = "Cases vs controls"}
+```{r,fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
 one = fst_out %>%
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
@@ -1351,7 +1374,7 @@ one = fst_out %>%
     guides(fill = F)
 
 two = fst_out %>%
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
@@ -1368,7 +1391,7 @@ one
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_histograms", "20210127_hits_all.png"),
+ggsave(here("plots", "20210127_histograms", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1381,7 +1404,7 @@ two
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_histograms", "20210127_controls_all.png"),
+ggsave(here("plots", "20210127_histograms", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1395,7 +1418,7 @@ ggsave(here("plots", "20210127_histograms", "20210127_controls_all.png"),
 
 ```{r, warning= F, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
 one = fst_out %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1407,7 +1430,7 @@ one = fst_out %>%
 
 
 two = fst_out %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1426,7 +1449,7 @@ one
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_densities", "20210127_hits_all.png"),
+ggsave(here("plots", "20210127_densities", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1439,7 +1462,7 @@ two
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_densities", "20210127_controls_all.png"),
+ggsave(here("plots", "20210127_densities", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1451,7 +1474,7 @@ ggsave(here("plots", "20210127_densities", "20210127_controls_all.png"),
 
 ```{r, warning = F, message = F, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
 one = fst_out %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1462,7 +1485,7 @@ one = fst_out %>%
     scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 
 two = fst_out %>%
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1481,7 +1504,7 @@ one
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_ridges", "20210127_hits_all.png"),
+ggsave(here("plots", "20210127_ridges", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1494,7 +1517,7 @@ two
 ```
 
 ```{r, eval = F}
-ggsave(here("plots", "20210127_ridges", "20210127_controls_all.png"),
+ggsave(here("plots", "20210127_ridges", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
@@ -1505,12 +1528,12 @@ ggsave(here("plots", "20210127_ridges", "20210127_controls_all.png"),
 ### Run Kolmogorov-Smirnov Tests
 
 ```{r, warning = F}
-case_control = unique(fst_out$case_control)
-names(case_control) = case_control
+hit_control = unique(fst_out$hit_control)
+names(hit_control) = hit_control
 
-ks_out = lapply(case_control, function(dataset){
+ks_out = lapply(hit_control, function(dataset){
   # filter dataset
-  target_df = fst_out[fst_out$case_control == dataset, ]
+  target_df = fst_out[fst_out$hit_control == dataset, ]
   # run pairwise KS tests
   ks_out = lapply(trait_levels_verb, function(trait_a){
     out = lapply(trait_levels_verb, function(trait_b){
@@ -1554,7 +1577,7 @@ ks_out_gg = lapply(ks_out, function(dataset){
   
   return(out)
 }) %>% 
-  dplyr::bind_rows(.id = "case_control") %>% 
+  dplyr::bind_rows(.id = "hit_control") %>% 
   dplyr::mutate(across(c("A", "B"),
                        ~factor(.x, levels = trait_levels_verb)))
 ```
@@ -1562,7 +1585,7 @@ ks_out_gg = lapply(ks_out, function(dataset){
 Plot
 ```{r, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
 heat_hits_all = ks_out_gg %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_tile(aes(A, B, fill = ks_P)) +
     scale_fill_viridis_c() +
@@ -1572,7 +1595,7 @@ heat_hits_all = ks_out_gg %>%
     labs(fill = "KS-test\n-log(P)")
 
 heat_controls_all = ks_out_gg %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_tile(aes(A, B, fill = ks_P)) +
     scale_fill_viridis_c(option = "magma") +
@@ -1620,7 +1643,7 @@ IBD only has 182 hits, so remove from this part of the analysis.
 The trait with the next least number of hits is `Intelligence`, with `480. So we'll take a random sample of 40
 
 ```{r}
-fst_sample = split(fst_out, f = fst_out$case_control)
+fst_sample = split(fst_out, f = fst_out$hit_control)
 fst_sample = lapply(fst_sample, function(dataset){
   out = split(dataset, f = dataset$phenotype)
   out = lapply(out, function(pheno){
@@ -1639,7 +1662,7 @@ fst_sample = lapply(fst_sample, function(dataset){
 
 ```{r, fig.show="hold", out.width='50%', fig.cap = "SAMPLED: Hits vs controls"}
 one = fst_sample %>%
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
@@ -1648,7 +1671,7 @@ one = fst_sample %>%
     guides(fill = F)
 
 two = fst_sample %>%
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
@@ -1689,7 +1712,7 @@ ggsave(here("plots", "20210127_histograms", "20210127_controls_sample.png"),
 
 ```{r, warning= F, fig.show="hold", out.width='50%', fig.cap = "SAMPLED: Hits vs controls"}
 one = fst_sample %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1700,7 +1723,7 @@ one = fst_sample %>%
     guides(fill = F)
 
 two = fst_sample %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1743,15 +1766,15 @@ ggsave(here("plots", "20210127_densities", "20210127_controls_sample.png"),
 ### KS test
 
 ```{r, warning = F}
-case_control = unique(fst_sample$case_control)
-names(case_control) = case_control
+hit_control = unique(fst_sample$hit_control)
+names(hit_control) = hit_control
 
 trait_levels_verb_sample = trait_levels_verb[-which(trait_levels_verb == "IBD")]
 traits_sample = traits[-which(traits == "ibd")]
 
-ks_sample = lapply(case_control, function(dataset){
+ks_sample = lapply(hit_control, function(dataset){
   # filter dataset
-  target_df = fst_sample[fst_sample$case_control == dataset, ]
+  target_df = fst_sample[fst_sample$hit_control == dataset, ]
   # run pairwise KS tests
   ks_out = lapply(trait_levels_verb_sample, function(trait_a){
     out = lapply(trait_levels_verb_sample, function(trait_b){
@@ -1788,7 +1811,7 @@ ks_sample_gg = lapply(ks_sample, function(dataset){
   
   return(out)
 }) %>% 
-  dplyr::bind_rows(.id = "case_control") %>% 
+  dplyr::bind_rows(.id = "hit_control") %>% 
   dplyr::mutate(across(c("A", "B"),
                        ~factor(.x, levels = trait_levels_verb_sample)))
 ```
@@ -1796,7 +1819,7 @@ ks_sample_gg = lapply(ks_sample, function(dataset){
 Plot
 ```{r, fig.show="hold", out.width='50%', fig.cap = "SAMPLED: Hits vs controls"}
 heat_hits_sample = ks_sample_gg %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_tile(aes(A, B, fill = ks_P)) +
     scale_fill_viridis_c() +
@@ -1806,7 +1829,7 @@ heat_hits_sample = ks_sample_gg %>%
     labs(fill = "KS-test\n-log(P)")
 
 heat_controls_sample = ks_sample_gg %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_tile(aes(A, B, fill = ks_P)) +
     scale_fill_viridis_c(option = "magma") +
@@ -1861,8 +1884,8 @@ heat_controls_sample
 
 ### Read in *Fst* results
 ```{r, message = F}
-fst_out = readr::read_csv(here::here("data", "20210127_results/20210127_fst.csv"))
-fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
+fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb[-1])
 
 ```
 
@@ -1873,7 +1896,7 @@ From the help pages of `ks.test`:
 > The possible values "`two.sided`", "`less`" and "`greater`" of alternative specify the null hypothesis that the true distribution function of `x` is equal to, not less than or not greater than the hypothesized distribution function (one-sample case) or the distribution function of `y` (two-sample case), respectively. This is a comparison of cumulative distribution functions, and the test statistic is the maximum difference in value, with the statistic in the `"greater"` alternative being *D^+ = max[F_x(u) - F_y(u)]*. Thus in the two-sample case `alternative = "greater"` includes distributions for which x is stochastically smaller than y (the CDF of x lies above and hence to the left of that for y), in contrast to t.test or wilcox.test.
 
 ```{r, warning = F}
-ks_out = split(fst_out, f = fst_out$case_control)
+ks_out = split(fst_out, f = fst_out$hit_control)
 ks_out = lapply(ks_out, function(dataset){
   split_data = split(dataset, f = dataset$phenotype)
   # run pairwise KS tests
@@ -1881,7 +1904,8 @@ ks_out = lapply(ks_out, function(dataset){
     out = lapply(split_data, function(trait_b){
       # "two.sided"
       results_two_sided = ks.test(trait_a$Fst,
-                                  trait_b$Fst)      
+                                  trait_b$Fst,
+                                  alternative = "two.sided")      
       # "less" test
       results_less = ks.test(trait_a$Fst,
                              trait_b$Fst,
@@ -1894,52 +1918,334 @@ ks_out = lapply(ks_out, function(dataset){
       results_mw = wilcox.test(trait_a$Fst,
                                trait_b$Fst,
                                alternative = "two.sided")
-#      # bind into DF
-#      df_out = c(results_two_sided[["statistic"]],
-#                 "P_LESS" = results_two_sided[["p.value"]],
-#                 results_less[["statistic"]],
-#                 "P_LESS" = results_less[["p.value"]],
-#                 results_greater[["statistic"]],
-#                 "P_GREATER" = results_greater[["p.value"]])
-#
-#      return(df_out)
+      # bind into DF
+      df_out = c(results_two_sided[["statistic"]],
+                 "P_TWO_SIDED" = results_two_sided[["p.value"]],
+                 results_less[["statistic"]],
+                 "P_LESS" = results_less[["p.value"]],
+                 results_greater[["statistic"]],
+                 "P_GREATER" = results_greater[["p.value"]],
+                 results_mw[["statistic"]],
+                 "P_MW" = results_mw[["p.value"]])
+
+      return(df_out)
       return(results_mw)
-    })})}) %>% 
-      dplyr::bind_rows(.id = "TRAIT_B")
+    }) %>% 
+      dplyr::bind_rows(.id = "B")
   }) %>% 
-    dplyr::bind_rows(.id = "TRAIT_A")
+    dplyr::bind_rows(.id = "A")
 }) %>% 
-  dplyr::bind_rows(.id = "CASE_CONTROL") %>% 
-  dplyr::mutate(across(c("TRAIT_A", "TRAIT_B"),
+  dplyr::bind_rows(.id = "HIT_CONTROL") %>% 
+  dplyr::mutate(across(c("A", "B"),
                        ~factor(.x, levels = trait_levels_verb)))
 
 
 ```
 
-Plot
+### Plot KS-test D
+
+Show correlation
+
+```{r}
+plt = ks_out %>% 
+  ggplot() +
+    geom_point(aes(`D^+`, `D^-`, colour = HIT_CONTROL,
+                   text = paste("Trait A: ", A,
+                                "<br>Trait B: ", B))) +
+    theme_bw() +
+    coord_fixed()
+
+ggplotly(plt)
+
+```
+
+
+
+```{r}
+ggplotly(plt) %>%
+  export(file = here::here("plots", "20210129_KS-D.svg"),
+         selenium = RSelenium::rsDriver(browser = "firefox"))
+```
+
+### Plot MW
 
 ```{r}
 heat_hits_sample = ks_out %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(HIT_CONTROL == "hit") %>% 
   ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
+    geom_tile(aes(A, B, fill = -log10(P_MW))) +
     scale_fill_viridis_c() +
     coord_fixed() +
     xlab(NULL) +
     ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
+    labs(fill = "MW-test\n-log(W)")
+
+ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_sample.png"),
+       device = "png",
+       units = "cm",
+       dpi = 400,
+       height = 12,
+       width = 20)
 
 heat_controls_sample = ks_out %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(HIT_CONTROL == "control") %>% 
   ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
+    geom_tile(aes(A, B, fill = -log10(P_MW))) +
     scale_fill_viridis_c(option = "magma") +
     coord_fixed() +
     xlab(NULL) +
     ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
+    labs(fill = "MW-test\n-log(W)")
+
+ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_sample.png"),
+       device = "png",
+       units = "cm",
+       dpi = 400,
+       height = 12,
+       width = 20)
    
 heat_hits_sample
 heat_controls_sample
+```
+
+## Calculate *Fst* for 100k random SNPs to compare to these distributions
+
+### Pull random lines from 1kg alfreq file
+
+```{bash}
+# On cluster 
+
+list_in=../big_data/20210125_alfreqs_all_binned/all.afreq
+list_out=data/20210129_random_100k_snps.list
+ref=../refs/hs37d5.fa.gz
+in_vcf=../vcfs/1kg_all.vcf.gz
+out_vcf=../vcfs/1kg_100k_rndm.vcf.gz
+
+conda activate fst_env_rhel 
+
+# create function to get random seed
+get_seeded_random()
+{
+  seed="$1"
+  openssl enc -aes-256-ctr -pass pass:"$seed" -nosalt \
+    </dev/zero 2>/dev/null
+}
+
+# make list
+awk '{print $2}' $list_in |\
+  tail -n+2 |\
+  shuf -n 100000 \
+  --random-source=<(get_seeded_random 454) \
+    > $list_out
+    
+# extract from 1KG
+gatk SelectVariants \
+  -R $ref \
+  -V $in_vcf \
+  --keep-ids $list_out \
+  -O $out_vcf
+```
+
+### Run `pegas` to get Fst
+
+```{r, eval = F}
+# On cluster
+library(here)
+source(here::here("code", "scripts", "source.R"))
+
+# Set variables
+in_vcf=here::here("..", "vcfs", "1kg_100k_rndm.vcf.gz")
+samples_file = here::here("data", "20130606_sample_info.xlsx")
+out_file=here::here("data", "20210129_100k_rndm_fst.txt")
+
+# Read in `meta` file
+meta = readxl::read_xlsx(samples_file,
+                         sheet = "Sample Info") %>%
+  dplyr::select(Sample, Population, Gender)
+
+# Read VCF 
+vcf_out <- pegas::read.vcf(in_vcf, to = 100000)
+
+# Create vector of populations
+populations = unlist(lapply(rownames(vcf_out), function(sample){
+  meta$Population[meta$Sample == sample]
+}))
+
+# Generate Fst stats
+fst_out <- as.data.frame(pegas::Fst(vcf_out, pop = populations))
+fst_out$snp <- rownames(fst_out)
+# remove NAs
+fst_out  = fst_out %>% 
+  tidyr::drop_na() 
+# 99682 remaining
+  
+# Set phenotype
+fst_out$phenotype <- "Random"
+
+# Save file
+readr::write_tsv(fst_out, out_file)
+```
+
+### Read in
+
+```{r}
+# read
+fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
+fst_random = readr::read_tsv(here::here("data", "20210129_100k_rndm_fst.txt")) %>% 
+  dplyr::mutate(hit_control = "hit")
+
+# bind
+fst_out = dplyr::bind_rows(fst_out, fst_random)
+
+# factor
+fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+```
+
+### Plot 
+
+#### *Fst* density
+
+##### Facets
+
+```{r}
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  ggplot(aes(Fst, fill = phenotype)) +
+    geom_density() +
+    labs(fill = "Phenotype") +
+    facet_wrap(~phenotype) +
+    ylab("Density") +
+    theme_bw() +
+    scale_fill_manual(values = pal_primary) +
+    guides(fill = F)
+
+```
+
+##### Ridges
+
+```{r, warning = F, message = F, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot() +
+    geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                         scale = 2) +
+    scale_fill_manual(values = pal_primary) +
+    ylab(label = NULL) +
+    theme_bw() +
+    guides(fill = F) +
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+```
+
+# Final
+
+## Get median *Fst* and 0.9 percentile
+
+### Read in data
+
+```{r}
+# Read in data
+fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
+fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+fst_out$hit_control = factor(fst_out$hit_control, levels = hit_control_levels)
+
+# Split
+fst_list = split(fst_out, f = fst_out$hit_control)
+fst_list = lapply(fst_list, function(dataset){
+  split(dataset, f = dataset$phenotype)
+})
+```
+
+### Median and 0.9 percentile
+
+From the `help` page of `wilcoxon.test`:
+
+> Note that in the two-sample case the estimator for the difference in location parameters does not estimate the difference in medians (a common misconception) but rather the median of the difference between a sample from x and a sample from y.
+
+```{r}
+mw_out = split(fst_out, f = fst_out$hit_control)
+mw_out = lapply(mw_out, function(dataset){
+  split_data = split(dataset, f = dataset$phenotype)
+  
+  out = lapply(split_data, function(pheno){
+    stats = list()
+    
+    # Get median and 90 percentile
+    stats[["stats"]] = c("median" = median(pheno$Fst),
+                         quantile(pheno$Fst, probs = 0.9))
+    
+    # Get Mann-Whitney results
+    stats[["mw_out"]] = wilcox.test(x = split_data[["Height"]]$Fst,
+                                    y = pheno$Fst,
+                                    alternative = "less",
+                                    paired = F,
+                                    conf.int = T)
+    
+    # Get KS results
+    stats[["ks_out"]] = ks.test(x = split_data[["Height"]]$Fst,
+                                y = pheno$Fst,
+                                alternative = "greater")
+
+    return(stats)
+  })# %>% 
+    #dplyr::bind_rows(.id = "phenotype")
+  
+  
+  return(out)
+
+})
+
+wilcox.test(fst_list$hit$Height$Fst, fst_list$hit$Height$Fst,
+            alternative = "less")
+
+ks.test(fst_list$hit$Height$Fst, fst_list$hit$`Educational attainment`$Fst)
+
+# Collapse into DF
+mw_gg = lapply(mw_out, function(dataset){
+  out = lapply(dataset, function(pheno){
+    # Put key data into data frame
+    df = c("MEDIAN" = pheno[["stats"]][["median"]],
+           "90%" = pheno[["stats"]][["90%"]],
+           pheno[["mw_out"]]$statistic,
+           "P_MW" = pheno[["mw_out"]]$p.value,
+           "CONF_LOWER" = pheno[["mw_out"]]$conf.int[1],
+           "CONF_UPPER" = pheno[["mw_out"]]$conf.int[2],
+           pheno[["ks_out"]]$statistic,
+           "P_KS" = pheno[["ks_out"]]$p.value)
+
+    return(df)
+  }) %>% 
+    dplyr::bind_rows(.id = "PHENO")
+  
+  return(out)
+}) %>% 
+  dplyr::bind_rows(.id = "HIT_CONTROL")
+
+# Factor
+mw_gg$PHENO <- factor(mw_gg$PHENO, levels = trait_levels_verb)
+mw_gg$HIT_CONTROL = factor(mw_gg$HIT_CONTROL, levels = hit_control_levels)
+```
+
+Plot
+
+```{r}
+mw_gg %>% 
+  ggplot() +
+    geom_col(aes(PHENO, -log10(P_MW), fill = PHENO)) +
+    facet_wrap(~HIT_CONTROL) + 
+    scale_fill_manual(values = pal_primary) +
+    theme_bw() +
+    ggtitle("Mann-Whitney p-values")
+
+```
+```{r}
+mw_gg %>% 
+  ggplot() +
+    geom_col(aes(PHENO, -log10(P_KS), fill = PHENO)) +
+    facet_wrap(~HIT_CONTROL) + 
+    scale_fill_manual(values = pal_primary) +
+    theme_bw() +
+    ggtitle("KS-test p-values")
+
 ```
 
