@@ -9,16 +9,15 @@ library(knitr)
 library(plotly)
 library(ggridges)
 library(qqman)
-library(GGally)
 
 # Functions
 
 ## Read `.afreq` files from `Plink`
 read_afreq <- function(file){
-  out = read.table(file, header = T, comment.char = "") %>% 
+  out = read.table(file, header = T, comment.char = "") %>%
     dplyr::rename(CHR = X.CHROM,
                   SNP = ID)
-  
+
   return(out)
 }
 
