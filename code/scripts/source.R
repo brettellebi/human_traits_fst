@@ -16,7 +16,8 @@ library(qqman)
 read_afreq <- function(file){
   out = read.table(file, header = T, comment.char = "") %>%
     dplyr::rename(CHR = X.CHROM,
-                  SNP = ID)
+                  SNP = ID) %>% 
+    dplyr::mutate(CHR = as.integer(CHR))
 
   return(out)
 }

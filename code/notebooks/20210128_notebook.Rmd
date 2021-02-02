@@ -681,12 +681,12 @@ source(here::here("code", "scripts", "source.R"))
 # Set variables
 in_dir = "../big_data/20210125_alfreqs_all"
 out_dir = "../big_data/20210201_alfreqs_all_binned_10"
-breakpoints = seq(0, 1, 0.1) # 1% bins
+breakpoints = seq(0, 1, 0.1) # 10% bins
 
 # Create output directory
 dir.create(out_dir)
 
-# Get list of input files
+# Get list of input files, excluding 
 in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
 
 # Read in files, add bins, and write to output
@@ -717,7 +717,7 @@ source(here::here("code", "scripts", "source.R"))
 # Variables
 
 input_risk_snp_dir = here::here("data", "20210201_snp_risk_hits_binned")
-all_1kg_bins = "../big_data/20210201_alfreqs_all_binned/all.afreq"
+all_1kg_bins = "../big_data/20210201_alfreqs_all_binned_10/all.afreq"
 initial_seed = 123
 output_dir = here::here("data", "20210201_random_snps")
 output_dir_snpids = here::here("data", "20210201_random_snps_snp_ids")
@@ -735,7 +735,7 @@ risk_list = lapply(phenos, function(pheno){
   # read file
   out = readr::read_tsv(file_path,
                         col_names = T) %>% 
-    split(., f = .$BIN_100) # split by bin
+    split(., f = .$BIN_10) # split by bin
 })
   
 ## Read in 1KG data
@@ -751,11 +751,11 @@ seeds = sample(1:1000, length(risk_list))
 
 ## Run over list
 counter <- 0
-lapply(risk_list, function(pheno){
+test = lapply(risk_list, function(pheno){
   # set counter 
   counter <<- counter + 1  
   # set seed for pheno
-  set.seed(seeds)[counter]
+  set.seed(seeds[counter])
   # get seeds for bin
   bin_seeds = sample(1:1000, length(pheno))
   # get random SNPs from each bin
@@ -771,11 +771,10 @@ lapply(risk_list, function(pheno){
     set.seed(bin_seeds[bin_counter])    
     # filter 1kg DF for SNPs with same bin and get random hits
     random_hits = freq_df %>% 
-      #dplyr::select(SNP, ALT_FREQS, OBS_CT, BIN_100) %>% 
-      dplyr::filter(BIN_100 == target_bin) %>% 
+      dplyr::filter(BIN_10 == target_bin) %>% 
       dplyr::slice_sample(n = hits_n) %>% 
       dplyr::rename(RANDOM_SNP = SNP,
-                    RANDOM_BIN_100 = BIN_100)
+                    RANDOM_BIN_10 = BIN_10)
     # bind `random_hits` to target SNP df
     df_out = cbind(bin_df, random_hits)
     
@@ -794,7 +793,9 @@ lapply(risk_list, function(pheno){
   # save just SNP IDs (for Plink to get per-population AFs)
   out_path = file.path(output_dir_snpids, paste(trait, ".list", sep = ""))
   ## write file
-  readr::write_lines(out$RANDOM_SNP, out_path)  
+  readr::write_lines(out$RANDOM_SNP, out_path)
+  
+  return(out)
 })
 
 ```
@@ -805,16 +806,16 @@ lapply(risk_list, function(pheno){
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
 in_vcf=../vcfs/1kg_all.vcf.gz
-snps_dir=data/20210126_random_snps_snp_ids
-out_dir=data/20210127_snp_rndm_filtered
+snps_dir=data/20210201_random_snps_snp_ids
+out_dir=data/20210201_snp_rndm_filtered
 
 mkdir -p $out_dir
 
 for trait in $(echo $traits ); do
   bsub \
     -M 10000 \
-    -o ../log/20210127_extract_snps_$trait.out \
-    -e ../log/20210127_extract_snps_$trait.err \
+    -o ../log/20210201_extract_snps_$trait.out \
+    -e ../log/20210201_extract_snps_$trait.err \
     """
     conda activate fst_env_rhel ;
     gatk SelectVariants \
@@ -830,10 +831,10 @@ done
 
 ```{bash, eval = F}
 traits=$(echo hei bmi edu int ibd pig)
-random_snps_dir=data/20210126_random_snps_snp_ids
-vcf_in_dir=data/20210127_snp_rndm_filtered
+random_snps_dir=data/20210201_random_snps_snp_ids
+vcf_in_dir=data/20210201_snp_rndm_filtered
 popn_key=data/plink2_sample_popn_key.txt
-out_dir=data/20210127_snp_rndm_alfreqs
+out_dir=data/20210201_snp_rndm_alfreqs
 
 
 for trait in $(echo $traits ); do
@@ -842,8 +843,8 @@ for trait in $(echo $traits ); do
   
   bsub \
     -M 10000 \
-    -o ../log/20210127_rdm_popn_afreqs_$trait.out \
-    -e ../log/20210127_rdm_popn_afreqs_$trait.err \
+    -o ../log/20210201_rdm_popn_afreqs_$trait.out \
+    -e ../log/20210201_rdm_popn_afreqs_$trait.err \
     """
     conda activate fst_env_rhel ;
     plink2 \
@@ -859,9 +860,9 @@ done
 
 #### Bind into single DF
 
-```{r, message = F}
-in_dir_rndm = here::here("data", "20210126_random_snps")
-in_dir_afreq = here::here("data", "20210127_snp_rndm_alfreqs")
+```{r, message = F, warning = F}
+in_dir_rndm = here::here("data", "20210201_random_snps")
+in_dir_afreq = here::here("data", "20210201_snp_rndm_alfreqs")
 
 # Read in data
 
@@ -889,13 +890,12 @@ popn_afreqs = lapply(trait_levels, function(pheno){
   popn_afreqs = lapply(target_files, function(popn){
     df = read_afreq(popn)
   }) %>% 
-    dplyr::bind_rows(.id = "POPN") # %>% 
-  #  dplyr::select(-OBS_CT) %>% 
-  #  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = c(ALT_FREQS, OBS_CT))
-  
+    dplyr::bind_rows(.id = "POPN")
+
   return(popn_afreqs)
 }) %>% 
-  dplyr::bind_rows(.id = "PHENO")
+  dplyr::bind_rows(.id = "PHENO") %>% 
+  tidyr::drop_na()
 
 # Bind `popn_afreqs` to `random_snps`
 random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, OBS_CT)),
@@ -903,9 +903,6 @@ random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, 
                                  by = c("PHENO", "RANDOM_SNP" = "SNP", "REF", "ALT", "CHR"))
 # Bind `all` AFs
 random_afreqs = rbind(random_afreqs, random_snps)
-
-## Recode PHENO
-#random_afreqs$PHENO = dplyr::recode(random_afreqs$PHENO, !!!rev_recode_vec)
 
 ## Add `HIT_CONTROL` column
 random_afreqs$HIT_CONTROL = "control"
@@ -2268,18 +2265,81 @@ fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
 ```{r}
 fst_out %>% 
   dplyr::filter(hit_control == "hit") %>% 
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot(mapping = aes(x = Fst, y = phenotype, fill = phenotype)) +
-    stat_density_ridges(aes(scale = 2),
-                        geom = "density_ridges_gradient",
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype)) +
+    stat_density_ridges(geom = "density_ridges_gradient",
+                        scale = 2,
                         calc_ecdf = TRUE,
                         quantiles = c(0.5, 0.9),
                         quantile_lines = T) +
-    scale_fill_manual(values = pal_primary) +
-    ylab(label = NULL) +
-    theme_bw() +
-    guides(fill = F) +
-    scale_y_discrete(expand = expansion(add = c(0.2, 2.3)))
-
+  scale_fill_manual(values = pal_primary) +
+  guides(fill = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL)
+```
+```{r}
+# Automatic bandwidth
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+  scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL)
 ```
 
+```{r}
+# Manually-set bandwidth 
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+ # scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL)
+```
+
+```{r}
+# Manually-set bandwidth 
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+  scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL)
+
+```
