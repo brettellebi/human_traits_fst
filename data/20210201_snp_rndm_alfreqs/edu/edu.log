@@ -1,0 +1,133 @@
+PLINK v2.00a2.3LM 64-bit Intel (24 Jan 2020)
+Options in effect:
+  --extract data/20210201_random_snps_snp_ids/edu.list
+  --freq
+  --loop-cats PHENO1
+  --out data/20210201_snp_rndm_alfreqs/edu/edu
+  --pheno iid-only data/plink2_sample_popn_key.txt
+  --vcf data/20210201_snp_rndm_filtered/edu.vcf.gz
+
+Hostname: hx-noah-02-03.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
+Start time: Tue Feb  2 13:20:59 2021
+
+Random number seed: 1612272059
+257545 MiB RAM detected; reserving 128772 MiB for main workspace.
+Using up to 64 threads (change this with --threads).
+--vcf: 3004 variants scanned.
+--vcf: data/20210201_snp_rndm_alfreqs/edu/edu-temporary.pgen +
+data/20210201_snp_rndm_alfreqs/edu/edu-temporary.pvar +
+data/20210201_snp_rndm_alfreqs/edu/edu-temporary.psam written.
+2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
+data/20210201_snp_rndm_alfreqs/edu/edu-temporary.psam.
+3004 variants loaded from
+data/20210201_snp_rndm_alfreqs/edu/edu-temporary.pvar.
+1 categorical phenotype loaded (2504 values).
+--extract: 3004 variants remaining.
+--loop-cats: 26 categories present.
+--loop-cats: Processing category 'GBR' (91 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.GBR.afreq .
+--loop-cats: Processing category 'FIN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.FIN.afreq .
+--loop-cats: Processing category 'CHS' (105 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.CHS.afreq .
+--loop-cats: Processing category 'PUR' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.PUR.afreq .
+--loop-cats: Processing category 'CDX' (93 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.CDX.afreq .
+--loop-cats: Processing category 'CLM' (94 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.CLM.afreq .
+--loop-cats: Processing category 'IBS' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.IBS.afreq .
+--loop-cats: Processing category 'PEL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.PEL.afreq .
+--loop-cats: Processing category 'PJL' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.PJL.afreq .
+--loop-cats: Processing category 'KHV' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.KHV.afreq .
+--loop-cats: Processing category 'ACB' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.ACB.afreq .
+--loop-cats: Processing category 'GWD' (113 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.GWD.afreq .
+--loop-cats: Processing category 'ESN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.ESN.afreq .
+--loop-cats: Processing category 'BEB' (86 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.BEB.afreq .
+--loop-cats: Processing category 'MSL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.MSL.afreq .
+--loop-cats: Processing category 'STU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.STU.afreq .
+--loop-cats: Processing category 'ITU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.ITU.afreq .
+--loop-cats: Processing category 'CEU' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.CEU.afreq .
+--loop-cats: Processing category 'YRI' (108 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.YRI.afreq .
+--loop-cats: Processing category 'CHB' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.CHB.afreq .
+--loop-cats: Processing category 'JPT' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.JPT.afreq .
+--loop-cats: Processing category 'LWK' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.LWK.afreq .
+--loop-cats: Processing category 'ASW' (61 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.ASW.afreq .
+--loop-cats: Processing category 'MXL' (64 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.MXL.afreq .
+--loop-cats: Processing category 'TSI' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.TSI.afreq .
+--loop-cats: Processing category 'GIH' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210201_snp_rndm_alfreqs/edu/edu.GIH.afreq .
+
+End time: Tue Feb  2 13:21:01 2021
