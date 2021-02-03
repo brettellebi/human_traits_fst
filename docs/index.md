@@ -1,11 +1,15 @@
 ---
 title: "Fst variation across human traits"
 author: "Ian Brettell"
-date: '2021-01-27'
+date: '2021-02-03'
+#editor_options: 
+#  chunk_output_type: inline
+#output: html_notebook
 output:
   html_document:
     toc: true
     toc_float: true
+    dev: 'svg'
     number_sections: true
     keep_md: true
     pandoc_args: --lua-filter=color-text.lua
@@ -54,7 +58,7 @@ library(here)
 source(here::here("code", "scripts", "source.R"))
 ```
 
-## Download 1GK data
+## Download 1KG data
 
 ### Download from FTP
 
@@ -81,7 +85,7 @@ find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz \
 ```bash
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
 
 # So remove that one from list above
@@ -90,7 +94,7 @@ sed -i '/MT/d' human_traits_fst/data/20200205_vcfs.list
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
   
 # Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
 sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
@@ -98,7 +102,7 @@ sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1gk_all.vcf.gz
+  O=vcfs/1kg_all.vcf.gz
 # SUCCESS
 ```
 
@@ -106,7 +110,7 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 
 ### Pull data for each trait
 
-[**NOTE**]{colour = "red"}: Uncheck `Include child trait data` before downloading.
+[**NOTE**]{color="red"}: Uncheck `Include child trait data` before downloading.
 
 All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210122_gwas_catalog.xlsx`
 
@@ -238,91 +242,82 @@ data_list = lapply(traits, function(trait){
 ```
 
 ```
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
+## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in AB1130 / R1130C28: got '1E-423'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in AB1130 /
+## R1130C28: got '1E-423'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L2384 / R2384C12: got '2 x 9'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L2384 /
+## R2384C12: got '2 x 9'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in M2384 / R2384C13: got '190120954 x 70383416'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in M2384 /
+## R2384C13: got '190120954 x 70383416'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L3046 / R3046C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L3046 /
+## R3046C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L3070 / R3070C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L3070 /
+## R3070C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4419 / R4419C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4419 /
+## R4419C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4420 / R4420C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4420 /
+## R4420C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4421 / R4421C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4421 /
+## R4421C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4422 / R4422C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4422 /
+## R4422C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4586 / R4586C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4586 /
+## R4586C12: got 'X'
 ```
 
 ```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L6641 / R6641C12: got 'X'
+## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L6641 /
+## R6641C12: got 'X'
 ```
 
 ```
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
+## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
+## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
+## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
 ```
 
 ```
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
+## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
+## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
+## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
+## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
 
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
+## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
 ```
 
 ```r
@@ -645,7 +640,7 @@ lapply(data_list, function(pheno_df){
 })
 ```
 
-![](index_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-2.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-3.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-4.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-5.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-6.png)<!-- -->
+![](index_files/figure-html/unnamed-chunk-12-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-6.svg)<!-- -->
 
 Save
 
@@ -725,7 +720,7 @@ lapply(data_list, function(pheno){
 
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
-in_vcf=../vcfs/1gk_all.vcf.gz
+in_vcf=../vcfs/1kg_all.vcf.gz
 snps_dir=data/20210122_snp_hit_lists
 out_dir=data/20210125_snp_hits_filtered
 
@@ -749,9 +744,10 @@ done
 
 ## Get allele frequencies of SNP hits with `Plink2`
 
-### Import 1GK metadata (for sample-population key)
+### Import 1KG metadata (for sample-population key)
 
-Downloded via this page: <http://www.internationalgenome.org/data>
+Downloded via this page: <http://www.internationalgenome.org/data>.
+
 Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>. 
 
 Saved here: `data/20130606_sample_info.xlsx`
@@ -934,13 +930,13 @@ Bin by risk allele frequency
 
 ```r
 # 1% intervals
-breakpoints = seq(0, 1, 0.01)
+breakpoints = seq(0, 1, 0.1)
 
 data_list = lapply(data_list, function(pheno){
   # choose DF
   df = pheno[["consol"]]
   # add bins
-  df$BIN_100 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
+  df$BIN_10 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
   # save back into list
   pheno[["consol"]] = df
   
@@ -952,7 +948,7 @@ Extract key columns and write to file
 
 
 ```r
-out_dir = here::here("data", "20210126_snp_risk_hits_binned")
+out_dir = here::here("data", "20210201_snp_risk_hits_binned")
 
 dir.create(out_dir)
 
@@ -966,7 +962,7 @@ risk_afs = lapply(data_list, function(pheno){
   # filter
   df = df %>% 
     dplyr::filter(POPN == "all") %>% # take only global AFs 
-    dplyr::select(TOP_SNP, BIN_100) %>% 
+    dplyr::select(TOP_SNP, BIN_10) %>% 
     tidyr::drop_na() # drop NAs
   # set output path
   trait = names(data_list)[counter]
@@ -985,7 +981,7 @@ With `Plink2`, per chromosome for speed.
 
 ```bash
 # set output directory
-in_file=../vcfs/1gk_all.vcf.gz
+in_file=../vcfs/1kg_all.vcf.gz
 out_dir=../big_data/20210125_alfreqs_all
 
 mkdir -p $out_dir
@@ -1014,19 +1010,20 @@ done
 
 ```r
 # On cluster
+# `conda activate fst_env_rhel`
 
 library(here)
 source(here::here("code", "scripts", "source.R"))
 
 # Set variables
 in_dir = "../big_data/20210125_alfreqs_all"
-out_dir = "../big_data/20210125_alfreqs_all_binned"
-breakpoints = seq(0, 1, 0.01) # 1% bins
+out_dir = "../big_data/20210201_alfreqs_all_binned_10"
+breakpoints = seq(0, 1, 0.1) # 10% bins
 
 # Create output directory
 dir.create(out_dir)
 
-# Get list of input files
+# Get list of input files, excluding 
 in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
 
 # Read in files, add bins, and write to output
@@ -1034,7 +1031,10 @@ freq_list = lapply(in_files, function(chr_file){
   # read in file
   df = read_afreq(chr_file)
   # add bins
-  df$BIN_100 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
+  df$BIN_10 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
+  # remove "ss" SNPs
+  df = df %>% 
+    dplyr::filter(!grepl("ss", SNP))
   # write file
   readr::write_tsv(df, file = file.path(out_dir, basename(chr_file)))
 })
@@ -1057,11 +1057,11 @@ source(here::here("code", "scripts", "source.R"))
 
 # Variables
 
-input_risk_snp_dir = here::here("data", "20210126_snp_risk_hits_binned")
-all_1kg_bins = "../big_data/20210125_alfreqs_all_binned/all.afreq"
+input_risk_snp_dir = here::here("data", "20210201_snp_risk_hits_binned")
+all_1kg_bins = "../big_data/20210201_alfreqs_all_binned_10/all.afreq"
 initial_seed = 123
-output_dir = here::here("data", "20210126_random_snps")
-output_dir_snpids = here::here("data", "20210126_random_snps_snp_ids")
+output_dir = here::here("data", "20210201_random_snps")
+output_dir_snpids = here::here("data", "20210201_random_snps_snp_ids")
 
 dir.create(output_dir)
 dir.create(output_dir_snpids)
@@ -1076,7 +1076,7 @@ risk_list = lapply(phenos, function(pheno){
   # read file
   out = readr::read_tsv(file_path,
                         col_names = T) %>% 
-    split(., f = .$BIN_100) # split by bin
+    split(., f = .$BIN_10) # split by bin
 })
   
 ## Read in 1KG data
@@ -1092,11 +1092,11 @@ seeds = sample(1:1000, length(risk_list))
 
 ## Run over list
 counter <- 0
-lapply(risk_list, function(pheno){
+test = lapply(risk_list, function(pheno){
   # set counter 
   counter <<- counter + 1  
   # set seed for pheno
-  set.seed(seeds)[counter]
+  set.seed(seeds[counter])
   # get seeds for bin
   bin_seeds = sample(1:1000, length(pheno))
   # get random SNPs from each bin
@@ -1112,11 +1112,10 @@ lapply(risk_list, function(pheno){
     set.seed(bin_seeds[bin_counter])    
     # filter 1kg DF for SNPs with same bin and get random hits
     random_hits = freq_df %>% 
-      #dplyr::select(SNP, ALT_FREQS, OBS_CT, BIN_100) %>% 
-      dplyr::filter(BIN_100 == target_bin) %>% 
+      dplyr::filter(BIN_10 == target_bin) %>% 
       dplyr::slice_sample(n = hits_n) %>% 
       dplyr::rename(RANDOM_SNP = SNP,
-                    RANDOM_BIN_100 = BIN_100)
+                    RANDOM_BIN_10 = BIN_10)
     # bind `random_hits` to target SNP df
     df_out = cbind(bin_df, random_hits)
     
@@ -1135,7 +1134,9 @@ lapply(risk_list, function(pheno){
   # save just SNP IDs (for Plink to get per-population AFs)
   out_path = file.path(output_dir_snpids, paste(trait, ".list", sep = ""))
   ## write file
-  readr::write_lines(out$RANDOM_SNP, out_path)  
+  readr::write_lines(out$RANDOM_SNP, out_path)
+  
+  return(out)
 })
 ```
 
@@ -1145,17 +1146,17 @@ lapply(risk_list, function(pheno){
 ```bash
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
-in_vcf=../vcfs/1gk_all.vcf.gz
-snps_dir=data/20210126_random_snps_snp_ids
-out_dir=data/20210127_snp_rndm_filtered
+in_vcf=../vcfs/1kg_all.vcf.gz
+snps_dir=data/20210201_random_snps_snp_ids
+out_dir=data/20210201_snp_rndm_filtered
 
 mkdir -p $out_dir
 
 for trait in $(echo $traits ); do
   bsub \
     -M 10000 \
-    -o ../log/20210127_extract_snps_$trait.out \
-    -e ../log/20210127_extract_snps_$trait.err \
+    -o ../log/20210201_extract_snps_$trait.out \
+    -e ../log/20210201_extract_snps_$trait.err \
     """
     conda activate fst_env_rhel ;
     gatk SelectVariants \
@@ -1172,10 +1173,10 @@ done
 
 ```bash
 traits=$(echo hei bmi edu int ibd pig)
-random_snps_dir=data/20210126_random_snps_snp_ids
-vcf_in_dir=data/20210127_snp_rndm_filtered
+random_snps_dir=data/20210201_random_snps_snp_ids
+vcf_in_dir=data/20210201_snp_rndm_filtered
 popn_key=data/plink2_sample_popn_key.txt
-out_dir=data/20210127_snp_rndm_alfreqs
+out_dir=data/20210201_snp_rndm_alfreqs
 
 
 for trait in $(echo $traits ); do
@@ -1184,8 +1185,8 @@ for trait in $(echo $traits ); do
   
   bsub \
     -M 10000 \
-    -o ../log/20210127_rdm_popn_afreqs_$trait.out \
-    -e ../log/20210127_rdm_popn_afreqs_$trait.err \
+    -o ../log/20210201_rdm_popn_afreqs_$trait.out \
+    -e ../log/20210201_rdm_popn_afreqs_$trait.err \
     """
     conda activate fst_env_rhel ;
     plink2 \
@@ -1196,15 +1197,15 @@ for trait in $(echo $traits ); do
       --loop-cats PHENO1 \
       --out $out_dir/$trait/$trait
     """ ;
-done  
+done
 ```
 
 #### Bind into single DF
 
 
 ```r
-in_dir_rndm = here::here("data", "20210126_random_snps")
-in_dir_afreq = here::here("data", "20210127_snp_rndm_alfreqs")
+in_dir_rndm = here::here("data", "20210201_random_snps")
+in_dir_afreq = here::here("data", "20210201_snp_rndm_alfreqs")
 
 # Read in data
 
@@ -1232,13 +1233,12 @@ popn_afreqs = lapply(trait_levels, function(pheno){
   popn_afreqs = lapply(target_files, function(popn){
     df = read_afreq(popn)
   }) %>% 
-    dplyr::bind_rows(.id = "POPN") # %>% 
-  #  dplyr::select(-OBS_CT) %>% 
-  #  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = c(ALT_FREQS, OBS_CT))
-  
+    dplyr::bind_rows(.id = "POPN")
+
   return(popn_afreqs)
 }) %>% 
-  dplyr::bind_rows(.id = "PHENO")
+  dplyr::bind_rows(.id = "PHENO") %>% 
+  tidyr::drop_na()
 
 # Bind `popn_afreqs` to `random_snps`
 random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, OBS_CT)),
@@ -1246,9 +1246,6 @@ random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, 
                                  by = c("PHENO", "RANDOM_SNP" = "SNP", "REF", "ALT", "CHR"))
 # Bind `all` AFs
 random_afreqs = rbind(random_afreqs, random_snps)
-
-## Recode PHENO
-#random_afreqs$PHENO = dplyr::recode(random_afreqs$PHENO, !!!rev_recode_vec)
 
 ## Add `HIT_CONTROL` column
 random_afreqs$HIT_CONTROL = "control"
@@ -1333,6 +1330,47 @@ done
 
 ```
 
+## Filter VCFs for clumped SNPs
+
+
+```bash
+# On cluster
+
+# Set variables
+traits=$(echo hei bmi edu int ibd pig)
+clump_param="r2-0.1_kb-1000"
+in_dir_snp=data/20210125_clumped
+in_dir_vcf=data/20210125_snp_hits_filtered
+ref=../refs/hs37d5.fa.gz
+out_dir_snp_list=data/20210128_clumped_snps
+out_dir_vcfs=data/20210128_hits_vcfs
+
+mkdir -p $out_dir_snp_list $out_dir_vcfs
+
+# Extract SNP column and write to list
+for trait in $(echo $traits ); do
+  target_file=$in_dir_snp/$trait/$clump_param.clumped ;
+  awk '{print $3}' $target_file | tail -n+2 \
+    > $out_dir_snp_list/$trait.list ;
+done
+
+# Make new VCFs
+for trait in $(echo $traits ); do
+  bsub \
+    -o ../log/20210128_filter_vcfs_clump_$trait.out \
+    -e ../log/20210128_filter_vcfs_clump_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    gatk SelectVariants \
+      -R $ref \
+      -V $in_dir_vcf/$trait.vcf.gz \
+      --keep-ids $out_dir_snp_list/$trait.list \
+      -O $out_dir_vcfs/$trait.vcf.gz     
+    """ ;
+done    
+
+```
+
 ### Add clumped SNP files to `data_list`
 
 
@@ -1379,6 +1417,66 @@ data_list = lapply(data_list, function(pheno){
 })
 ```
 
+## Extract random SNPs filtered by those matching the clumped SNPs
+
+
+```r
+out_dir = here::here("data", "20210201_random_snps")
+
+dir.create(out_dir)
+
+counter = 0
+out = lapply(data_list, function(pheno){
+  # set counter
+  counter <<- counter + 1
+  # get name of trait
+  trait = names(data_list)[counter]
+  # get clumped SNPs
+  clumped_snps = pheno[["clumped"]][[clump_param]]$SNP
+  # gather SNPs
+  snps = pheno[["random_af"]] %>% 
+    dplyr::filter(TOP_SNP %in% clumped_snps) %>% 
+    dplyr::select(RANDOM_SNP) %>% 
+    unique(.)
+  # write to file
+  out_path = file.path(out_dir, paste(trait, ".list", sep = ""))
+  readr::write_lines(snps$RANDOM_SNP, out_path)
+})
+rm(out)
+```
+
+## Make VCFs for random control SNPs
+
+
+```bash
+# On cluster
+
+# Set variables
+traits=$(echo hei bmi edu int ibd pig)
+in_dir_snp_list=data/20210201_random_snps
+in_vcf=../vcfs/1kg_all.vcf.gz
+ref=../refs/hs37d5.fa.gz
+out_dir_vcfs=data/20210201_rndm_vcfs
+
+mkdir -p $out_dir_vcfs
+
+# Make new VCFs
+for trait in $(echo $traits ); do
+  bsub \
+    -M 20000 \
+    -o ../log/20210201_filter_vcfs_rndm_$trait.out \
+    -e ../log/20210201_filter_vcfs_rndm_$trait.err \
+    """
+    conda activate fst_env_rhel ;
+    gatk SelectVariants \
+      -R $ref \
+      -V $in_vcf \
+      --keep-ids $in_dir_snp_list/$trait.list \
+      -O $out_dir_vcfs/$trait.vcf.gz     
+    """ ;
+done    
+```
+
 ## Consolidate key data into single DF for analysis
 
 **NOTE**: `clump_param` is set in `code/scripts/source.R`
@@ -1399,7 +1497,7 @@ data_list = lapply(data_list, function(pheno){
   controls = pheno[["random_af"]] %>%
     # filter for SNPs in target_clump
     dplyr::filter(TOP_SNP %in% target_clump$SNP) %>% 
-    dplyr::select(-c(TOP_SNP, BIN_100, RANDOM_BIN_100), 
+    dplyr::select(-c(TOP_SNP, BIN_10, RANDOM_BIN_10), 
                   SNP = RANDOM_SNP) %>% 
     dplyr::mutate(RISK_AF = ALT_FREQS)
   
@@ -1427,6 +1525,7 @@ final_plt = final_df %>%
   tidyr::pivot_wider(names_from = POPN, values_from = RISK_AF) 
 ```
 
+
 # Analysis
 
 ## Manhattan plots
@@ -1448,9 +1547,7 @@ lapply(unique(final_df$PHENO), function(pheno){
 })
 ```
 
-![](index_files/figure-html/unnamed-chunk-33-1.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-2.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-3.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-4.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-5.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-6.png)<!-- -->
-
-
+![](index_files/figure-html/unnamed-chunk-36-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-6.svg)<!-- -->
 
 ## Allele frequency distributions of risk alleles
 
@@ -1473,7 +1570,7 @@ final_df %>%
 ## Warning: Removed 28 rows containing non-finite values (stat_bin).
 ```
 
-![](index_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
+![](index_files/figure-html/unnamed-chunk-37-1.svg)<!-- -->
 
 ```r
 ggsave(here("plots", "20210127_af_distribution", "20210127_hits_all.png"),
@@ -1528,9 +1625,10 @@ two
 ```
 
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-36-1.png" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" /><img src="index_files/figure-html/unnamed-chunk-36-2.png" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" />
+<img src="index_files/figure-html/unnamed-chunk-39-1.svg" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" /><img src="index_files/figure-html/unnamed-chunk-39-2.svg" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" />
 <p class="caption">Full size and zoomed to 0 < y < 20</p>
 </div>
+
 
 
 
@@ -1564,15 +1662,10 @@ ggsave(here("plots", "20210127_af_v_effect_size", "20210127_hits_zoomed.png"),
 
 ```r
 # Create raw list of variants
-case = here::here("data", "20210125_snp_hits_filtered")
-control = here::here("data", "20210127_snp_rndm_filtered")
-target_dirs = c(case, control)
-names(target_dirs) = c("case", "control")
-
-# Set seed
-initial_seed = 53
-set.seed(initial_seed)
-seeds = sample(1:1000, size = length(target_dirs))
+hit = here::here("data", "20210128_hits_vcfs")
+control = here::here("data", "20210201_rndm_vcfs")
+target_dirs = c(hit, control)
+names(target_dirs) = c("hit", "control")
 
 # Run 
 counter = 0
@@ -1584,17 +1677,6 @@ fst_out = lapply(target_dirs, function(target_dir){
     target_file = file.path(target_dir, paste(trait, ".vcf.gz", sep = ""))
     # read in file
     vcf_out <- pegas::read.vcf(target_file)
-    # filter `cases` for clumped SNPs, and take same number of `control` SNPs
-    ## get target SNP IDs
-    target_snps = data_list[[trait]]$clumped[[clump_param]]$SNP
-    if (names(target_dirs)[counter] == "case"){
-      ## filter VCF
-      vcf_out = vcf_out[, colnames(vcf_out) %in% target_snps]
-      ## take sample of same number of `control` SNPs
-    } else if (names(target_dirs)[counter] == "control"){
-      set.seed(seeds[counter])
-      vcf_out = vcf_out[, sample(ncol(vcf_out), size = length(target_snps))]
-    }
     
     return(vcf_out)
   })
@@ -1619,7 +1701,7 @@ fst_out = lapply(target_dirs, function(target_dir){
   
   return(fst_out_df)
 }) %>% 
-  dplyr::bind_rows(.id = "case_control")
+  dplyr::bind_rows(.id = "hit_control")
 
 # Recode phenotype
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels)
@@ -1630,8 +1712,8 @@ Write to file
 
 
 ```r
-out_dir = here::here("data", "20210127_results")
-out_path = file.path(out_dir, paste("20210127_fst", ".csv", sep = ""))
+out_dir = here::here("data", "20210203_results")
+out_path = file.path(out_dir, paste("20210203_fst", ".csv", sep = ""))
 
 dir.create(out_dir)
 
@@ -1641,62 +1723,65 @@ readr::write_csv(fst_out, out_path)
 Read back in 
 
 ```r
-fst_out = readr::read_csv(here::here("data", "20210127_results/20210127_fst.csv"))
+fst_out = readr::read_csv(here::here("data", "20210203_results", "20210203_fst.csv"))
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+fst_out$hit_control = factor(fst_out$hit_control, levels = hit_control_levels)
 
 knitr::kable(head(fst_out))
 ```
 
 
 
-|case_control |phenotype | Fit|       Fst| Fis|snp        |
-|:------------|:---------|---:|---------:|---:|:----------|
-|case         |Height    |   1| 0.0543812|   1|rs2710889  |
-|case         |Height    |   1| 0.2898026|   1|rs1240697  |
-|case         |Height    |   1| 0.0972836|   1|rs28401288 |
-|case         |Height    |   1| 0.0669376|   1|rs377599   |
-|case         |Height    |   1| 0.0274605|   1|rs12028979 |
-|case         |Height    |   1| 0.0888646|   1|rs5024246  |
+|hit_control |phenotype | Fit|       Fst| Fis|snp        |
+|:-----------|:---------|---:|---------:|---:|:----------|
+|hit         |Height    |   1| 0.0543812|   1|rs2710889  |
+|hit         |Height    |   1| 0.2898026|   1|rs1240697  |
+|hit         |Height    |   1| 0.0972836|   1|rs28401288 |
+|hit         |Height    |   1| 0.0669376|   1|rs377599   |
+|hit         |Height    |   1| 0.0274605|   1|rs12028979 |
+|hit         |Height    |   1| 0.0888646|   1|rs5024246  |
 
 #### *Fst* histograms
 
 
 ```r
 one = fst_out %>%
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
     theme_bw() +
     scale_fill_manual(values = pal_primary)  +
-    guides(fill = F)
+    guides(fill = F) +
+    ylim(0, 450) +
+    ggtitle("Hits")
 
 two = fst_out %>%
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot() +
     geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
     facet_wrap(~phenotype) +
     theme_bw() +
     scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
+    guides(fill = F) +
+    ylim(0, 450) +
+    ggtitle("Controls")
 
 one
 two
 ```
 
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-44-1.png" alt="Cases vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-44-2.png" alt="Cases vs controls" width="50%" />
-<p class="caption">Cases vs controls</p>
+<img src="index_files/figure-html/unnamed-chunk-47-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-47-2.svg" alt="Hits vs controls" width="50%" />
+<p class="caption">Hits vs controls</p>
 </div>
 
 
 
 
 ```r
-ggsave(here("plots", "20210127_histograms", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+ggsave(file.path(plot_path, "histograms_hits.svg"),
+       device = "svg",
        height = 12,
        width = 20)
 ```
@@ -1705,10 +1790,10 @@ ggsave(here("plots", "20210127_histograms", "20210127_hits_all.png"),
 
 
 ```r
-ggsave(here("plots", "20210127_histograms", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+out_path = file.path(plot_path, "histograms_rndm.svg")
+
+ggsave(out_path,
+       device = "svg",
        height = 12,
        width = 20)
 ```
@@ -1720,7 +1805,7 @@ ggsave(here("plots", "20210127_histograms", "20210127_controls_all.png"),
 
 ```r
 one = fst_out %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1728,11 +1813,13 @@ one = fst_out %>%
     ylab("Density") +
     theme_bw() +
     scale_fill_manual(values = pal_primary) +
-    guides(fill = F)
+    guides(fill = F) +
+    ylim(0, 12) +
+    ggtitle("Hits")
 
 
 two = fst_out %>% 
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
   ggplot(aes(Fst, fill = phenotype)) +
     geom_density() +
     labs(fill = "Phenotype") +
@@ -1740,14 +1827,16 @@ two = fst_out %>%
     ylab("Density") +
     theme_bw() +
     scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
+    guides(fill = F) +
+    ylim(0, 12) +
+    ggtitle("Controls")
 
 one
 two
 ```
 
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-49-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-49-2.png" alt="Hits vs controls" width="50%" />
+<img src="index_files/figure-html/unnamed-chunk-52-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-52-2.svg" alt="Hits vs controls" width="50%" />
 <p class="caption">Hits vs controls</p>
 </div>
 
@@ -1755,10 +1844,8 @@ two
 
 
 ```r
-ggsave(here("plots", "20210127_densities", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+ggsave(file.path(plot_path, "density_hits.svg"),
+       device = "svg",
        height = 12,
        width = 20)
 ```
@@ -1767,10 +1854,8 @@ ggsave(here("plots", "20210127_densities", "20210127_hits_all.png"),
 
 
 ```r
-ggsave(here("plots", "20210127_densities", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+ggsave(file.path(plot_path, "density_rndm.svg"),
+       device = "svg",
        height = 12,
        width = 20)
 ```
@@ -1780,7 +1865,8 @@ ggsave(here("plots", "20210127_densities", "20210127_controls_all.png"),
 
 ```r
 one = fst_out %>% 
-  dplyr::filter(case_control == "case") %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1788,10 +1874,12 @@ one = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
+    ggtitle("Hits")
 
 two = fst_out %>%
-  dplyr::filter(case_control == "control") %>% 
+  dplyr::filter(hit_control == "control") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1799,14 +1887,15 @@ two = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
+    ggtitle("Controls")
 
 one
 two
 ```
 
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-54-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-54-2.png" alt="Hits vs controls" width="50%" />
+<img src="index_files/figure-html/unnamed-chunk-57-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-57-2.svg" alt="Hits vs controls" width="50%" />
 <p class="caption">Hits vs controls</p>
 </div>
 
@@ -1814,10 +1903,8 @@ two
 
 
 ```r
-ggsave(here("plots", "20210127_ridges", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+ggsave(file.path(plot_path, "ridges_hits.svg"),
+       device = "svg",
        height = 12,
        width = 20)
 ```
@@ -1826,398 +1913,206 @@ ggsave(here("plots", "20210127_ridges", "20210127_hits_all.png"),
 
 
 ```r
-ggsave(here("plots", "20210127_ridges", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
+ggsave(file.path(plot_path, "ridges_rndm.svg"),
+       device = "svg",
        height = 12,
        width = 20)
 ```
 
-### Run Kolmogorov-Smirnov Tests
+### Tests
+
+#### Median, 80 and 90 percentiles, KS test, and MW test
+
+[Rationale]{color="red"}:
+
+1. Get the median, and 0.8 and 0.9 percentiles for the *Fst* density of each trait.
+2. Run one-sided Mann-Whitney tests using `Height` as the reference against each of the other traits.
+3. Run one-sided Kolmogorov-Smirnov tests using `Height` as the reference against each of the other traits.
+4. Determine which tests to use to confirm the differences apparent in the forms of the density curves.
 
 
 ```r
-case_control = unique(fst_out$case_control)
-names(case_control) = case_control
-
-ks_out = lapply(case_control, function(dataset){
-  # filter dataset
-  target_df = fst_out[fst_out$case_control == dataset, ]
-  # run pairwise KS tests
-  ks_out = lapply(trait_levels_verb, function(trait_a){
-    out = lapply(trait_levels_verb, function(trait_b){
-      results = ks.test(target_df$Fst[target_df$phenotype == trait_a],
-                        target_df$Fst[target_df$phenotype == trait_b])
-      P = results$p.value
-      
-      return(P)
-    }) %>% 
-      dplyr::bind_rows(.id = "test_b")
+final_list = split(fst_out, f = fst_out$hit_control)
+final_list = lapply(final_list, function(dataset){
+  split_data = split(dataset, f = dataset$phenotype)
+  
+  out = lapply(split_data, function(pheno){
+    stats = list()
     
-    return(out)
-  })  %>% 
-    dplyr::bind_rows(.id = "trait")
-  
-  traits = ks_out$trait
-  ks_out$trait <- NULL
-  
-  rownames(ks_out) = traits
-  return(ks_out)
-})
+    # Get median and 90 percentile
+    stats[["stats"]] = c("median" = median(pheno$Fst),
+                         quantile(pheno$Fst, probs = 0.8),
+                         quantile(pheno$Fst, probs = 0.9))
+    
+    # Get Mann-Whitney results
+    stats[["final_list"]] = wilcox.test(x = split_data[["Height"]]$Fst,
+                                    y = pheno$Fst,
+                                    alternative = "less",
+                                    paired = F,
+                                    conf.int = T)
+    
+    # Get KS results
+    stats[["ks_out"]] = ks.test(x = split_data[["Height"]]$Fst,
+                                y = pheno$Fst,
+                                alternative = "greater")
 
-# convert to matrix
-ks_mat = lapply(ks_out, function(dataset){
-  out = as.matrix(dataset)
+    return(stats)
+  })# %>% 
+    #dplyr::bind_rows(.id = "phenotype")
+  
   
   return(out)
+
 })
-```
 
+# Collapse into DF
+final_df = lapply(final_list, function(dataset){
+  out = lapply(dataset, function(pheno){
+    # Put key data into data frame
+    df = c("MEDIAN" = pheno[["stats"]][["median"]],
+           "80%" = pheno[["stats"]][["80%"]],
+           "90%" = pheno[["stats"]][["90%"]],
+           pheno[["final_list"]]$statistic,
+           "P_MW" = pheno[["final_list"]]$p.value,
+           "CONF_LOWER" = pheno[["final_list"]]$conf.int[1],
+           "CONF_UPPER" = pheno[["final_list"]]$conf.int[2],
+           pheno[["ks_out"]]$statistic,
+           "P_KS" = pheno[["ks_out"]]$p.value)
 
-
-```r
-# Process for plotting
-ks_out_gg = lapply(ks_out, function(dataset){
-  out = dataset
-  out$A = rownames(dataset)
-  out = out %>% 
-    pivot_longer(cols = -A, names_to = "B", values_to = "ks_P")
-  # convert P-values to -log10
-  out$ks_P = -log10(out$ks_P)
-  
-  return(out)
-}) %>% 
-  dplyr::bind_rows(.id = "case_control") %>% 
-  dplyr::mutate(across(c("A", "B"),
-                       ~factor(.x, levels = trait_levels_verb)))
-```
-
-Plot
-
-```r
-heat_hits_all = ks_out_gg %>% 
-  dplyr::filter(case_control == "case") %>% 
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c() +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_controls_all = ks_out_gg %>% 
-  dplyr::filter(case_control == "control") %>% 
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c(option = "magma") +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_hits_all
-heat_controls_all
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-61-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-61-2.png" alt="Hits vs controls" width="50%" />
-<p class="caption">Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-### Try with same number of SNPs 
-
-[**Strategy**]{color="red"}: Will it make a difference if we analyse the same number of SNPs for each trait? i.e. is the different number of SNPs for each trait affecting the KS test output?
-
-IBD only has 182 hits, so remove from this part of the analysis.
-
-The trait with the next least number of hits is `Intelligence`, with `480. So we'll take a random sample of 40
-
-
-```r
-fst_sample = split(fst_out, f = fst_out$case_control)
-fst_sample = lapply(fst_sample, function(dataset){
-  out = split(dataset, f = dataset$phenotype)
-  out = lapply(out, function(pheno){
-    pheno = pheno %>% 
-      dplyr::slice_sample(n = 480)
-    
-    return(pheno)
+    return(df)
   }) %>% 
-    dplyr::bind_rows() %>% 
-    dplyr::filter(phenotype != "IBD")
-}) %>% 
-  dplyr::bind_rows()
-```
-
-#### Histograms
-
-
-```r
-one = fst_sample %>%
-  dplyr::filter(case_control == "case") %>% 
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
-    theme_bw() +
-    scale_fill_manual(values = pal_primary)  +
-    guides(fill = F)
-
-two = fst_sample %>%
-  dplyr::filter(case_control == "control") %>% 
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
-
-one
-two
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-67-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-67-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
-
-
-
-```r
-ggsave(here("plots", "20210127_histograms", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_histograms", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-#### Density
-
-
-```r
-one = fst_sample %>% 
-  dplyr::filter(case_control == "case") %>% 
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_primary) +
-    guides(fill = F)
-
-two = fst_sample %>% 
-  dplyr::filter(case_control == "control") %>% 
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
-
-one
-two
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-72-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-72-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(here("plots", "20210127_densities", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_densities", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-### KS test
-
-
-```r
-case_control = unique(fst_sample$case_control)
-names(case_control) = case_control
-
-trait_levels_verb_sample = trait_levels_verb[-which(trait_levels_verb == "IBD")]
-traits_sample = traits[-which(traits == "ibd")]
-
-ks_sample = lapply(case_control, function(dataset){
-  # filter dataset
-  target_df = fst_sample[fst_sample$case_control == dataset, ]
-  # run pairwise KS tests
-  ks_out = lapply(trait_levels_verb_sample, function(trait_a){
-    out = lapply(trait_levels_verb_sample, function(trait_b){
-      results = ks.test(target_df$Fst[target_df$phenotype == trait_a],
-                        target_df$Fst[target_df$phenotype == trait_b])
-      P = results$p.value
-      
-      return(P)
-    }) %>% 
-      dplyr::bind_rows(.id = "test_b")
-    
-    return(out)
-  })  %>% 
-    dplyr::bind_rows(.id = "trait")
-  
-  traits = ks_out$trait_levels_verb_sample
-  ks_out$trait <- NULL
-  
-  rownames(ks_out) = trait_levels_verb_sample
-  return(ks_out)
-})
-```
-
-#### Heatmaps
-
-
-```r
-ks_sample_gg = lapply(ks_sample, function(dataset){
-  out = dataset
-  out$A = rownames(dataset)
-  out = out %>% 
-    pivot_longer(cols = -A, names_to = "B", values_to = "ks_P")
-  # convert P-values to -log10
-  out$ks_P = -log10(out$ks_P)
+    dplyr::bind_rows(.id = "PHENO")
   
   return(out)
 }) %>% 
-  dplyr::bind_rows(.id = "case_control") %>% 
-  dplyr::mutate(across(c("A", "B"),
-                       ~factor(.x, levels = trait_levels_verb_sample)))
+  dplyr::bind_rows(.id = "HIT_CONTROL")
+
+# Factor
+final_df$PHENO <- factor(final_df$PHENO, levels = trait_levels_verb)
+final_df$HIT_CONTROL = factor(final_df$HIT_CONTROL, levels = hit_control_levels)
+
+# Output table
+final_df %>% 
+  dplyr::filter(PHENO != "Height" & HIT_CONTROL == "hit") %>%
+  dplyr::select(!HIT_CONTROL) %>% 
+  knitr::kable()
 ```
 
-Plot
-
-```r
-heat_hits_sample = ks_sample_gg %>% 
-  dplyr::filter(case_control == "case") %>% 
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c() +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_controls_sample = ks_sample_gg %>% 
-  dplyr::filter(case_control == "control") %>% 
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c(option = "magma") +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-   
-heat_hits_sample
-heat_controls_sample
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-79-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-79-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
 
 
+|PHENO                  |    MEDIAN|       80%|       90%|       W|      P_MW| CONF_LOWER| CONF_UPPER|       D^+|      P_KS|
+|:----------------------|---------:|---------:|---------:|-------:|---------:|----------:|----------:|---------:|---------:|
+|BMI                    | 0.0473438| 0.0951012| 0.1338033| 2014306| 0.9994353|       -Inf|  0.0069362| 0.0354889| 0.0920426|
+|Educational attainment | 0.0591072| 0.1189623| 0.1617981| 1668872| 0.0000070|       -Inf| -0.0042002| 0.0875242| 0.0000007|
+|Intelligence           | 0.0640484| 0.1187706| 0.1599932|  522053| 0.0000130|       -Inf| -0.0062020| 0.1251515| 0.0000034|
+|IBD                    | 0.0559605| 0.1180520| 0.1704417|  205361| 0.0233731|       -Inf| -0.0012905| 0.1019891| 0.0293960|
+|Pigmentation           | 0.0513410| 0.1238692| 0.1724036|  621561| 0.8097992|       -Inf|  0.0059789| 0.0355927| 0.3547547|
+
+### Final *Fst* density plots for hits
+
+Some options for the figure.
 
 
 ```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype)) +
+    stat_density_ridges(geom = "density_ridges_gradient",
+                        scale = 2,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.8, 0.9),
+                        quantile_lines = T) +
+  scale_fill_manual(values = pal_primary) +
+  guides(fill = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; auto-bandwidth")
 ```
 
+```
+## Picking joint bandwidth of 0.0133
+```
 
+![](index_files/figure-html/unnamed-chunk-63-1.svg)<!-- -->
+
+```r
+# Automatic bandwidth
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.8, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+  scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; auto-bandwidth; with points")  
+```
+
+```
+## Picking joint bandwidth of 0.0133
+```
+
+![](index_files/figure-html/unnamed-chunk-64-1.svg)<!-- -->
 
 
 ```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
+# Manually-set bandwidth 
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.8, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+ # scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; manual bandwidth; with points; black lines")  
 ```
 
-### Compare effects of sampling on P-values
+![](index_files/figure-html/unnamed-chunk-65-1.svg)<!-- -->
 
 
 ```r
-heat_hits_all
-heat_hits_sample
+# Manually-set bandwidth 
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary) +
+  scale_colour_manual(values = pal_secondary) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; manual bandwidth; with points; coloured lines")  
 ```
 
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-84-1.png" alt="Hits: all vs sample" width="50%" /><img src="index_files/figure-html/unnamed-chunk-84-2.png" alt="Hits: all vs sample" width="50%" />
-<p class="caption">Hits: all vs sample</p>
-</div>
-
-
-```r
-heat_controls_all
-heat_controls_sample
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-85-1.png" alt="Controls: all vs sample" width="50%" /><img src="index_files/figure-html/unnamed-chunk-85-2.png" alt="Controls: all vs sample" width="50%" />
-<p class="caption">Controls: all vs sample</p>
-</div>
+![](index_files/figure-html/unnamed-chunk-66-1.svg)<!-- -->
