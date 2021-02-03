@@ -695,6 +695,9 @@ freq_list = lapply(in_files, function(chr_file){
   df = read_afreq(chr_file)
   # add bins
   df$BIN_10 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
+  # remove "ss" SNPs
+  df = df %>% 
+    dplyr::filter(!grepl("ss", SNP))
   # write file
   readr::write_tsv(df, file = file.path(out_dir, basename(chr_file)))
 })
@@ -855,7 +858,7 @@ for trait in $(echo $traits ); do
       --loop-cats PHENO1 \
       --out $out_dir/$trait/$trait
     """ ;
-done  
+done
 ```
 
 #### Bind into single DF
@@ -1073,7 +1076,7 @@ data_list = lapply(data_list, function(pheno){
 ## Extract random SNPs filtered by those matching the clumped SNPs
 
 ```{r, eval = F}
-out_dir = here::here("data", "20210128_random_snps")
+out_dir = here::here("data", "20210201_random_snps")
 
 dir.create(out_dir)
 
@@ -1104,10 +1107,10 @@ rm(out)
 
 # Set variables
 traits=$(echo hei bmi edu int ibd pig)
-in_dir_snp_list=data/20210128_random_snps
+in_dir_snp_list=data/20210201_random_snps
 in_vcf=../vcfs/1kg_all.vcf.gz
 ref=../refs/hs37d5.fa.gz
-out_dir_vcfs=data/20210128_rndm_vcfs
+out_dir_vcfs=data/20210201_rndm_vcfs
 
 mkdir -p $out_dir_vcfs
 
@@ -1115,8 +1118,8 @@ mkdir -p $out_dir_vcfs
 for trait in $(echo $traits ); do
   bsub \
     -M 20000 \
-    -o ../log/20210128_filter_vcfs_rndm_$trait.out \
-    -e ../log/20210128_filter_vcfs_rndm_$trait.err \
+    -o ../log/20210201_filter_vcfs_rndm_$trait.out \
+    -e ../log/20210201_filter_vcfs_rndm_$trait.err \
     """
     conda activate fst_env_rhel ;
     gatk SelectVariants \
@@ -1127,7 +1130,6 @@ for trait in $(echo $traits ); do
     """ ;
 done    
 ```
-
 
 ## Consolidate key data into single DF for analysis
 
@@ -1148,7 +1150,7 @@ data_list = lapply(data_list, function(pheno){
   controls = pheno[["random_af"]] %>%
     # filter for SNPs in target_clump
     dplyr::filter(TOP_SNP %in% target_clump$SNP) %>% 
-    dplyr::select(-c(TOP_SNP, BIN_100, RANDOM_BIN_100), 
+    dplyr::select(-c(TOP_SNP, BIN_10, RANDOM_BIN_10), 
                   SNP = RANDOM_SNP) %>% 
     dplyr::mutate(RISK_AF = ALT_FREQS)
   
