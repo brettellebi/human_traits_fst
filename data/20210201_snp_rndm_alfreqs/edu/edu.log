@@ -7,11 +7,11 @@ Options in effect:
   --pheno iid-only data/plink2_sample_popn_key.txt
   --vcf data/20210201_snp_rndm_filtered/edu.vcf.gz
 
-Hostname: hx-noah-02-03.ebi.ac.uk
+Hostname: hx-noah-03-09.ebi.ac.uk
 Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
-Start time: Tue Feb  2 13:20:59 2021
+Start time: Wed Feb  3 09:26:01 2021
 
-Random number seed: 1612272059
+Random number seed: 1612344361
 257545 MiB RAM detected; reserving 128772 MiB for main workspace.
 Using up to 64 threads (change this with --threads).
 --vcf: 3004 variants scanned.
@@ -130,4 +130,4 @@ Calculating allele frequencies... done.
 --freq: Allele frequencies (founders only) written to
 data/20210201_snp_rndm_alfreqs/edu/edu.GIH.afreq .
 
-End time: Tue Feb  2 13:21:01 2021
+End time: Wed Feb  3 09:26:04 2021

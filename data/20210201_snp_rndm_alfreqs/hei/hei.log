@@ -7,23 +7,23 @@ Options in effect:
   --pheno iid-only data/plink2_sample_popn_key.txt
   --vcf data/20210201_snp_rndm_filtered/hei.vcf.gz
 
-Hostname: hx-noah-54-03.ebi.ac.uk
+Hostname: hx-noah-03-15.ebi.ac.uk
 Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
-Start time: Tue Feb  2 13:20:59 2021
+Start time: Wed Feb  3 09:26:04 2021
 
-Random number seed: 1612272059
-385391 MiB RAM detected; reserving 192695 MiB for main workspace.
-Using up to 96 threads (change this with --threads).
---vcf: 4172 variants scanned.
+Random number seed: 1612344364
+257545 MiB RAM detected; reserving 128772 MiB for main workspace.
+Using up to 64 threads (change this with --threads).
+--vcf: 4171 variants scanned.
 --vcf: data/20210201_snp_rndm_alfreqs/hei/hei-temporary.pgen +
 data/20210201_snp_rndm_alfreqs/hei/hei-temporary.pvar +
 data/20210201_snp_rndm_alfreqs/hei/hei-temporary.psam written.
 2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
 data/20210201_snp_rndm_alfreqs/hei/hei-temporary.psam.
-4172 variants loaded from
+4171 variants loaded from
 data/20210201_snp_rndm_alfreqs/hei/hei-temporary.pvar.
 1 categorical phenotype loaded (2504 values).
---extract: 4172 variants remaining.
+--extract: 4171 variants remaining.
 --loop-cats: 26 categories present.
 --loop-cats: Processing category 'GBR' (91 samples).
 Calculating allele frequencies... done.
@@ -130,4 +130,4 @@ Calculating allele frequencies... done.
 --freq: Allele frequencies (founders only) written to
 data/20210201_snp_rndm_alfreqs/hei/hei.GIH.afreq .
 
-End time: Tue Feb  2 13:21:02 2021
+End time: Wed Feb  3 09:26:08 2021
