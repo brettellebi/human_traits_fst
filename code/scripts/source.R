@@ -1,6 +1,12 @@
 #!/usr/bin/env Rscript
 
+<<<<<<< HEAD
 # Load libaries
+=======
+#############################
+# Libaries
+#############################
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 library(here)
 library(tidyverse)
@@ -10,7 +16,22 @@ library(plotly)
 library(ggridges)
 library(qqman)
 
+<<<<<<< HEAD
 # Functions
+=======
+#############################
+# Paths
+#############################
+
+## Latest plot path
+plot_path = here::here("plots", "20210203_batch")
+dir.create(plot_path)
+
+
+#############################
+# Functions
+#############################
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 ## Read `.afreq` files from `Plink`
 read_afreq <- function(file){
@@ -32,8 +53,17 @@ get_man <- function(df, trait, title, chr, bp, snp, p){
             main = title)
 }
 
+<<<<<<< HEAD
 # Parameters
 
+=======
+
+#############################
+# Parameters
+#############################
+
+## Clumping target parameter
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 clump_param = "r2-0.1_kb-1000"
 
 # Factor levels for `trait` (or `PHENO`)

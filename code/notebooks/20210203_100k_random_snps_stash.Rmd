@@ -1,0 +1,136 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Calculate *Fst* for 100k random SNPs to compare to these distributions
+
+### Pull random lines from 1kg alfreq file
+
+```{bash}
+# On cluster 
+
+list_in=../big_data/20210125_alfreqs_all_binned/all.afreq
+list_out=data/20210129_random_100k_snps.list
+ref=../refs/hs37d5.fa.gz
+in_vcf=../vcfs/1kg_all.vcf.gz
+out_vcf=../vcfs/1kg_100k_rndm.vcf.gz
+
+conda activate fst_env_rhel 
+
+# create function to get random seed
+get_seeded_random()
+{
+  seed="$1"
+  openssl enc -aes-256-ctr -pass pass:"$seed" -nosalt \
+    </dev/zero 2>/dev/null
+}
+
+# make list
+awk '{print $2}' $list_in |\
+  tail -n+2 |\
+  shuf -n 100000 \
+  --random-source=<(get_seeded_random 454) \
+    > $list_out
+    
+# extract from 1KG
+gatk SelectVariants \
+  -R $ref \
+  -V $in_vcf \
+  --keep-ids $list_out \
+  -O $out_vcf
+```
+
+### Run `pegas` to get Fst
+
+```{r, eval = F}
+# On cluster
+library(here)
+source(here::here("code", "scripts", "source.R"))
+
+# Set variables
+in_vcf=here::here("..", "vcfs", "1kg_100k_rndm.vcf.gz")
+samples_file = here::here("data", "20130606_sample_info.xlsx")
+out_file=here::here("data", "20210129_100k_rndm_fst.txt")
+
+# Read in `meta` file
+meta = readxl::read_xlsx(samples_file,
+                         sheet = "Sample Info") %>%
+  dplyr::select(Sample, Population, Gender)
+
+# Read VCF 
+vcf_out <- pegas::read.vcf(in_vcf, to = 100000)
+
+# Create vector of populations
+populations = unlist(lapply(rownames(vcf_out), function(sample){
+  meta$Population[meta$Sample == sample]
+}))
+
+# Generate Fst stats
+fst_out <- as.data.frame(pegas::Fst(vcf_out, pop = populations))
+fst_out$snp <- rownames(fst_out)
+# remove NAs
+fst_out  = fst_out %>% 
+  tidyr::drop_na() 
+# 99682 remaining
+  
+# Set phenotype
+fst_out$phenotype <- "Random"
+
+# Save file
+readr::write_tsv(fst_out, out_file)
+```
+
+### Read in
+
+```{r}
+# read
+fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
+fst_random = readr::read_tsv(here::here("data", "20210129_100k_rndm_fst.txt")) %>% 
+  dplyr::mutate(hit_control = "hit")
+
+# bind
+fst_out = dplyr::bind_rows(fst_out, fst_random)
+
+# factor
+fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+```
+
+### Plot 
+
+#### *Fst* density
+
+##### Facets
+
+```{r}
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  ggplot(aes(Fst, fill = phenotype)) +
+    geom_density() +
+    labs(fill = "Phenotype") +
+    facet_wrap(~phenotype) +
+    ylab("Density") +
+    theme_bw() +
+    scale_fill_manual(values = pal_primary) +
+    guides(fill = F)
+
+```
+
+##### Ridges
+
+```{r, warning = F, message = F, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
+fst_out %>% 
+  dplyr::filter(hit_control == "hit") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+  ggplot() +
+    geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
+                         scale = 2) +
+    scale_fill_manual(values = pal_primary) +
+    ylab(label = NULL) +
+    theme_bw() +
+    guides(fill = F) +
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+```
+

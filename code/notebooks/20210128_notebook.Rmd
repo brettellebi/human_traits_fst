@@ -2,6 +2,7 @@
 title: "Fst variation across human traits"
 author: "Ian Brettell"
 date: '`r format(Sys.Date())`'
+<<<<<<< HEAD
 editor_options: 
   chunk_output_type: inline
 output: html_notebook
@@ -13,6 +14,20 @@ output: html_notebook
 #    keep_md: true
 #    pandoc_args: --lua-filter=color-text.lua
 #    highlight: pygments  
+=======
+#editor_options: 
+#  chunk_output_type: inline
+#output: html_notebook
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    dev: 'svg'
+    number_sections: true
+    keep_md: true
+    pandoc_args: --lua-filter=color-text.lua
+    highlight: pygments  
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 ---
 
 # Setup
@@ -1292,6 +1307,7 @@ ggsave(here("plots", "20210127_af_v_effect_size", "20210127_hits_zoomed.png"),
 ```{r, message=F, warning=F, results=F, eval = F}
 # Create raw list of variants
 hit = here::here("data", "20210128_hits_vcfs")
+<<<<<<< HEAD
 control = here::here("data", "20210128_rndm_vcfs")
 target_dirs = c(hit, control)
 names(target_dirs) = c("hit", "control")
@@ -1301,6 +1317,12 @@ names(target_dirs) = c("hit", "control")
 #set.seed(initial_seed)
 #seeds = sample(1:1000, size = length(target_dirs))
 
+=======
+control = here::here("data", "20210201_rndm_vcfs")
+target_dirs = c(hit, control)
+names(target_dirs) = c("hit", "control")
+
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 # Run 
 counter = 0
 fst_out = lapply(target_dirs, function(target_dir){
@@ -1345,8 +1367,13 @@ fst_out$phenotype = dplyr::recode(fst_out$phenotype, !!!recode_vec)
 Write to file
 
 ```{r, eval = F}
+<<<<<<< HEAD
 out_dir = here::here("data", "20210127_results")
 out_path = file.path(out_dir, paste("20210128_fst", ".csv", sep = ""))
+=======
+out_dir = here::here("data", "20210203_results")
+out_path = file.path(out_dir, paste("20210203_fst", ".csv", sep = ""))
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 dir.create(out_dir)
 
@@ -1355,8 +1382,14 @@ readr::write_csv(fst_out, out_path)
 
 Read back in 
 ```{r, message = F, results = 'asis'}
+<<<<<<< HEAD
 fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"))
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+=======
+fst_out = readr::read_csv(here::here("data", "20210203_results", "20210203_fst.csv"))
+fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
+fst_out$hit_control = factor(fst_out$hit_control, levels = hit_control_levels)
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 knitr::kable(head(fst_out))
 ```
@@ -1371,7 +1404,13 @@ one = fst_out %>%
     facet_wrap(~phenotype) +
     theme_bw() +
     scale_fill_manual(values = pal_primary)  +
+<<<<<<< HEAD
     guides(fill = F)
+=======
+    guides(fill = F) +
+    ylim(0, 450) +
+    ggtitle("Hits")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 two = fst_out %>%
   dplyr::filter(hit_control == "control") %>% 
@@ -1380,7 +1419,13 @@ two = fst_out %>%
     facet_wrap(~phenotype) +
     theme_bw() +
     scale_fill_manual(values = pal_secondary) +
+<<<<<<< HEAD
     guides(fill = F)
+=======
+    guides(fill = F) +
+    ylim(0, 450) +
+    ggtitle("Controls")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 one
 two
@@ -1391,10 +1436,15 @@ one
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_histograms", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+ggsave(file.path(plot_path, "histograms_hits.svg"),
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -1404,10 +1454,17 @@ two
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_histograms", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+out_path = file.path(plot_path, "histograms_rndm.svg")
+
+ggsave(out_path,
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -1426,7 +1483,13 @@ one = fst_out %>%
     ylab("Density") +
     theme_bw() +
     scale_fill_manual(values = pal_primary) +
+<<<<<<< HEAD
     guides(fill = F)
+=======
+    guides(fill = F) +
+    ylim(0, 12) +
+    ggtitle("Hits")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 
 two = fst_out %>% 
@@ -1438,7 +1501,13 @@ two = fst_out %>%
     ylab("Density") +
     theme_bw() +
     scale_fill_manual(values = pal_secondary) +
+<<<<<<< HEAD
     guides(fill = F)
+=======
+    guides(fill = F) +
+    ylim(0, 12) +
+    ggtitle("Controls")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 one
 two
@@ -1449,10 +1518,15 @@ one
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_densities", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+ggsave(file.path(plot_path, "density_hits.svg"),
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -1462,10 +1536,15 @@ two
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_densities", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+ggsave(file.path(plot_path, "density_rndm.svg"),
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -1475,6 +1554,10 @@ ggsave(here("plots", "20210127_densities", "20210128_controls_all.png"),
 ```{r, warning = F, message = F, fig.show="hold", out.width='50%', fig.cap = "Hits vs controls"}
 one = fst_out %>% 
   dplyr::filter(hit_control == "hit") %>% 
+<<<<<<< HEAD
+=======
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1482,10 +1565,19 @@ one = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
+<<<<<<< HEAD
     scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
 
 two = fst_out %>%
   dplyr::filter(hit_control == "control") %>% 
+=======
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
+    ggtitle("Hits")
+
+two = fst_out %>%
+  dplyr::filter(hit_control == "control") %>% 
+  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>% 
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -1493,7 +1585,12 @@ two = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
+<<<<<<< HEAD
     scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
+=======
+    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
+    ggtitle("Controls")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 one
 two
@@ -1504,10 +1601,15 @@ one
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_ridges", "20210128_hits_all.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+ggsave(file.path(plot_path, "ridges_hits.svg"),
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -1517,6 +1619,7 @@ two
 ```
 
 ```{r, eval = F}
+<<<<<<< HEAD
 ggsave(here("plots", "20210127_ridges", "20210128_controls_all.png"),
        device = "png",
        units = "cm",
@@ -1864,10 +1967,15 @@ ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_sample.png"),
        device = "png",
        units = "cm",
        dpi = 400,
+=======
+ggsave(file.path(plot_path, "ridges_rndm.svg"),
+       device = "svg",
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
 
+<<<<<<< HEAD
 ### Compare effects of sampling on P-values
 
 ```{r, fig.show="hold", out.width='50%', fig.cap = "Hits: all vs sample"}
@@ -2165,6 +2273,22 @@ From the `help` page of `wilcoxon.test`:
 ```{r}
 mw_out = split(fst_out, f = fst_out$hit_control)
 mw_out = lapply(mw_out, function(dataset){
+=======
+### Tests
+
+#### Median, 80 and 90 percentiles, KS test, and MW test
+
+[Rationale]{color="red"}:
+
+1. Get the median, and 0.8 and 0.9 percentiles for the *Fst* density of each trait.
+2. Run one-sided Mann-Whitney tests using `Height` as the reference against each of the other traits.
+3. Run one-sided Kolmogorov-Smirnov tests using `Height` as the reference against each of the other traits.
+4. Determine which tests to use to confirm the differences apparent in the forms of the density curves.
+
+```{r, results='asis', warning=FALSE}
+final_list = split(fst_out, f = fst_out$hit_control)
+final_list = lapply(final_list, function(dataset){
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   split_data = split(dataset, f = dataset$phenotype)
   
   out = lapply(split_data, function(pheno){
@@ -2172,10 +2296,18 @@ mw_out = lapply(mw_out, function(dataset){
     
     # Get median and 90 percentile
     stats[["stats"]] = c("median" = median(pheno$Fst),
+<<<<<<< HEAD
                          quantile(pheno$Fst, probs = 0.9))
     
     # Get Mann-Whitney results
     stats[["mw_out"]] = wilcox.test(x = split_data[["Height"]]$Fst,
+=======
+                         quantile(pheno$Fst, probs = 0.8),
+                         quantile(pheno$Fst, probs = 0.9))
+    
+    # Get Mann-Whitney results
+    stats[["final_list"]] = wilcox.test(x = split_data[["Height"]]$Fst,
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
                                     y = pheno$Fst,
                                     alternative = "less",
                                     paired = F,
@@ -2195,6 +2327,7 @@ mw_out = lapply(mw_out, function(dataset){
 
 })
 
+<<<<<<< HEAD
 wilcox.test(fst_list$hit$Height$Fst, fst_list$hit$Height$Fst,
             alternative = "less")
 
@@ -2210,6 +2343,19 @@ mw_gg = lapply(mw_out, function(dataset){
            "P_MW" = pheno[["mw_out"]]$p.value,
            "CONF_LOWER" = pheno[["mw_out"]]$conf.int[1],
            "CONF_UPPER" = pheno[["mw_out"]]$conf.int[2],
+=======
+# Collapse into DF
+final_df = lapply(final_list, function(dataset){
+  out = lapply(dataset, function(pheno){
+    # Put key data into data frame
+    df = c("MEDIAN" = pheno[["stats"]][["median"]],
+           "80%" = pheno[["stats"]][["80%"]],
+           "90%" = pheno[["stats"]][["90%"]],
+           pheno[["final_list"]]$statistic,
+           "P_MW" = pheno[["final_list"]]$p.value,
+           "CONF_LOWER" = pheno[["final_list"]]$conf.int[1],
+           "CONF_UPPER" = pheno[["final_list"]]$conf.int[2],
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
            pheno[["ks_out"]]$statistic,
            "P_KS" = pheno[["ks_out"]]$p.value)
 
@@ -2222,6 +2368,7 @@ mw_gg = lapply(mw_out, function(dataset){
   dplyr::bind_rows(.id = "HIT_CONTROL")
 
 # Factor
+<<<<<<< HEAD
 mw_gg$PHENO <- factor(mw_gg$PHENO, levels = trait_levels_verb)
 mw_gg$HIT_CONTROL = factor(mw_gg$HIT_CONTROL, levels = hit_control_levels)
 ```
@@ -2263,6 +2410,21 @@ fst_out = readr::read_csv(here::here("data", "20210127_results/20210128_fst.csv"
 # factor
 fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
 ```
+=======
+final_df$PHENO <- factor(final_df$PHENO, levels = trait_levels_verb)
+final_df$HIT_CONTROL = factor(final_df$HIT_CONTROL, levels = hit_control_levels)
+
+# Output table
+final_df %>% 
+  dplyr::filter(PHENO != "Height" & HIT_CONTROL == "hit") %>%
+  dplyr::select(!HIT_CONTROL) %>% 
+  knitr::kable()
+```
+
+### Final *Fst* density plots for hits
+
+Some options for the figure.
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 ```{r}
 fst_out %>% 
@@ -2272,13 +2434,22 @@ fst_out %>%
     stat_density_ridges(geom = "density_ridges_gradient",
                         scale = 2,
                         calc_ecdf = TRUE,
+<<<<<<< HEAD
                         quantiles = c(0.5, 0.9),
+=======
+                        quantiles = c(0.5, 0.8, 0.9),
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
                         quantile_lines = T) +
   scale_fill_manual(values = pal_primary) +
   guides(fill = F) +
   theme_bw() +
   scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+<<<<<<< HEAD
   ylab(NULL)
+=======
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; auto-bandwidth")
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 ```
 ```{r}
 # Automatic bandwidth
@@ -2288,7 +2459,11 @@ fst_out %>%
   ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
     geom_density_ridges(scale = 2,
                         calc_ecdf = TRUE,
+<<<<<<< HEAD
                         quantiles = c(0.5, 0.9),
+=======
+                        quantiles = c(0.5, 0.8, 0.9),
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
                         quantile_lines = T,
                         jittered_points = TRUE,
                         point_shape = '|', alpha = 0.85, point_size = 2,
@@ -2298,7 +2473,12 @@ fst_out %>%
   guides(fill = F, colour = F) +
   theme_bw() +
   scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+<<<<<<< HEAD
   ylab(NULL)
+=======
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; auto-bandwidth; with points")  
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 ```
 
 ```{r}
@@ -2310,7 +2490,11 @@ fst_out %>%
     geom_density_ridges(scale = 2,
                         bandwidth = 0.003,
                         calc_ecdf = TRUE,
+<<<<<<< HEAD
                         quantiles = c(0.5, 0.9),
+=======
+                        quantiles = c(0.5, 0.8, 0.9),
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
                         quantile_lines = T,
                         jittered_points = TRUE,
                         point_shape = '|', alpha = 0.85, point_size = 2,
@@ -2320,7 +2504,12 @@ fst_out %>%
   guides(fill = F, colour = F) +
   theme_bw() +
   scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+<<<<<<< HEAD
   ylab(NULL)
+=======
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; manual bandwidth; with points; black lines")  
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 ```
 
 ```{r}
@@ -2342,6 +2531,11 @@ fst_out %>%
   guides(fill = F, colour = F) +
   theme_bw() +
   scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+<<<<<<< HEAD
   ylab(NULL)
 
+=======
+  ylab(NULL) +
+  ggtitle("Median, 80% and 90%; manual bandwidth; with points; coloured lines")  
+>>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 ```
