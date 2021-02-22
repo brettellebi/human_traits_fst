@@ -1,0 +1,132 @@
+PLINK v2.00a2.3LM 64-bit Intel (24 Jan 2020)
+Options in effect:
+  --freq
+  --loop-cats PHENO1
+  --max-alleles 2
+  --out data/20210221_snp_hits_alfreqs/fgl/fgl
+  --pheno iid-only data/plink2_sample_popn_key.txt
+  --snps-only
+  --vcf data/20210221_snp_hits_filtered/fgl.vcf.gz
+
+Hostname: hx-noah-10-08.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
+Start time: Mon Feb 22 06:48:57 2021
+
+Random number seed: 1613976537
+256224 MiB RAM detected; reserving 128112 MiB for main workspace.
+Using up to 80 threads (change this with --threads).
+--vcf: 169 variants scanned.
+--vcf: data/20210221_snp_hits_alfreqs/fgl/fgl-temporary.pgen +
+data/20210221_snp_hits_alfreqs/fgl/fgl-temporary.pvar +
+data/20210221_snp_hits_alfreqs/fgl/fgl-temporary.psam written.
+2504 samples (0 females, 0 males, 2504 ambiguous; 2504 founders) loaded from
+data/20210221_snp_hits_alfreqs/fgl/fgl-temporary.psam.
+169 variants loaded from data/20210221_snp_hits_alfreqs/fgl/fgl-temporary.pvar.
+1 categorical phenotype loaded (2504 values).
+--loop-cats: 26 categories present.
+--loop-cats: Processing category 'GBR' (91 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.GBR.afreq .
+--loop-cats: Processing category 'FIN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.FIN.afreq .
+--loop-cats: Processing category 'CHS' (105 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.CHS.afreq .
+--loop-cats: Processing category 'PUR' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.PUR.afreq .
+--loop-cats: Processing category 'CDX' (93 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.CDX.afreq .
+--loop-cats: Processing category 'CLM' (94 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.CLM.afreq .
+--loop-cats: Processing category 'IBS' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.IBS.afreq .
+--loop-cats: Processing category 'PEL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.PEL.afreq .
+--loop-cats: Processing category 'PJL' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.PJL.afreq .
+--loop-cats: Processing category 'KHV' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.KHV.afreq .
+--loop-cats: Processing category 'ACB' (96 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.ACB.afreq .
+--loop-cats: Processing category 'GWD' (113 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.GWD.afreq .
+--loop-cats: Processing category 'ESN' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.ESN.afreq .
+--loop-cats: Processing category 'BEB' (86 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.BEB.afreq .
+--loop-cats: Processing category 'MSL' (85 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.MSL.afreq .
+--loop-cats: Processing category 'STU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.STU.afreq .
+--loop-cats: Processing category 'ITU' (102 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.ITU.afreq .
+--loop-cats: Processing category 'CEU' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.CEU.afreq .
+--loop-cats: Processing category 'YRI' (108 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.YRI.afreq .
+--loop-cats: Processing category 'CHB' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.CHB.afreq .
+--loop-cats: Processing category 'JPT' (104 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.JPT.afreq .
+--loop-cats: Processing category 'LWK' (99 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.LWK.afreq .
+--loop-cats: Processing category 'ASW' (61 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.ASW.afreq .
+--loop-cats: Processing category 'MXL' (64 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.MXL.afreq .
+--loop-cats: Processing category 'TSI' (107 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.TSI.afreq .
+--loop-cats: Processing category 'GIH' (103 samples).
+Calculating allele frequencies... done.
+--freq: Allele frequencies (founders only) written to
+data/20210221_snp_hits_alfreqs/fgl/fgl.GIH.afreq .
+
+End time: Mon Feb 22 06:48:58 2021

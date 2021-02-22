@@ -102,11 +102,7 @@ sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
 # run MergeVCFs again
 java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
   I=human_traits_fst/data/20200205_vcfs.list \
-<<<<<<< HEAD
-  O=vcfs/1gk_all.vcf.gz
-=======
   O=vcfs/1kg_all.vcf.gz
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 # SUCCESS
 ```
 
@@ -114,11 +110,7 @@ java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
 
 ### Pull data for each trait
 
-<<<<<<< HEAD
-[**NOTE**]{colour = "red"}: Uncheck `Include child trait data` before downloading.
-=======
 [**NOTE**]{color="red"}: Uncheck `Include child trait data` before downloading.
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210122_gwas_catalog.xlsx`
 
@@ -736,11 +728,7 @@ lapply(data_list, function(pheno_df){
 })
 ```
 
-<<<<<<< HEAD
-![](index_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-2.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-3.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-4.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-5.png)<!-- -->![](index_files/figure-html/unnamed-chunk-12-6.png)<!-- -->
-=======
 ![](index_files/figure-html/unnamed-chunk-12-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-6.svg)<!-- -->
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 Save
 
@@ -820,9 +808,6 @@ lapply(data_list, function(pheno){
 
 traits=$(echo hei bmi edu int ibd pig)
 ref=../refs/hs37d5.fa.gz
-<<<<<<< HEAD
-in_vcf=../vcfs/1gk_all.vcf.gz
-=======
 in_vcf=../vcfs/1kg_all.vcf.gz
 >>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 snps_dir=data/20210122_snp_hit_lists
@@ -848,16 +833,10 @@ done
 
 ## Get allele frequencies of SNP hits with `Plink2`
 
-<<<<<<< HEAD
-### Import 1GK metadata (for sample-population key)
-
-Downloded via this page: <http://www.internationalgenome.org/data>
-=======
 ### Import 1KG metadata (for sample-population key)
 
 Downloded via this page: <http://www.internationalgenome.org/data>.
 
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>.
 
 Saved here: `data/20130606_sample_info.xlsx`
@@ -1040,21 +1019,13 @@ Bin by risk allele frequency
 
 ```r
 # 1% intervals
-<<<<<<< HEAD
-breakpoints = seq(0, 1, 0.01)
-=======
 breakpoints = seq(0, 1, 0.1)
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 data_list = lapply(data_list, function(pheno){
   # choose DF
   df = pheno[["consol"]]
   # add bins
-<<<<<<< HEAD
-  df$BIN_100 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
-=======
   df$BIN_10 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   # save back into list
   pheno[["consol"]] = df
 
@@ -1066,11 +1037,7 @@ Extract key columns and write to file
 
 
 ```r
-<<<<<<< HEAD
-out_dir = here::here("data", "20210126_snp_risk_hits_binned")
-=======
 out_dir = here::here("data", "20210201_snp_risk_hits_binned")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 dir.create(out_dir)
 
@@ -1084,11 +1051,7 @@ risk_afs = lapply(data_list, function(pheno){
   # filter
   df = df %>%
     dplyr::filter(POPN == "all") %>% # take only global AFs
-<<<<<<< HEAD
-    dplyr::select(TOP_SNP, BIN_100) %>%
-=======
     dplyr::select(TOP_SNP, BIN_10) %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
     tidyr::drop_na() # drop NAs
   # set output path
   trait = names(data_list)[counter]
@@ -1107,11 +1070,7 @@ With `Plink2`, per chromosome for speed.
 
 ```bash
 # set output directory
-<<<<<<< HEAD
-in_file=../vcfs/1gk_all.vcf.gz
-=======
 in_file=../vcfs/1kg_all.vcf.gz
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 out_dir=../big_data/20210125_alfreqs_all
 
 mkdir -p $out_dir
@@ -1140,23 +1099,15 @@ done
 
 ```r
 # On cluster
-<<<<<<< HEAD
-=======
 # `conda activate fst_env_rhel`
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 library(here)
 source(here::here("code", "scripts", "source.R"))
 
 # Set variables
 in_dir = "../big_data/20210125_alfreqs_all"
-<<<<<<< HEAD
-out_dir = "../big_data/20210125_alfreqs_all_binned"
-breakpoints = seq(0, 1, 0.01) # 1% bins
-=======
 out_dir = "../big_data/20210201_alfreqs_all_binned_10"
 breakpoints = seq(0, 1, 0.1) # 10% bins
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 # Create output directory
 dir.create(out_dir)
@@ -2214,15 +2165,8 @@ ggsave(file.path(plot_path, "density_hits.svg"),
 
 
 ```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_densities", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
 ggsave(file.path(plot_path, "density_rndm.svg"),
        device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -2232,12 +2176,8 @@ ggsave(file.path(plot_path, "density_rndm.svg"),
 
 ```r
 one = fst_out %>%
-<<<<<<< HEAD
-  dplyr::filter(case_control == "case") %>%
-=======
   dplyr::filter(hit_control == "hit") %>%
   dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -2245,19 +2185,12 @@ one = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
-<<<<<<< HEAD
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
-
-two = fst_out %>%
-  dplyr::filter(case_control == "control") %>%
-=======
     scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
     ggtitle("Hits")
 
 two = fst_out %>%
   dplyr::filter(hit_control == "control") %>%
   dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
   ggplot() +
     geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
                          scale = 2) +
@@ -2265,23 +2198,15 @@ two = fst_out %>%
     ylab(label = NULL) +
     theme_bw() +
     guides(fill = F) +
-<<<<<<< HEAD
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3)))
-=======
     scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
     ggtitle("Controls")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 one
 two
 ```
 
 <div class="figure">
-<<<<<<< HEAD
-<img src="index_files/figure-html/unnamed-chunk-54-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-54-2.png" alt="Hits vs controls" width="50%" />
-=======
 <img src="index_files/figure-html/unnamed-chunk-57-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-57-2.svg" alt="Hits vs controls" width="50%" />
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 <p class="caption">Hits vs controls</p>
 </div>
 
@@ -2289,15 +2214,8 @@ two
 
 
 ```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_ridges", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
 ggsave(file.path(plot_path, "ridges_hits.svg"),
        device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
@@ -2306,15 +2224,8 @@ ggsave(file.path(plot_path, "ridges_hits.svg"),
 
 
 ```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_ridges", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
 ggsave(file.path(plot_path, "ridges_rndm.svg"),
        device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
        height = 12,
        width = 20)
 ```
