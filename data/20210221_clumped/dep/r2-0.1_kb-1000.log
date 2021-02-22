@@ -1,0 +1,41 @@
+PLINK v1.90b6.18 64-bit (16 Jun 2020)
+Options in effect:
+  --clump data/20210221_snp_hit_lists/dep_with_P.txt
+  --clump-kb 1000
+  --clump-p1 0.00000001
+  --clump-p2 0.00000001
+  --clump-r2 0.1
+  --out data/20210221_clumped/dep/r2-0.1_kb-1000
+  --vcf data/20210221_snp_hits_filtered/dep.vcf.gz
+
+Hostname: hx-noah-06-13.ebi.ac.uk
+Working directory: /hps/research1/birney/users/ian/hmn_fst/human_traits_fst
+Start time: Mon Feb 22 07:01:07 2021
+
+Random number seed: 1613977267
+257545 MB RAM detected; reserving 128772 MB for main workspace.
+--vcf: data/20210221_clumped/dep/r2-0.1_kb-1000-temporary.bed +
+data/20210221_clumped/dep/r2-0.1_kb-1000-temporary.bim +
+data/20210221_clumped/dep/r2-0.1_kb-1000-temporary.fam written.
+1576 variants loaded from .bim file.
+2504 people (0 males, 0 females, 2504 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to data/20210221_clumped/dep/r2-0.1_kb-1000.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2504 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.999484.
+1576 variants and 2504 people pass filters and QC.
+Note: No phenotypes present.
+Warning: 'rs145410455' is missing from the main dataset, and is a top variant.
+Warning: 'rs1058172' is missing from the main dataset, and is a top variant.
+Warning: 'rs115507122' is missing from the main dataset, and is a top variant.
+Warning: 'rs201935337' is missing from the main dataset, and is a top variant.
+Warning: 'rs116755193' is missing from the main dataset, and is a top variant.
+Warning: 'rs40465' is missing from the main dataset, and is a top variant.
+Warning: 'rs78108344' is missing from the main dataset, and is a top variant.
+Warning: 'rs78355601' is missing from the main dataset, and is a top variant.
+Warning: 'rs9368649' is missing from the main dataset, and is a top variant.
+--clump: 291 clumps formed from 542 top variants.
+Results written to data/20210221_clumped/dep/r2-0.1_kb-1000.clumped .
+
+End time: Mon Feb 22 07:01:08 2021
