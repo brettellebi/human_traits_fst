@@ -2,18 +2,17 @@
 title: "Fst variation across human traits"
 author: "Ian Brettell"
 date: '`r format(Sys.Date())`'
-#editor_options: 
-#  chunk_output_type: inline
-#output: html_notebook
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    dev: 'svg'
-    number_sections: true
-    keep_md: true
-    pandoc_args: --lua-filter=color-text.lua
-    highlight: pygments  
+editor_options: 
+  chunk_output_type: inline
+output: html_notebook
+#output:
+#  html_document:
+#    toc: true
+#    toc_float: true
+#    dev: 'svg'
+#    number_sections: true
+#    pandoc_args: --lua-filter=color-text.lua
+#    highlight: pygments  
 ---
 
 Updates:
@@ -461,18 +460,19 @@ lapply(data_list, function(pheno){
 traits=$(echo hei bmi edu int ibd pig scz dep fgl myc ldl plt)
 ref=../refs/hs37d5.fa.gz
 in_vcf=../vcfs/1kg_all.vcf.gz
-snps_dir=data/20210122_snp_hit_lists
-out_dir=data/20210125_snp_hits_filtered
+snps_dir=data/20210221_snp_hit_lists
+out_dir=data/20210221_snp_hits_filtered
 
 mkdir -p $out_dir
 
-for trait in $(echo $traits ); do
+for trait in $(echo $traits); do
   bsub \
     -M 10000 \
     -o ../log/20210221_extract_snps_$trait.out \
     -e ../log/20210221_extract_snps_$trait.err \
     """
-    conda activate fst_env_rhel ;
+    conda init bash ;
+    source activate fst_env_rhel ;
     gatk SelectVariants \
       -R $ref \
       -V $in_vcf \
@@ -525,10 +525,10 @@ conda activate fst_env_rhel
 
 # Set variables
 
-traits=$(echo hei bmi edu int ibd pig)
-in_vcf_dir=data/20210125_snp_hits_filtered
+traits=$(echo hei bmi edu int ibd pig scz dep fgl myc ldl plt)
+in_vcf_dir=data/20210221_snp_hits_filtered
 popn_file=data/plink2_sample_popn_key.txt
-out_dir=data/20210122_snp_hits_alfreqs
+out_dir=data/20210221_snp_hits_alfreqs
 
 # Set up directories
 mkdir -p $out_dir
@@ -565,7 +565,7 @@ done
 ### Add allele frequency files
 
 ```{r}
-target_dir = here::here("data", "20210122_snp_hits_alfreqs")
+target_dir = here::here("data", "20210221_snp_hits_alfreqs")
 
 # Global
 counter <- 0
@@ -671,7 +671,7 @@ data_list = lapply(data_list, function(pheno){
 Extract key columns and write to file
 
 ```{r, eval = F, message=F}
-out_dir = here::here("data", "20210201_snp_risk_hits_binned")
+out_dir = here::here("data", "20210221_snp_risk_hits_binned")
 
 dir.create(out_dir)
 
