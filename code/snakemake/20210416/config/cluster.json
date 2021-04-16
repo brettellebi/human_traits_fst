@@ -1,0 +1,12 @@
+{
+    "__default__": {
+        "memory": "5000",
+        "n": "1",
+        "name": "{rule}.{wildcards}",
+        "output": "/hps/nobackup/birney/users/ian/hmn_fst/log/{rule}_{wildcards}.out",
+        "error": "/hps/nobackup/birney/users/ian/hmn_fst/log/{rule}_{wildcards}.err"
+    },
+    "merge_1KG": {
+        "memory": "20000"
+    }
+}

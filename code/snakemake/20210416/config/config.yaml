@@ -1,0 +1,8 @@
+working_dir:
+    "/hps/nobackup/birney/users/ian/hmn_fst"
+ftp_dir_1kg:
+    "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
+tmp_dir:
+    "/hps/nobackup/birney/users/ian/hmn_fst/tmp"
+picard:
+    "/hps/software/users/birney/ian/containers/picard_2.25.2.sif"
