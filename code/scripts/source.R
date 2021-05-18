@@ -1,12 +1,9 @@
 #!/usr/bin/env Rscript
 
-<<<<<<< HEAD
-# Load libaries
-=======
+
 #############################
-# Libaries
+# Libraries
 #############################
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 library(here)
 library(tidyverse)
@@ -15,10 +12,8 @@ library(knitr)
 library(plotly)
 library(ggridges)
 library(qqman)
+library(gwasrapidd)
 
-<<<<<<< HEAD
-# Functions
-=======
 #############################
 # Paths
 #############################
@@ -27,11 +22,9 @@ library(qqman)
 plot_path = here::here("plots", "20210203_batch")
 dir.create(plot_path)
 
-
 #############################
 # Functions
 #############################
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 
 ## Read `.afreq` files from `Plink`
 read_afreq <- function(file){
@@ -53,17 +46,30 @@ get_man <- function(df, trait, title, chr, bp, snp, p){
             main = title)
 }
 
-<<<<<<< HEAD
-# Parameters
-
-=======
 
 #############################
 # Parameters
 #############################
+
+target_traits = c("body height",
+                  "body mass index",
+                  "self reported educational attainment",
+                  "intelligence",
+                  "inflammatory bowel disease",
+                  "skin pigmentation",
+                  "skin pigmentation measurement",
+                  "eye color",
+                  "eye colour measurement",
+                  "hair color",
+                  "hair colour measurement",
+                  "schizophrenia",
+                  "unipolar depression",
+                  "fasting blood glucose measurement",
+                  "myocardial infarction",
+                  "low density lipoprotein cholesterol measurement",
+                  "platelet count")
 
 ## Clumping target parameter
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
 clump_param = "r2-0.1_kb-1000"
 
 # Factor levels for `trait` (or `PHENO`)

@@ -1,0 +1,66 @@
+---
+title: "$F_{ST}$ variation across human traits"
+author: "Ian Brettell"
+date: '`r format(Sys.Date())`'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    dev: 'svg'
+    number_sections: true
+    keep_md: true
+    pandoc_args: --lua-filter=color-text.lua
+    highlight: pygments  
+---
+
+# Setup
+
+* [Working directory]{color="#4f0943"} on EBI Codon HPC: `/hps/nobackup/birney/users/ian/hmn_fst`
+* [GitHub repository]{color="#4f0943"}: <https://github.com/brettellebi/human_traits_fst>
+
+## `renv`
+
+```{r, eval = F}
+# Export env (to renv.lock file)
+renv::init()
+# To install packages on new system, or 'activate' the env: 
+renv::restore()
+```
+
+## Source libraries, functions and plotting parameters
+
+```{r, warning = F, message = F}
+library(here)
+
+source(here::here("code", "scripts", "source.R"))
+```
+
+## Gather and process 1KG VCFs
+
+```{bash, eval = F}
+cd /hps/software/users/birney/ian/repos/human_traits_fst
+conda activate snakemake
+sing_load
+snmk_proj="20210416"
+
+snakemake \
+  --jobs 5000 \
+  --latency-wait 100 \
+  --cluster-config code/snakemake/$snmk_proj/config/cluster.json \
+  --cluster 'bsub -g /snakemake_bgenie -J {cluster.name} -n {cluster.n} -M {cluster.memory} -o {cluster.output} -e {cluster.error}' \
+  --keep-going \
+  --rerun-incomplete \
+  --use-conda \
+  --use-singularity \
+  -s code/snakemake/$snmk_proj/Snakefile \
+  -p
+```
+
+## Collect GWAS Catalog data
+
+```{r, results = 'asis'}
+gcat_traits = gwasrapidd::get_traits(efo_trait = target_traits)
+
+
+```
+
