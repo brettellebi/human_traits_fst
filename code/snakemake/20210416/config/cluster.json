@@ -8,5 +8,8 @@
     },
     "merge_1KG": {
         "memory": "20000"
+    },
+    "get_fst" : {
+        "memory" : "60000"
     }
 }

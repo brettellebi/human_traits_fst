@@ -1,8 +1,24 @@
 working_dir:
     "/hps/nobackup/birney/users/ian/hmn_fst"
-ftp_dir_1kg:
-    "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502"
+ftp_dir_1kg_37:
+    "ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502"
+ftp_dir_1kg_38:
+    "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL"
 tmp_dir:
     "/hps/nobackup/birney/users/ian/hmn_fst/tmp"
 picard:
     "/hps/software/users/birney/ian/containers/picard_2.25.2.sif"
+r-base:
+    "/hps/software/users/birney/ian/containers/r-base_4.0.5.sif"
+rscript:
+    "Rscript --no-save --no-restore --no-environ --no-site-file"
+ftp_pop_file:
+    "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx"
+local_pop_file:
+    "data/1kg_populations.csv"
+get_fst_script:
+    "code/scripts/get_fst.R"
+get_associations_script:
+    "code/scripts/get_associations.R"
+get_variants_script:
+    "code/scripts/get_variants.R"

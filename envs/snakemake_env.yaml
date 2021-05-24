@@ -211,4 +211,6 @@ dependencies:
   - zipp=3.4.1=pyhd8ed1ab_0
   - zlib=1.2.11=h516909a_1010
   - zstd=1.4.9=ha95c52a_0
+  - pip:
+    - xlrd==2.0.1
 prefix: /hps/software/users/birney/ian/miniconda3/envs/snakemake

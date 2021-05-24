@@ -1,0 +1,18 @@
+BootStrap: docker
+From: r-base:4.0.5
+
+%environment
+    LD_LIBRARY_PATH=/usr/local/lib
+
+%post
+    # Update
+    apt-get update
+
+    # Install linux libraries
+    apt-get -y install libbz2-dev liblzma-dev libicu-dev libicu67 libssl-dev libxml2-dev libjpeg-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
+
+    # Install renv
+    R --slave -e 'install.packages("renv", version = "0.13.2", repos="https://cloud.r-project.org/")'
+
+#    R --slave -e 'install.packages("sf", version = "0.9-9", repos="https://cloud.r-project.org/")'
+    

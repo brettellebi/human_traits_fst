@@ -24,6 +24,7 @@
 #####################
 
 import os.path
+import pandas as pd
 
 #####################
 # Variables
@@ -32,8 +33,29 @@ import os.path
 # Config file
 configfile: "code/snakemake/20210416/config/config.yaml"
 
-# Chromosomes
 CHRS  = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22']
+
+# Date of GWAS data collection
+DATE_OF_COLLECTION = "20210520"
+
+# Traits
+EFO_IDS = ["EFO_0004339",
+           "EFO_0004340",
+           "EFO_0004784",
+           "EFO_0004337",
+           "EFO_0003767",
+           "EFO_0003784",
+           "EFO_0007009",
+           "EFO_0003949",
+           "EFO_0009764",
+           "EFO_0003924",
+           "EFO_0007822",
+           "EFO_0000692",
+           "EFO_0003761",
+           "EFO_0004465",
+           "EFO_0000612",
+           "EFO_0004611",
+           "EFO_0004309"]
 
 # Set up FTP
 
@@ -46,37 +68,128 @@ FTP = FTPRemoteProvider()
 
 rule all:
     input:
-         expand(os.path.join(config["working_dir"], "vcfs/1kg/chrs/{chr}.vcf.gz"),
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz"),
+#           chr = CHRS),
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz.tbi"),
+#           chr = CHRS),
+        expand(os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
             chr = CHRS),
-         os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz")
+        expand(os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz.tbi"),
+            chr = CHRS),
+#         os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz"),
+#        "data/1kg_populations.csv",
+        expand(os.path.join(config["working_dir"], "fst/1kg/20190312/chrs/{chr}.vcf.gz"),
+            chr = CHRS),
+        expand("data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS),
+        expand("data/gwasrapidd/{date}/variants_raw/{efo_id}.rds",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS)
 
-rule download_1KG:
+#rule download_1KG_37:
+#    input:
+#        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"),
+#                keep_local = True, immediate_close = True),
+#        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"),
+#                keep_local = True, immediate_close = True)
+#    output:
+#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz"),
+#        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz.tbi")
+#    shell:
+#        """
+#        mv {input.vcf} {output.vcf} ;
+#        mv {input.tbi} {output.tbi}
+#        """
+
+rule download_1KG_38:
     input:
-        FTP.remote(os.path.join(config["ftp_dir_1kg"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"),
-            keep_local = True),
+        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"),
+                keep_local = True, immediate_close = True),
+        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz.tbi"),
+                keep_local = True, immediate_close = True)
     output:
-        os.path.join(config["working_dir"], "vcfs/1kg/chrs/{chr}.vcf.gz")
+        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
+        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz.tbi")
     shell:
         """
-        mv {input} {output}
+        mv {input.vcf} {output.vcf} ;
+        mv {input.tbi} {output.tbi}
         """
 
-rule merge_1KG:
+#rule merge_1KG:
+#    input:
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/chrs/{chr}.vcf.gz"),
+#            chr = CHRS)
+#    output:
+#        os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz")
+#    params:
+#        files = lambda wildcards, input: " I=".join(input),
+#    singularity:
+#        config["picard"]
+#    shell:
+#        """
+#        java -jar /usr/picard/picard.jar MergeVcfs \
+#            I={params.files} \
+#            O={output} \
+#            TMP_DIR={config[tmp_dir]}            
+#        """
+
+rule get_population_file:
     input:
-        expand(os.path.join(config["working_dir"], "vcfs/1kg/chrs/{chr}.vcf.gz"),
-            chr = CHRS)
+        FTP.remote(config["ftp_pop_file"], keep_local = True)
     output:
-        os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz")
-    params:
-        files = lambda wildcards, input: " I=".join(input),
+        config["local_pop_file"]
+    run:
+        pop_file = pd.read_excel(input[0], sheet_name = "Sample Info")
+        pop_file = pop_file.loc[:, ['Sample', 'Population']]
+        pop_file.to_csv(output[0], index = False)
+
+rule get_fst:
+    input:
+        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
+        pop_file = config["local_pop_file"]
+    output:
+        os.path.join(config["working_dir"], "fst/1kg/20190312/chrs/{chr}.vcf.gz")
     singularity:
-        config["picard"]
+        config["r-base"]
     shell:
         """
-        java -jar /usr/picard/picard.jar MergeVcfs \
-            I={params.files} \
-            O={output} \
-            TMP_DIR={config[tmp_dir]}            
+        {config[rscript]} {config[get_fst_script]} {input.vcf} {input.pop_file} {output}
         """
-    
 
+rule get_associations:
+    output:
+        "data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds"
+    params:
+        date = lambda wildcards: wildcards.date,
+        efo_id = lambda wildcards: wildcards.efo_id,
+        output_dir = lambda wildcards, output: os.path.dirname(str(output))
+    singularity:
+        config["r-base"]
+    shell:
+        """
+        mkdir -p {params.output_dir} ;
+        {config[rscript]} {config[get_associations_script]} {params.efo_id} {output}
+        """
+
+rule get_variants:
+    output:
+        "data/gwasrapidd/{date}/variants_raw/{efo_id}.rds"
+    params:
+        date = lambda wildcards: wildcards.date,
+        efo_id = lambda wildcards: wildcards.efo_id,
+        output_dir = lambda wildcards, output: os.path.dirname(str(output))
+    singularity:
+        config["r-base"]
+    shell:
+        """
+        mkdir -p {params.output_dir} ;
+        {config[rscript]} {config[get_variants_script]} {params.efo_id} {output}
+        """
+
+rule get_loci:
+    input:
+        "data/gwasrapidd/{date}/variants_raw/{efo_id}.rds"
+    
+    
