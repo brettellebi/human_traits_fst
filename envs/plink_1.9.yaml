@@ -1,0 +1,9 @@
+name: plink_1.9
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - libgcc-ng=9.1.0=hdf63c60_0
+  - plink=1.90b6.21=h516909a_0
+prefix: /hps/software/users/birney/ian/miniconda3/envs/plink_1.9

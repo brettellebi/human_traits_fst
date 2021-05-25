@@ -1,0 +1,2 @@
+BootStrap: docker
+From: biocontainers/bcftools:v1.9-1-deb_cv1

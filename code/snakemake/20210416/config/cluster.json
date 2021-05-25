@@ -6,10 +6,10 @@
         "output": "/hps/nobackup/birney/users/ian/hmn_fst/log/{rule}_{wildcards}.out",
         "error": "/hps/nobackup/birney/users/ian/hmn_fst/log/{rule}_{wildcards}.err"
     },
-    "merge_1KG": {
-        "memory": "20000"
+    "merge_vcfs": {
+        "memory": "60000"
     },
-    "get_fst" : {
-        "memory" : "60000"
+    "consolidate_fst": {
+        "memory" : "30000"
     }
 }

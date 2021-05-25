@@ -1,0 +1,2 @@
+BootStrap: docker
+From: biocontainers/plink1.9:v1.90b6.6-181012-1-deb_cv1

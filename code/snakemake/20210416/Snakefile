@@ -33,10 +33,18 @@ import pandas as pd
 # Config file
 configfile: "code/snakemake/20210416/config/config.yaml"
 
-CHRS  = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22']
+CHRS  = [str(chrom) for chrom in list(range(1,23))]
+
+CHRS_TEST = ['22']
 
 # Date of GWAS data collection
-DATE_OF_COLLECTION = "20210520"
+DATE_OF_COLLECTION = config["date_of_gwas_collection"]
+
+# Date of dbSNP data collection
+DATE_OF_DBSNP_COLLECTION = config["date_of_dbsnp_collection"]
+
+# Extensions
+GZ_EXTS = config["gz_exts"]
 
 # Traits
 EFO_IDS = ["EFO_0004339",
@@ -57,10 +65,20 @@ EFO_IDS = ["EFO_0004339",
            "EFO_0004611",
            "EFO_0004309"]
 
-# Set up FTP
+EFO_IDS_TEST = ["EFO_0004309"]
 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 FTP = FTPRemoteProvider()
+
+#####################
+# Start and end commands
+#####################
+
+onstart:
+    shell("mkdir -p {config[log_dir]}")
+
+onsuccess:
+    shell("rm -rf {config[log_dir]}")
 
 #####################
 # Rules
@@ -68,72 +86,68 @@ FTP = FTPRemoteProvider()
 
 rule all:
     input:
-#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz"),
-#           chr = CHRS),
-#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz.tbi"),
-#           chr = CHRS),
-        expand(os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
-            chr = CHRS),
-        expand(os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz.tbi"),
-            chr = CHRS),
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20150319/chrs/{chr}.vcf{gz_ext}"),
+#            chr = CHRS,
+#            gz_ext = GZ_EXTS)
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz"),
+#            chr = CHRS),
+#        os.path.join(config["working_dir"], "vcfs/1kg/20150319/merged/1kg_all.vcf.gz"),
+#        os.path.join(config["working_dir"], "vcfs/1kg/20150319/merged/1kg_all.vcf.gz.tbi"),
+#        config["local_pop_file_plink"],
+#        expand(os.path.join(config["working_dir"], "plink/fst/by_chr/{chr}.fst"),
+#            chr = CHRS),
+#        os.path.join(config["working_dir"], "plink/fst/1kg/20150319/all.fst.gz"),
 #         os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz"),
-#        "data/1kg_populations.csv",
-        expand(os.path.join(config["working_dir"], "fst/1kg/20190312/chrs/{chr}.vcf.gz"),
-            chr = CHRS),
-        expand("data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds",
+#        expand("data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS),
+#        expand("data/gwasrapidd/{date}/variants_raw/{efo_id}.rds",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS),
+#        expand("data/gwasrapidd/{date}/assocations_snp_ids/{efo_id}.txt",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS),
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20150319/filtered/{date}/{efo_id}/by_chr/{chr}.vcf.gz"),
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS,
+#            chr = CHRS),
+        expand("data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
-        expand("data/gwasrapidd/{date}/variants_raw/{efo_id}.rds",
+        expand("data/gwasrapidd/{date}/plink/fst/{efo_id}.fst",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS)
 
-#rule download_1KG_37:
-#    input:
-#        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"),
-#                keep_local = True, immediate_close = True),
-#        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"),
-#                keep_local = True, immediate_close = True)
-#    output:
-#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz"),
-#        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz.tbi")
-#    shell:
-#        """
-#        mv {input.vcf} {output.vcf} ;
-#        mv {input.tbi} {output.tbi}
-#        """
-
-rule download_1KG_38:
-    input:
-        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"),
-                keep_local = True, immediate_close = True),
-        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz.tbi"),
-                keep_local = True, immediate_close = True)
+rule download_1KG_38_annotated:
+    params:
+        input = os.path.join(config["ftp_dir_1kg_38_annotated"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v3plus_nounphased.rsID.genotypes.GRCh38_dbSNP.vcf{gz_ext}")
     output:
-        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
-        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz.tbi")
+        os.path.join(config["working_dir"], "vcfs/1kg/20150319/chrs/{chr}.vcf{gz_ext}")
     shell:
         """
-        mv {input.vcf} {output.vcf} ;
-        mv {input.tbi} {output.tbi}
+        wget -O {output} {params.input}
         """
 
-#rule merge_1KG:
-#    input:
-#        expand(os.path.join(config["working_dir"], "vcfs/1kg/chrs/{chr}.vcf.gz"),
-#            chr = CHRS)
-#    output:
-#        os.path.join(config["working_dir"], "vcfs/1kg/merged/1kg_all.vcf.gz")
-#    params:
-#        files = lambda wildcards, input: " I=".join(input),
-#    singularity:
-#        config["picard"]
-#    shell:
-#        """
-#        java -jar /usr/picard/picard.jar MergeVcfs \
-#            I={params.files} \
-#            O={output} \
-#            TMP_DIR={config[tmp_dir]}            
-#        """
+# When trying to merge, get the following error:
+#Caused by: htsjdk.tribble.TribbleException$InvalidHeader: Your input file has a malformed header: Unclosed quote in header line value <ID=ssID,Number=A,Type=String,Description=dbSNP ssID of the allele">
+# Therefore created a new header file with:
+# bcftools view /hps/nobackup/birney/users/ian/hmn_fst/vcfs/1kg/20150319/chrs/1.vcf.gz | grep "#" > /hps/nobackup/birney/users/ian/hmn_fst/vcfs/1kg/20150319/new_header.vcf
+# Then manually inserted the missing quote. Use that file to re-header all VCFs before merging
+
+rule fix_vcf_headers:
+    input:
+        os.path.join(config["working_dir"], "vcfs/1kg/20150319/chrs/{chr}.vcf.gz")
+    output:
+        os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz")
+    singularity:
+        config["bcftools"]
+    shell:
+        """
+        bcftools reheader \
+            --header {config[new_header]} \
+            --output {output} \
+            {input}
+        """
 
 rule get_population_file:
     input:
@@ -145,18 +159,22 @@ rule get_population_file:
         pop_file = pop_file.loc[:, ['Sample', 'Population']]
         pop_file.to_csv(output[0], index = False)
 
-rule get_fst:
+rule get_population_file_plink:
     input:
-        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.gz"),
-        pop_file = config["local_pop_file"]
+        FTP.remote(config["ftp_pop_file"], keep_local = True)
     output:
-        os.path.join(config["working_dir"], "fst/1kg/20190312/chrs/{chr}.vcf.gz")
-    singularity:
-        config["r-base"]
-    shell:
-        """
-        {config[rscript]} {config[get_fst_script]} {input.vcf} {input.pop_file} {output}
-        """
+        config["local_pop_file_plink"]
+    run:
+        pop_file = pd.read_excel(input[0], sheet_name = "Sample Info")
+        pop_file = pop_file.loc[:, ['Sample', 'Population']]
+        # Create second column of samples as IIDs
+        pop_file['Sample_2'] = pop_file['Sample']
+        # Rename columns
+        pop_file = pop_file.rename(columns = {"Sample" : "FID", "Sample_2" : "IID", "Population" : "CLUSTER"})
+        # Re-order columns
+        pop_file = pop_file[['FID', 'IID', 'CLUSTER']]
+        # Write to file
+        pop_file.to_csv(output[0], sep = "\t", header = False, index = False)
 
 rule get_associations:
     output:
@@ -173,23 +191,234 @@ rule get_associations:
         {config[rscript]} {config[get_associations_script]} {params.efo_id} {output}
         """
 
-rule get_variants:
+rule get_snp_ids:
+    input:
+        "data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds"
     output:
-        "data/gwasrapidd/{date}/variants_raw/{efo_id}.rds"
+        "data/gwasrapidd/{date}/assocations_snp_ids/{efo_id}.txt"
+    conda:
+        "envs/r_4.1.0.yaml"
+    script:
+        "scripts/get_snp_ids.R"
+
+rule extract_gtypes:
+    input:
+        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz"),
+        snps = "data/gwasrapidd/{date}/assocations_snp_ids/{efo_id}.txt"
+    output:
+        os.path.join(config["working_dir"], "vcfs/1kg/20150319/filtered/{date}/{efo_id}/by_chr/{chr}.vcf.gz")
+    conda:
+        "envs/bcftools_1.9.yaml"
+    shell:
+        """
+        bcftools view \
+            --include ID=@{input.snps} \
+            --output-type z \
+            --output-file {output} \
+            {input.vcf}
+        """
+
+rule merge_gtypes:
+    input:
+        expand(os.path.join(config["working_dir"], "vcfs/1kg/20150319/filtered/{{date}}/{{efo_id}}/by_chr/{chr}.vcf.gz"),
+            chr = CHRS)
+    output:
+        vcf = "data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz"
+    conda:
+        "envs/bcftools_1.9.yaml"
+    shell:
+        """
+        bcftools concat \
+            --output {output.vcf} \
+            --output-type z \
+            {input}
+        """
+
+rule get_fst:
+    input:
+        vcf = "data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
+        pop_file = config["local_pop_file_plink"]
+    output:
+        "data/gwasrapidd/{date}/plink/fst/{efo_id}.fst"
     params:
-        date = lambda wildcards: wildcards.date,
-        efo_id = lambda wildcards: wildcards.efo_id,
-        output_dir = lambda wildcards, output: os.path.dirname(str(output))
-    singularity:
-        config["r-base"]
+        output_dir = lambda wildcards, output: os.path.dirname(str(output)),
+        pref = lambda wildcards, output: os.path.splitext(str(output))[0]
+    conda:
+        "envs/plink_1.9.yaml"
     shell:
         """
         mkdir -p {params.output_dir} ;
-        {config[rscript]} {config[get_variants_script]} {params.efo_id} {output}
+        plink \
+            --vcf {input.vcf} \
+            --double-id \
+            --fst \
+            --within {input.pop_file} \
+            --out {params.pref} \
+            --vcf-half-call missing
         """
 
-rule get_loci:
-    input:
-        "data/gwasrapidd/{date}/variants_raw/{efo_id}.rds"
-    
-    
+#rule get_risk_alleles:
+#    input:
+#        "data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds"
+#    output:
+#        "data/gwasrapidd/{date}/assocations_risk_alleles/{efo_id}.txt"
+#    conda:
+#        ""
+
+#rule recode:
+#    input:
+#        os.path.join(config["working_dir"], "data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz")
+#    output:
+#        os.path.join(config["working_dir"], "data/gwasrapidd/{date}/plink/recode/{efo_id}.vcf.gz")
+
+#####################
+# JUNK?
+#####################
+
+
+#rule get_population_file:
+#    input:
+#        FTP.remote(config["ftp_pop_file"], keep_local = True)
+#    output:
+#        config["local_pop_file"]
+#    run:
+#        pop_file = pd.read_excel(input[0], sheet_name = "Sample Info")
+#        pop_file = pop_file.loc[:, ['Sample', 'Population']]
+#        pop_file.to_csv(output[0], index = False)
+
+#rule download_1KG_37:
+#    input:
+#        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"),
+#                keep_local = True, immediate_close = True),
+#        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_37"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"),
+#                keep_local = True, immediate_close = True)
+#    output:
+#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz"),
+#        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20130502/chrs/{chr}.vcf.gz.tbi")
+#    shell:
+#        """
+#        mv {input.vcf} {output.vcf} ;
+#        mv {input.tbi} {output.tbi}
+#        """
+#
+#rule get_variants:
+#    output:
+#        "data/gwasrapidd/{date}/variants_raw/{efo_id}.rds"
+#    params:
+#        date = lambda wildcards: wildcards.date,
+#        efo_id = lambda wildcards: wildcards.efo_id,
+#        output_dir = lambda wildcards, output: os.path.dirname(str(output))
+#    singularity:
+#        config["r-base"]
+#    shell:
+#        """
+#        mkdir -p {params.output_dir} ;
+#        {config[rscript]} {config[get_variants_script]} {params.efo_id} {output}
+#        """
+
+#rule download_1KG_38:
+#    input:
+#        vcf = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.#shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"),
+#                keep_local = True, immediate_close = True),
+#        tbi = FTP.remote(os.path.join(config["ftp_dir_1kg_38"], "ALL.chr{chr}.#shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz.tbi"),
+#                keep_local = True, immediate_close = True)
+#    output:
+#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.#gz"),
+#        tbi = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.#gz.tbi")
+#    shell:
+#        """
+#        mv {input.vcf} {output.vcf} ;
+#        mv {input.tbi} {output.tbi}
+#        """
+
+#rule download_annotations:
+#    params: 
+#        input = config["ftp_dbsnp_vcf"] + "{gz_ext}"
+#    output:
+#        os.path.join(config["working_dir"], "vcfs/dbsnp/{date}/00-All.vcf{gz_ext}")
+#    shell:
+#        """
+#        wget -O {output} {params.input}
+#        """
+#
+#rule annotate_vcfs:
+#    input:
+#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/{chr}.vcf.#gz"),
+#        annotations = os.path.join(config["working_dir"], "vcfs/dbsnp/{date}/00-All.#vcf.gz")
+#    output:
+#        os.path.join(config["working_dir"], "vcfs/1kg/20190312/chrs/annotated/{date}/#{chr}.vcf.gz")
+#    singularity:
+#        config["bcftools"]
+#    shell:
+#        """
+#        bcftools annotate \
+#            --annotations {input.annotations} \
+#            --columns ID \
+#            --output-type z \
+#            --output {output} \
+#            {input.vcf}
+#        """
+
+# Note: --vcf-half-call missing because we get the following error when processing each chr
+# Like chr17 for example:
+# Error: Line 11878 of .vcf file has a GT half-call.
+# Use --vcf-half-call to specify how these should be processed.
+#rule get_fst_all:
+#    input:
+#        vcf = os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz"),
+#        pop_file = config["local_pop_file_plink"]
+#    output:
+#        os.path.join(config["working_dir"], "plink/fst/by_chr/{chr}.fst")
+#    params:
+#        pref = lambda wildcards, output: os.path.splitext(str(output))[0]
+#    singularity:
+#        config["plink1.9"]
+#    shell:
+#        """
+#        plink1.9 \
+#            --vcf {input.vcf} \
+#            --double-id \
+#            --fst \
+#            --within {input.pop_file} \
+#            --out {params.pref} \
+#            --vcf-half-call missing
+#        """
+#    
+#rule consolidate_fst:
+#    input:
+#        expand(os.path.join(config["working_dir"], "plink/fst/by_chr/{chr}.fst"),
+#            chr = CHRS)
+#    output:
+#        os.path.join(config["working_dir"], "plink/fst/1kg/20150319/all.fst.gz")
+#    run:
+#        out = pd.concat([pd.read_csv(file, sep = "\t") for file in input])
+#        # Convert to csv and export
+#        out.to_csv(output[0], index = False)
+
+#rule merge_vcfs:
+#    input:
+#        expand(os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz"),
+#            chr = CHRS)
+#    output:
+#        os.path.join(config["working_dir"], "vcfs/1kg/20150319/merged/1kg_all.vcf.gz")
+#    singularity:
+#        config["bcftools"]
+#    shell:
+#        """
+#        bcftools concat \
+#            --output {output} \
+#            --output-type z \
+#            {input}
+#        """
+#
+#rule index_vcf:
+#    input:
+#        os.path.join(config["working_dir"], "vcfs/1kg/20150319/merged/1kg_all.vcf.gz")
+#    output:
+#        os.path.join(config["working_dir"], "vcfs/1kg/20150319/merged/1kg_all.vcf.gz.tbi")
+#    singularity:
+#        config["bcftools"]
+#    shell:
+#        """
+#        bcftools index --tbi {input} 
+#        """ 
