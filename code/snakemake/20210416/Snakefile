@@ -65,7 +65,7 @@ EFO_IDS = ["EFO_0004339",
            "EFO_0004611",
            "EFO_0004309"]
 
-EFO_IDS_TEST = ["EFO_0004309"]
+EFO_IDS_TEST = ["EFO_0000612"]
 
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 FTP = FTPRemoteProvider()
@@ -111,12 +111,24 @@ rule all:
 #            date = DATE_OF_COLLECTION,
 #            efo_id = EFO_IDS,
 #            chr = CHRS),
-        expand("data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
+        expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
-        expand("data/gwasrapidd/{date}/plink/fst/{efo_id}.fst",
-            date = DATE_OF_COLLECTION,
-            efo_id = EFO_IDS)
+        expand("data/gwasrapidd/{date}/final/final.csv",
+            date = DATE_OF_COLLECTION)
+#        expand("data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS),
+#        expand("data/gwasrapidd/{date}/plink/fst/{efo_id}.fst",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS)
+
+# Run snakemake command with `-R setup_r_env`
+rule setup_r_env:
+    conda:
+        "envs/r_4.1.0.yaml"
+    script:
+        "scripts/r-dependencies.R"
 
 rule download_1KG_38_annotated:
     params:
@@ -178,7 +190,7 @@ rule get_population_file_plink:
 
 rule get_associations:
     output:
-        "data/gwasrapidd/{date}/assocations_raw/{efo_id}.rds"
+        "data/gwasrapidd/{date}/associations_raw/{efo_id}.rds"
     params:
         date = lambda wildcards: wildcards.date,
         efo_id = lambda wildcards: wildcards.efo_id,
@@ -190,6 +202,30 @@ rule get_associations:
         mkdir -p {params.output_dir} ;
         {config[rscript]} {config[get_associations_script]} {params.efo_id} {output}
         """
+
+rule process_associations:
+    input:
+        "data/gwasrapidd/{date}/associations_raw/{efo_id}.rds"
+    output:
+        "data/gwasrapidd/{date}/associations_clean/{efo_id}.csv"
+    params:
+        efo_id = lambda wildcards: wildcards.efo_id
+    conda:
+        "envs/r_4.1.0.yaml"
+    script:
+        "scripts/process_associations.R"
+
+rule consolidate_associations:
+    input:
+        expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS)
+    output:
+        "data/gwasrapidd/{date}/final/final.csv"
+    run:
+        out = pd.concat([pd.read_csv(file) for file in input])
+        # Convert to csv and export
+        out.to_csv(output[0], index = False)
 
 rule get_snp_ids:
     input:
