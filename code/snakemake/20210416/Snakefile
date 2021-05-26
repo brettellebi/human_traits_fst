@@ -114,7 +114,7 @@ rule all:
         expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
-        expand("data/gwasrapidd/{date}/final/final.csv",
+        expand("data/gwasrapidd/{date}/final/final.csv.gz",
             date = DATE_OF_COLLECTION)
 #        expand("data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
 #            date = DATE_OF_COLLECTION,
@@ -221,7 +221,7 @@ rule consolidate_associations:
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS)
     output:
-        "data/gwasrapidd/{date}/final/final.csv"
+        "data/gwasrapidd/{date}/final/final.csv.gz"
     run:
         out = pd.concat([pd.read_csv(file) for file in input])
         # Convert to csv and export
