@@ -111,3 +111,7 @@ pal_secondary = c("Height" = "#B63502",
                   "Intelligence" = "#00727A",
                   "IBD" = "#972062",
                   "Pigmentation" = "#1F033A")
+
+onekg_pal = c("#B8984D","#E3B64C","#CFB54D","#D49943","#C26B36","#E1B759","#ECCB51","#682B7B","#8C5793","#8D3B5E", "#AE307F","#5D448A","#B8C650","#7FAA53","#8DAF4F","#5E8A48","#6E974B","#2D3468","#394D92","#798EC1","#95C4DB","#81B6C2","#B6302C","#B1253A","#A33E3A","#A34028")
+names(onekg_pal) = c("LWK", "GWD", "MSL", "ABC", "ASW", "YRI", "ESN", "BEB", "STU", "ITU", "PJL", "GIH", "CHB", "KHV", "CHS", "JPT", "CDX", "TSI", "CEU", "IBS", "GBR", "FIN", "PEL", "MXL", "CLM", "PUR")
+

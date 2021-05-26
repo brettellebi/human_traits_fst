@@ -45,7 +45,7 @@ snmk_proj="20210416"
 
 snakemake \
   --jobs 5000 \
-  --latency-wait 100 \
+  --latency-wait 500 \
   --cluster-config code/snakemake/$snmk_proj/config/cluster.json \
   --cluster 'bsub -g /snakemake_bgenie -J {cluster.name} -n {cluster.n} -M {cluster.memory} -o {cluster.output} -e {cluster.error}' \
   --keep-going \
@@ -61,6 +61,36 @@ snakemake \
 ```{r, results = 'asis'}
 gcat_traits = gwasrapidd::get_traits(efo_trait = target_traits)
 
+test_assoc = gwasrapidd::get_associations(efo_trait = target_traits[1])
+
 
 ```
+
+## Read in associations and extract key data
+
+```{r, eval = F}
+# Variables
+trait_ids = gcat_traits@traits$efo_id
+names(trait_ids) = trait_ids
+target_dir = here::here("data/gwasrapidd/20210525/associations_raw")
+
+# Read in raw associations objects
+assocs_raw = lapply(trait_ids, function(TRAIT_ID){
+  readRDS(file.path(target_dir, paste(TRAIT_ID, ".rds", sep = "")))
+})
+
+# Extract key data
+assocs_clean = purrr::map(assocs_raw, function(TRAIT_ID){
+  out = TRAIT_ID@associations %>% 
+    dplyr::left_join(TRAIT_ID@risk_alleles, by = "association_id")
+}) %>% 
+  dplyr::bind_rows(.id = "EFO_ID")
+
+# Add study
+studies = gwasrapidd::association_to_study(assocs_clean$association_id)
+assocs_clean = dplyr::left_join(assocs_clean,
+                                studies,
+                                by = "association_id")
+```
+
 
