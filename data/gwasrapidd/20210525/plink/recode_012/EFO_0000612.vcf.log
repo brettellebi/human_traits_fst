@@ -1,0 +1,30 @@
+PLINK v1.90b6.21 64-bit (19 Oct 2020)
+Options in effect:
+  --double-id
+  --out data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf
+  --recode A
+  --vcf data/gwasrapidd/20210525/vcfs/EFO_0000612.vcf.gz
+
+Hostname: hl-codon-48-01.ebi.ac.uk
+Working directory: /hps/software/users/birney/ian/repos/human_traits_fst
+Start time: Wed May 26 14:30:06 2021
+
+Random number seed: 1622035806
+385341 MB RAM detected; reserving 192670 MB for main workspace.
+--vcf: data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf-temporary.bed
++ data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf-temporary.bim +
+data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf-temporary.fam
+written.
+272 variants loaded from .bim file.
+2504 people (0 males, 0 females, 2504 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2504 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+272 variants and 2504 people pass filters and QC.
+Note: No phenotypes present.
+--recode A to data/gwasrapidd/20210525/plink/recode_012/EFO_0000612.vcf.raw ...
+done.
+
+End time: Wed May 26 14:30:06 2021

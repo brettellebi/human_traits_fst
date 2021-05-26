@@ -18,4 +18,5 @@ studies = gwasrapidd::get_studies(study_id = unique(studies_key$study_id))
 
 # Save to file
 
-saveRDS(studies, snakemake@output[[1]])
+saveRDS(studies_key, snakemake@output[["key"]])
+saveRDS(studies, snakemake@output[["studies"]])

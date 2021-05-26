@@ -113,18 +113,24 @@ rule all:
 #            chr = CHRS),
         expand("data/gwasrapidd/{date}/studies_raw/{efo_id}.rds",
             date = DATE_OF_COLLECTION,
-            efo_id = EFO_IDS),            
-        expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
-            date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
-        expand("data/gwasrapidd/{date}/final/final.csv.gz",
-            date = DATE_OF_COLLECTION)
+        expand("data/gwasrapidd/{date}/studies_key/{efo_id}.rds",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS),   
+#        expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
+#            date = DATE_OF_COLLECTION,
+#            efo_id = EFO_IDS),
+#        expand("data/gwasrapidd/{date}/final/final.csv.gz",
+#            date = DATE_OF_COLLECTION),
 #        expand("data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz",
 #            date = DATE_OF_COLLECTION,
 #            efo_id = EFO_IDS),
 #        expand("data/gwasrapidd/{date}/plink/fst/{efo_id}.fst",
 #            date = DATE_OF_COLLECTION,
-#            efo_id = EFO_IDS)
+#            efo_id = EFO_IDS),
+        expand("data/gwasrapidd/{date}/plink/recode_012/{efo_id}.raw",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS)
 
 # Run snakemake command with `-R setup_r_env`
 rule setup_r_env:
@@ -210,7 +216,8 @@ rule get_studies:
     input:
         "data/gwasrapidd/{date}/associations_raw/{efo_id}.rds"
     output:
-        "data/gwasrapidd/{date}/studies_raw/{efo_id}.rds"
+        key = "data/gwasrapidd/{date}/studies_key/{efo_id}.rds",
+        studies = "data/gwasrapidd/{date}/studies_raw/{efo_id}.rds"
     conda:
         "envs/r_4.1.0.yaml"
     script:
@@ -312,7 +319,28 @@ rule get_fst:
 #    output:
 #        "data/gwasrapidd/{date}/assocations_risk_alleles/{efo_id}.txt"
 #    conda:
-#        ""
+#        "envs/r_4.1.0.yaml"
+#    script:
+#        "scripts/get_risk_alleles.R"
+
+rule recode_012:
+    input:
+        vcf = "data/gwasrapidd/{date}/vcfs/{efo_id}.vcf.gz"
+    output:
+        "data/gwasrapidd/{date}/plink/recode_012/{efo_id}.raw"
+    params:
+        pref = lambda wildcards, output: os.path.splitext(str(output))[0]
+    conda:
+        "envs/plink_1.9.yaml"
+    shell:
+        """
+        plink \
+            --vcf {input.vcf} \
+            --double-id \
+            --recode A \
+            --out {params.pref}
+        """
+
 
 #rule recode:
 #    input:
