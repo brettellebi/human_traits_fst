@@ -111,6 +111,9 @@ rule all:
 #            date = DATE_OF_COLLECTION,
 #            efo_id = EFO_IDS,
 #            chr = CHRS),
+        expand("data/gwasrapidd/{date}/studies_raw/{efo_id}.rds",
+            date = DATE_OF_COLLECTION,
+            efo_id = EFO_IDS_TEST),            
         expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
@@ -202,6 +205,16 @@ rule get_associations:
         mkdir -p {params.output_dir} ;
         {config[rscript]} {config[get_associations_script]} {params.efo_id} {output}
         """
+
+rule get_studies:
+    input:
+        "data/gwasrapidd/{date}/associations_raw/{efo_id}.rds"
+    output:
+        "data/gwasrapidd/{date}/studies_raw/{efo_id}.rds"
+    conda:
+        "envs/r_4.1.0.yaml"
+    script:
+        "scripts/get_studies.R"
 
 rule process_associations:
     input:
