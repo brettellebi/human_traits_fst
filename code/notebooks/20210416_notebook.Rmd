@@ -35,7 +35,7 @@ library(here)
 source(here::here("code", "scripts", "source.R"))
 ```
 
-## Gather and process 1KG VCFs
+## Gather and process 1KG VCFs and GWAS Catalog data
 
 ```{bash, eval = F}
 cd /hps/software/users/birney/ian/repos/human_traits_fst
@@ -59,38 +59,34 @@ snakemake \
 ## Collect GWAS Catalog data
 
 ```{r, results = 'asis'}
-gcat_traits = gwasrapidd::get_traits(efo_trait = target_traits)
-
-test_assoc = gwasrapidd::get_associations(efo_trait = target_traits[1])
-
 
 ```
 
-## Read in associations and extract key data
+## Read in data and process
 
 ```{r, eval = F}
 # Variables
+gcat_traits = gwasrapidd::get_traits(efo_trait = target_traits)
 trait_ids = gcat_traits@traits$efo_id
 names(trait_ids) = trait_ids
-target_dir = here::here("data/gwasrapidd/20210525/associations_raw")
+target_dir = here::here("data/gwasrapidd/20210525/")
 
 # Read in raw associations objects
 assocs_raw = lapply(trait_ids, function(TRAIT_ID){
-  readRDS(file.path(target_dir, paste(TRAIT_ID, ".rds", sep = "")))
+  readRDS(file.path(target_dir, "associations_raw", paste(TRAIT_ID, ".rds", sep = "")))
 })
 
-# Extract key data
-assocs_clean = purrr::map(assocs_raw, function(TRAIT_ID){
-  out = TRAIT_ID@associations %>% 
-    dplyr::left_join(TRAIT_ID@risk_alleles, by = "association_id")
-}) %>% 
-  dplyr::bind_rows(.id = "EFO_ID")
+# Read in raw studies objects
+studies_raw = lapply(trait_ids, function(TRAIT_ID){
+  readRDS(file.path(target_dir, "studies_raw", paste(TRAIT_ID, ".rds", sep = "")))
+})
 
-# Add study
-studies = gwasrapidd::association_to_study(assocs_clean$association_id)
-assocs_clean = dplyr::left_join(assocs_clean,
-                                studies,
-                                by = "association_id")
+# Read in genotypes
+genos_raw = lapply(trait_ids, function(TRAIT_ID){
+  path = file.path(target_dir, "vcfs", paste(TRAIT_ID, ".vcf.gz", sep = ""))
+  pegas::VCFLoci(path)
+#  pegas::read.vcf()
+})
 ```
 
 
