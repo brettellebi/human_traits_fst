@@ -113,7 +113,7 @@ rule all:
 #            chr = CHRS),
         expand("data/gwasrapidd/{date}/studies_raw/{efo_id}.rds",
             date = DATE_OF_COLLECTION,
-            efo_id = EFO_IDS_TEST),            
+            efo_id = EFO_IDS),            
         expand("data/gwasrapidd/{date}/associations_clean/{efo_id}.csv",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
