@@ -131,7 +131,7 @@ rule all:
         expand("data/gwasrapidd/{date}/vcfs/no_dups/{efo_id}.vcf.gz",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
-        expand("data/gwasrapidd/{date}/plink/recode_012/{efo_id}.raw",
+        expand("data/gwasrapidd/{date}/plink/recode_012/{efo_id}.traw",
             date = DATE_OF_COLLECTION,
             efo_id = EFO_IDS),
         expand("data/gwasrapidd/{date}/p-values/{efo_id}.txt",
@@ -355,7 +355,7 @@ rule recode_012:
     input:
         vcf = "data/gwasrapidd/{date}/vcfs/no_dups/{efo_id}.vcf.gz"
     output:
-        "data/gwasrapidd/{date}/plink/recode_012/{efo_id}.raw"
+        "data/gwasrapidd/{date}/plink/recode_012/{efo_id}.traw"
     params:
         pref = lambda wildcards, output: os.path.splitext(str(output))[0]
     conda:
@@ -365,7 +365,7 @@ rule recode_012:
         plink \
             --vcf {input.vcf} \
             --double-id \
-            --recode A \
+            --recode A-transpose \
             --out {params.pref}
         """
 

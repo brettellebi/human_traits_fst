@@ -2,15 +2,15 @@ PLINK v1.90b6.21 64-bit (19 Oct 2020)
 Options in effect:
   --double-id
   --out data/gwasrapidd/20210525/plink/recode_012/EFO_0007009
-  --recode A
+  --recode A-transpose
   --vcf data/gwasrapidd/20210525/vcfs/no_dups/EFO_0007009.vcf.gz
 
-Hostname: hl-codon-40-04.ebi.ac.uk
+Hostname: hl-codon-07-01.ebi.ac.uk
 Working directory: /hps/software/users/birney/ian/repos/human_traits_fst
-Start time: Thu May 27 08:52:38 2021
+Start time: Thu May 27 09:35:43 2021
 
-Random number seed: 1622101958
-385341 MB RAM detected; reserving 192670 MB for main workspace.
+Random number seed: 1622104543
+385340 MB RAM detected; reserving 192670 MB for main workspace.
 --vcf: data/gwasrapidd/20210525/plink/recode_012/EFO_0007009-temporary.bed +
 data/gwasrapidd/20210525/plink/recode_012/EFO_0007009-temporary.bim +
 data/gwasrapidd/20210525/plink/recode_012/EFO_0007009-temporary.fam written.
@@ -24,7 +24,7 @@ Calculating allele frequencies... done.
 Total genotyping rate is 0.999947.
 83 variants and 2504 people pass filters and QC.
 Note: No phenotypes present.
---recode A to data/gwasrapidd/20210525/plink/recode_012/EFO_0007009.raw ...
-done.
+--recode A-transpose to
+data/gwasrapidd/20210525/plink/recode_012/EFO_0007009.traw ... done.
 
-End time: Thu May 27 08:52:38 2021
+End time: Thu May 27 09:35:44 2021
