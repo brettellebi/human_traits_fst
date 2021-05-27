@@ -44,6 +44,10 @@ get_associations_script:
 get_variants_script:
     "code/scripts/get_variants.R"
 #####################
-# Conda envs
+# Variables
 #####################
+clump_r2:
+    "0.1"
+clump_kb:
+    "1000"
 

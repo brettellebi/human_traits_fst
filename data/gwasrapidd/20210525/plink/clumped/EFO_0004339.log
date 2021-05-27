@@ -1,0 +1,98 @@
+PLINK v1.90b6.21 64-bit (19 Oct 2020)
+Options in effect:
+  --clump data/gwasrapidd/20210525/p-values/EFO_0004339.txt
+  --clump-kb 1000
+  --clump-p1 0.00000001
+  --clump-p2 0.00000001
+  --clump-r2 0.1
+  --out data/gwasrapidd/20210525/plink/clumped/EFO_0004339
+  --vcf data/gwasrapidd/20210525/vcfs/no_dups/EFO_0004339.vcf.gz
+
+Hostname: hl-codon-40-04.ebi.ac.uk
+Working directory: /hps/software/users/birney/ian/repos/human_traits_fst
+Start time: Thu May 27 08:52:38 2021
+
+Random number seed: 1622101958
+385341 MB RAM detected; reserving 192670 MB for main workspace.
+--vcf: data/gwasrapidd/20210525/plink/clumped/EFO_0004339-temporary.bed +
+data/gwasrapidd/20210525/plink/clumped/EFO_0004339-temporary.bim +
+data/gwasrapidd/20210525/plink/clumped/EFO_0004339-temporary.fam written.
+4804 variants loaded from .bim file.
+2504 people (0 males, 0 females, 2504 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+data/gwasrapidd/20210525/plink/clumped/EFO_0004339.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2504 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.99989.
+4804 variants and 2504 people pass filters and QC.
+Note: No phenotypes present.
+Warning: 'rs5938929' is missing from the main dataset, and is a top variant.
+Warning: 'rs12837147' is missing from the main dataset, and is a top variant.
+Warning: 'rs7058676' is missing from the main dataset, and is a top variant.
+Warning: 'rs35424856' is missing from the main dataset, and is a top variant.
+Warning: 'rs3848873' is missing from the main dataset, and is a top variant.
+Warning: 'rs201981153' is missing from the main dataset, and is a top variant.
+Warning: 'rs75975831' is missing from the main dataset, and is a top variant.
+Warning: 'rs398121251' is missing from the main dataset, and is a top variant.
+Warning: 'chr2:200141875' is missing from the main dataset, and is a top
+variant.
+Warning: 'chr17:6925490' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs35374532' is missing from the main dataset, and is a top variant.
+Warning: 'chr20:8521304' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs2413143' is missing from the main dataset, and is a top variant.
+Warning: 'chr2:1638793' is missing from the main dataset, and is a top variant.
+Warning: 'rs71555635' is missing from the main dataset, and is a top variant.
+Warning: 'chr9:95123569' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs28721484' is missing from the main dataset, and is a top variant.
+Warning: 'rs4132934' is missing from the main dataset, and is a top variant.
+Warning: 'rs531184891' is missing from the main dataset, and is a top variant.
+Warning: 'rs7065171' is missing from the main dataset, and is a top variant.
+Warning: 'rs12680655' is missing from the main dataset, and is a top variant.
+Warning: 'rs148300465' is missing from the main dataset, and is a top variant.
+Warning: 'rs2941551' is missing from the main dataset, and is a top variant.
+Warning: 'chr3:52781335' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs398090202' is missing from the main dataset, and is a top variant.
+Warning: 'rs426349' is missing from the main dataset, and is a top variant.
+Warning: 'rs397807524' is missing from the main dataset, and is a top variant.
+Warning: 'chr15:89459676' is missing from the main dataset, and is a top
+variant.
+Warning: 'chr3:185513482' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs371908554' is missing from the main dataset, and is a top variant.
+Warning: 'rs12393627' is missing from the main dataset, and is a top variant.
+Warning: 'rs11323064' is missing from the main dataset, and is a top variant.
+Warning: 'rs376362701' is missing from the main dataset, and is a top variant.
+Warning: 'rs56937648' is missing from the main dataset, and is a top variant.
+Warning: 'rs10846577' is missing from the main dataset, and is a top variant.
+Warning: 'rs199957421' is missing from the main dataset, and is a top variant.
+Warning: 'rs397831028' is missing from the main dataset, and is a top variant.
+Warning: 'rs34823076' is missing from the main dataset, and is a top variant.
+Warning: 'rs200235318' is missing from the main dataset, and is a top variant.
+Warning: 'rs200267038' is missing from the main dataset, and is a top variant.
+Warning: 'rs140498234' is missing from the main dataset, and is a top variant.
+Warning: 'rs78807762' is missing from the main dataset, and is a top variant.
+Warning: 'rs565478760' is missing from the main dataset, and is a top variant.
+Warning: 'chr1:172107982' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs55768579' is missing from the main dataset, and is a top variant.
+Warning: 'rs34322845' is missing from the main dataset, and is a top variant.
+Warning: 'rs11380688' is missing from the main dataset, and is a top variant.
+Warning: 'rs200992198' is missing from the main dataset, and is a top variant.
+Warning: 'rs397954080' is missing from the main dataset, and is a top variant.
+Warning: 'rs397812377' is missing from the main dataset, and is a top variant.
+Warning: 'chr5:42628418' is missing from the main dataset, and is a top
+variant.
+Warning: 'rs2307857' is missing from the main dataset, and is a top variant.
+Warning: 'rs4844299' is missing from the main dataset, and is a top variant.
+Warning: 'rs750884927' is missing from the main dataset, and is a top variant.
+Warning: 'rs771273709' is missing from the main dataset, and is a top variant.
+Warning: 'rs770307181' is missing from the main dataset, and is a top variant.
+--clump: 2849 clumps formed from 3716 top variants.
+Results written to data/gwasrapidd/20210525/plink/clumped/EFO_0004339.clumped .
+
+End time: Thu May 27 08:52:39 2021
