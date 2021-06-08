@@ -15,19 +15,26 @@
 
 <title>Fst variation across human traits</title>
 
-<script src="site_libs/header-attrs-2.5/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.8/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
 <script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/anchor-sections-1.0/anchor-sections.css" rel="stylesheet" />
-<script src="site_libs/anchor-sections-1.0/anchor-sections.js"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -39,11 +46,19 @@
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -126,39 +141,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
 
 
-<style type="text/css">
-h1 {
-  font-size: 34px;
-}
-h1.title {
-  font-size: 38px;
-}
-h2 {
-  font-size: 30px;
-}
-h3 {
-  font-size: 24px;
-}
-h4 {
-  font-size: 18px;
-}
-h5 {
-  font-size: 16px;
-}
-h6 {
-  font-size: 12px;
-}
-.table th:not([align]) {
-  text-align: left;
-}
-</style>
+
 
 
 
@@ -168,10 +153,6 @@ h6 {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
-}
-code {
-  color: inherit;
-  background-color: rgba(0, 0, 0, 0.04);
 }
 img {
   max-width:100%;
@@ -188,40 +169,13 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+pre code {
+  padding: 0;
+}
 </style>
 
 
 <style type="text/css">
-/* padding for bootstrap navbar */
-body {
-  padding-top: 60px;
-  padding-bottom: 40px;
-}
-/* offset scroll position for anchor links (for fixed navbar)  */
-.section h1 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
-.section h2 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
-.section h3 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
-.section h4 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
-.section h5 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
-.section h6 {
-  padding-top: 65px;
-  margin-top: -65px;
-}
 .dropdown-submenu {
   position: relative;
 }
@@ -249,7 +203,7 @@ body {
   margin-right: -10px;
 }
 .dropdown-submenu:hover>a:after {
-  border-left-color: #ffffff;
+  border-left-color: #adb5bd;
 }
 .dropdown-submenu.pull-left {
   float: none;
@@ -261,7 +215,7 @@ body {
 }
 </style>
 
-<script>
+<script type="text/javascript">
 // manage active state of menu based on current page
 $(document).ready(function () {
   // active menu anchor
@@ -272,10 +226,23 @@ $(document).ready(function () {
   var menuAnchor = $('a[href="' + href + '"]');
 
   // mark it active
-  menuAnchor.parent().addClass('active');
+  menuAnchor.tab('show');
 
   // if it's got a parent navbar menu mark it active as well
   menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
 });
 </script>
 
@@ -287,7 +254,6 @@ $(document).ready(function () {
   max-height: 500px;
   min-height: 44px;
   overflow-y: auto;
-  background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -413,7 +379,7 @@ div.tocify {
 
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
-<div class="row-fluid">
+<div class="row">
 <div class="col-xs-12 col-sm-4 col-md-3">
 <div id="TOC" class="tocify">
 </div>
@@ -432,7 +398,7 @@ div.tocify {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">Fst variation across human traits</a>
+      <a class="navbar-brand" href="index.html">$F_{ST}$ variation across human traits</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -447,7 +413,7 @@ div.tocify {
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-<div class="fluid-row" id="header">
+<div id="header">
 
 
 
@@ -467,15 +433,15 @@ div.tocify {
 <div id="conda-env-on-cluster" class="section level2" number="1.1">
 <h2 number="1.1"><span class="header-section-number">1.1</span> <code>conda</code> env on cluster</h2>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create env on cluster with mamba</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> create -y <span class="kw">\</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-n</span> fst_env_rhel <span class="kw">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-c</span> bioconda gatk4</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> create <span class="at">-y</span> <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-n</span> fst_env_rhel <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-c</span> bioconda gatk4</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate fst_env_rhel</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> install bcftools plink2 r-base r-essentials r-tidyverse r-units libgdal r-sf</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Export</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> env export <span class="kw">\</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">--no-builds</span> <span class="kw">\</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-f</span> envs/fst_env_rhel.yml</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> env export <span class="dt">\</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--no-builds</span> <span class="dt">\</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">-f</span> envs/fst_env_rhel.yml</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Activate</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate fst_env_rhel</span></code></pre></div>
 </div>
@@ -496,39 +462,39 @@ div.tocify {
 <h2 number="1.4"><span class="header-section-number">1.4</span> Download 1GK data</h2>
 <div id="download-from-ftp" class="section level3" number="1.4.1">
 <h3 number="1.4.1"><span class="header-section-number">1.4.1</span> Download from FTP</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> <span class="kw">\</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-r</span> -p -k <span class="kw">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">--no-parent</span> <span class="kw">\</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-cut-dirs</span>=5 <span class="kw">\</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">ftp</span>://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-r</span> <span class="at">-p</span> <span class="at">-k</span> <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--no-parent</span> <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-cut-dirs</span><span class="op">=</span>5 <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/</span></code></pre></div>
 </div>
 <div id="put-filenames-into-list" class="section level3" number="1.4.2">
 <h3 number="1.4.2"><span class="header-section-number">1.4.2</span> Put filenames into list</h3>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz <span class="kw">\</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="ex">human_traits_fst/data/20200205_vcfs.list</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr<span class="pp">*</span>.vcf.gz <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> human_traits_fst/data/20200205_vcfs.list</span></code></pre></div>
 </div>
 <div id="merge-vcfs" class="section level3" number="1.4.3">
 <h3 number="1.4.3"><span class="header-section-number">1.4.3</span> Merge VCFs</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="kw">\</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">I=</span>human_traits_fst/data/20200205_vcfs.list <span class="kw">\</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">O=</span>vcfs/1gk_all.vcf.gz</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="dt">\</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  I=human_traits_fst/data/20200205_vcfs.list <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  O=vcfs/1gk_all.vcf.gz</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Exception in thread &quot;main&quot; java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.</span></span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># So remove that one from list above</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> -i <span class="st">&#39;/MT/d&#39;</span> human_traits_fst/data/20200205_vcfs.list</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i</span> <span class="st">&#39;/MT/d&#39;</span> human_traits_fst/data/20200205_vcfs.list</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># run MergeVCFs again</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="kw">\</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="va">I=</span>human_traits_fst/data/20200205_vcfs.list <span class="kw">\</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="va">O=</span>vcfs/1gk_all.vcf.gz</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="dt">\</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  I=human_traits_fst/data/20200205_vcfs.list <span class="dt">\</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  O=vcfs/1gk_all.vcf.gz</span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Exception in thread &quot;main&quot; java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> -i <span class="st">&#39;/chrY/d&#39;</span> human_traits_fst/data/20200205_vcfs.list</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i</span> <span class="st">&#39;/chrY/d&#39;</span> human_traits_fst/data/20200205_vcfs.list</span>
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># run MergeVCFs again</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="kw">\</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  <span class="va">I=</span>human_traits_fst/data/20200205_vcfs.list <span class="kw">\</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="va">O=</span>vcfs/1gk_all.vcf.gz</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs <span class="dt">\</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  I=human_traits_fst/data/20200205_vcfs.list <span class="dt">\</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  O=vcfs/1gk_all.vcf.gz</span>
 <span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co"># SUCCESS</span></span></code></pre></div>
 </div>
 </div>
@@ -1630,22 +1596,22 @@ div.tocify {
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="va">snps_dir=</span>data/20210122_snp_hit_lists</span>
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir=</span>data/20210125_snp_hits_filtered</span>
 <span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> -p <span class="va">$out_dir</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span></span>
 <span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="kw">\</span></span>
-<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-M</span> 10000 <span class="kw">\</span></span>
-<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-o</span> ../log/20210122_extract_snps_<span class="va">$trait</span>.out <span class="kw">\</span></span>
-<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-e</span> ../log/20210122_extract_snps_<span class="va">$trait</span>.err <span class="kw">\</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="dt">\</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">-M</span> 10000 <span class="dt">\</span></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> ../log/20210122_extract_snps_<span class="va">$trait</span>.out <span class="dt">\</span></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">-e</span> ../log/20210122_extract_snps_<span class="va">$trait</span>.err <span class="dt">\</span></span>
 <span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
 <span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a><span class="st">    conda activate fst_env_rhel ;</span></span>
-<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="st">    gatk SelectVariants \</span></span>
-<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a><span class="st">      -R </span><span class="va">$ref</span><span class="st"> \</span></span>
-<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="st">      -V </span><span class="va">$in_vcf</span><span class="st"> \</span></span>
-<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --keep-ids </span><span class="va">$snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list \</span></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="st">    gatk SelectVariants </span><span class="dt">\</span></span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a><span class="st">      -R </span><span class="va">$ref</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="st">      -V </span><span class="va">$in_vcf</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --keep-ids </span><span class="va">$snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list </span><span class="dt">\</span></span>
 <span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a><span class="st">      -O </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz </span></span>
-<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> ;</span>
-<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span></span></code></pre></div>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> <span class="kw">;</span></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
 </div>
 <div id="get-allele-frequencies-of-snp-hits-with-plink2" class="section level2" number="1.7">
 <h2 number="1.7"><span class="header-section-number">1.7</span> Get allele frequencies of SNP hits with <code>Plink2</code></h2>
@@ -1727,35 +1693,35 @@ div.tocify {
 <span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir=</span>data/20210122_snp_hits_alfreqs</span>
 <span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Set up directories</span></span>
-<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> -p <span class="va">$out_dir</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span></span>
 <span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> -p <span class="va">$out_dir</span>/<span class="va">$trait</span><span class="kw">;</span> </span>
-<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span>   </span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span>/<span class="va">$trait</span><span class="kw">;</span> </span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span>   </span>
 <span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Plink2</span></span>
 <span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a><span class="co">## Get global AF</span></span>
-<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>  <span class="ex">plink2</span> <span class="kw">\</span></span>
-<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--vcf</span> <span class="va">$in_vcf_dir</span>/<span class="va">$trait</span>.vcf.gz <span class="kw">\</span></span>
-<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--freq</span> <span class="kw">\</span></span>
-<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--max-alleles</span> 2 <span class="kw">\</span></span>
-<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--snps-only</span> <span class="kw">\</span></span>
-<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--out</span> <span class="va">$out_dir</span>/<span class="va">$trait</span>/<span class="va">$trait</span>.all</span>
-<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>  <span class="ex">plink2</span> <span class="dt">\</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">--vcf</span> <span class="va">$in_vcf_dir</span>/<span class="va">$trait</span>.vcf.gz <span class="dt">\</span></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">--freq</span> <span class="dt">\</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">--max-alleles</span> 2 <span class="dt">\</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">--snps-only</span> <span class="dt">\</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">--out</span> <span class="va">$out_dir</span>/<span class="va">$trait</span>/<span class="va">$trait</span>.all</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
 <span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a><span class="co">## Get AF per population</span></span>
-<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>  <span class="ex">plink2</span> <span class="kw">\</span></span>
-<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--vcf</span> <span class="va">$in_vcf_dir</span>/<span class="va">$trait</span>.vcf.gz <span class="kw">\</span></span>
-<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--freq</span> <span class="kw">\</span></span>
-<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--max-alleles</span> 2 <span class="kw">\</span></span>
-<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--snps-only</span> <span class="kw">\</span></span>
-<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--pheno</span> iid-only <span class="va">$popn_file</span> <span class="kw">\</span></span>
-<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--loop-cats</span> PHENO1 <span class="kw">\</span></span>
-<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>    <span class="ex">--out</span> <span class="va">$out_dir</span>/<span class="va">$trait</span>/<span class="va">$trait</span> <span class="kw">;</span></span>
-<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span></span></code></pre></div>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>  <span class="ex">plink2</span> <span class="dt">\</span></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">--vcf</span> <span class="va">$in_vcf_dir</span>/<span class="va">$trait</span>.vcf.gz <span class="dt">\</span></span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">--freq</span> <span class="dt">\</span></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">--max-alleles</span> 2 <span class="dt">\</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">--snps-only</span> <span class="dt">\</span></span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">--pheno</span> iid-only <span class="va">$popn_file</span> <span class="dt">\</span></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">--loop-cats</span> PHENO1 <span class="dt">\</span></span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">--out</span> <span class="va">$out_dir</span>/<span class="va">$trait</span>/<span class="va">$trait</span> <span class="kw">;</span></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
 </div>
 <div id="add-allele-frequency-files" class="section level3" number="1.7.4">
 <h3 number="1.7.4"><span class="header-section-number">1.7.4</span> Add allele frequency files</h3>
@@ -1883,25 +1849,25 @@ div.tocify {
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="va">in_file=</span>../vcfs/1gk_all.vcf.gz</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir=</span>../big_data/20210125_alfreqs_all</span>
 <span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> -p <span class="va">$out_dir</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span></span>
 <span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Per chromosome</span></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">chr</span> in <span class="va">$(</span><span class="fu">seq</span> 1 22<span class="va">)</span> <span class="kw">;</span> <span class="kw">do</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chr <span class="kw">in</span> <span class="va">$(</span><span class="fu">seq</span> 1 22<span class="va">)</span> <span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create allele-freq tables</span></span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="kw">\</span></span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-M</span> 10000 <span class="kw">\</span></span>
-<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-o</span> ../log/20210125_plink_alfreq_<span class="va">$chr</span>.out <span class="kw">\</span></span>
-<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-e</span> ../log/20210125_plink_alfreq_<span class="va">$chr</span>.err <span class="kw">\</span></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="dt">\</span></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">-M</span> 10000 <span class="dt">\</span></span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> ../log/20210125_plink_alfreq_<span class="va">$chr</span>.out <span class="dt">\</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">-e</span> ../log/20210125_plink_alfreq_<span class="va">$chr</span>.err <span class="dt">\</span></span>
 <span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
 <span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a><span class="st">    conda activate fst_env_rhel ;</span></span>
-<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="st">    plink2 \</span></span>
-<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a><span class="st">      --vcf </span><span class="va">$in_file</span><span class="st"> \</span></span>
-<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a><span class="st">      --freq \</span></span>
-<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --chr </span><span class="va">$chr</span><span class="st"> \</span></span>
-<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --max-alleles 2 \</span></span>
-<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a><span class="st">      --snps-only \</span></span>
-<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a><span class="st">      --out </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$chr</span><span class="st"> &quot;</span>;</span>
-<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span> </span></code></pre></div>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="st">    plink2 </span><span class="dt">\</span></span>
+<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a><span class="st">      --vcf </span><span class="va">$in_file</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a><span class="st">      --freq </span><span class="dt">\</span></span>
+<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --chr </span><span class="va">$chr</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --max-alleles 2 </span><span class="dt">\</span></span>
+<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a><span class="st">      --snps-only </span><span class="dt">\</span></span>
+<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a><span class="st">      --out </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$chr</span><span class="st"> &quot;</span><span class="kw">;</span></span>
+<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> </span></code></pre></div>
 </div>
 <div id="bin-them-and-save-to-single-file" class="section level4" number="1.8.2.2">
 <h4 number="1.8.2.2"><span class="header-section-number">1.8.2.2</span> Bin them and save to single file</h4>
@@ -2035,22 +2001,22 @@ div.tocify {
 <span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="va">snps_dir=</span>data/20210126_random_snps_snp_ids</span>
 <span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir=</span>data/20210127_snp_rndm_filtered</span>
 <span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> -p <span class="va">$out_dir</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span></span>
 <span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="kw">\</span></span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-M</span> 10000 <span class="kw">\</span></span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-o</span> ../log/20210127_extract_snps_<span class="va">$trait</span>.out <span class="kw">\</span></span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-e</span> ../log/20210127_extract_snps_<span class="va">$trait</span>.err <span class="kw">\</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="dt">\</span></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">-M</span> 10000 <span class="dt">\</span></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> ../log/20210127_extract_snps_<span class="va">$trait</span>.out <span class="dt">\</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">-e</span> ../log/20210127_extract_snps_<span class="va">$trait</span>.err <span class="dt">\</span></span>
 <span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
 <span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a><span class="st">    conda activate fst_env_rhel ;</span></span>
-<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a><span class="st">    gatk SelectVariants \</span></span>
-<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="st">      -R </span><span class="va">$ref</span><span class="st"> \</span></span>
-<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a><span class="st">      -V </span><span class="va">$in_vcf</span><span class="st"> \</span></span>
-<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --keep-ids </span><span class="va">$snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list \</span></span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a><span class="st">    gatk SelectVariants </span><span class="dt">\</span></span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="st">      -R </span><span class="va">$ref</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a><span class="st">      -V </span><span class="va">$in_vcf</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --keep-ids </span><span class="va">$snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list </span><span class="dt">\</span></span>
 <span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a><span class="st">      -O </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz </span></span>
-<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> ;</span>
-<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span></span></code></pre></div>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> <span class="kw">;</span></span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
 </div>
 <div id="get-per-population-allele-frequencies-of-random-snps" class="section level4" number="1.8.2.5">
 <h4 number="1.8.2.5"><span class="header-section-number">1.8.2.5</span> Get per-population allele frequencies of random SNPs</h4>
@@ -2061,25 +2027,25 @@ div.tocify {
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir=</span>data/20210127_snp_rndm_alfreqs</span>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="kw">do</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> -p <span class="va">$out_dir</span>/<span class="va">$trait</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span>/<span class="va">$trait</span></span>
 <span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="kw">\</span></span>
-<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-M</span> 10000 <span class="kw">\</span></span>
-<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-o</span> ../log/20210127_rdm_popn_afreqs_<span class="va">$trait</span>.out <span class="kw">\</span></span>
-<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">-e</span> ../log/20210127_rdm_popn_afreqs_<span class="va">$trait</span>.err <span class="kw">\</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bsub</span> <span class="dt">\</span></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">-M</span> 10000 <span class="dt">\</span></span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> ../log/20210127_rdm_popn_afreqs_<span class="va">$trait</span>.out <span class="dt">\</span></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">-e</span> ../log/20210127_rdm_popn_afreqs_<span class="va">$trait</span>.err <span class="dt">\</span></span>
 <span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
 <span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a><span class="st">    conda activate fst_env_rhel ;</span></span>
-<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a><span class="st">    plink2 \</span></span>
-<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --vcf </span><span class="va">$vcf_in_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz \</span></span>
-<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --extract </span><span class="va">$random_snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list \</span></span>
-<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a><span class="st">      --freq \</span></span>
-<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a><span class="st">      --pheno iid-only </span><span class="va">$popn_key</span><span class="st"> \</span></span>
-<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="st">      --loop-cats PHENO1 \</span></span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a><span class="st">    plink2 </span><span class="dt">\</span></span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a><span class="st">      --vcf </span><span class="va">$vcf_in_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz </span><span class="dt">\</span></span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a><span class="st">      --extract </span><span class="va">$random_snps_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.list </span><span class="dt">\</span></span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a><span class="st">      --freq </span><span class="dt">\</span></span>
+<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a><span class="st">      --pheno iid-only </span><span class="va">$popn_key</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="st">      --loop-cats PHENO1 </span><span class="dt">\</span></span>
 <span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a><span class="st">      --out </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">/</span><span class="va">$trait</span></span>
-<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> ;</span>
-<span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span>  </span></code></pre></div>
+<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span> <span class="kw">;</span></span>
+<span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span>  </span></code></pre></div>
 </div>
 <div id="bind-into-single-df" class="section level4" number="1.8.2.6">
 <h4 number="1.8.2.6"><span class="header-section-number">1.8.2.6</span> Bind into single DF</h4>
@@ -2179,32 +2145,32 @@ div.tocify {
 <span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a><span class="va">kb_params=$(</span><span class="bu">echo</span> 500 750 1000 <span class="va">)</span></span>
 <span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Make directory</span></span>
-<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> -p <span class="va">$out_dir</span></span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span></span>
 <span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Run with different parameters</span></span>
-<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="ex">trait</span> in <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="kw">do</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> trait <span class="kw">in</span> <span class="va">$(</span><span class="bu">echo</span> <span class="va">$traits</span> <span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> -p <span class="va">$out_dir</span>/<span class="va">$trait</span> <span class="kw">;</span></span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$out_dir</span>/<span class="va">$trait</span> <span class="kw">;</span></span>
 <span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> <span class="ex">r2</span> in <span class="va">$r2_params</span> <span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="ex">kb</span> in <span class="va">$kb_params</span> <span class="kw">;</span> <span class="kw">do</span></span>
-<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>      <span class="ex">bsub</span> <span class="kw">\</span></span>
-<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>        <span class="ex">-o</span> ../log/20210125_clump_<span class="va">$trait</span>\_<span class="va">$r2</span>\_<span class="va">$kb</span>.out <span class="kw">\</span></span>
-<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>        <span class="ex">-e</span> ../log/20210125_clump_<span class="va">$trait</span>\_<span class="va">$r2</span>\_<span class="va">$kb</span>.err <span class="kw">\</span></span>
+<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> r2 <span class="kw">in</span> <span class="va">$r2_params</span> <span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> kb <span class="kw">in</span> <span class="va">$kb_params</span> <span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>      <span class="ex">bsub</span> <span class="dt">\</span></span>
+<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">-o</span> ../log/20210125_clump_<span class="va">$trait</span><span class="dt">\_</span><span class="va">$r2</span><span class="dt">\_</span><span class="va">$kb</span>.out <span class="dt">\</span></span>
+<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">-e</span> ../log/20210125_clump_<span class="va">$trait</span><span class="dt">\_</span><span class="va">$r2</span><span class="dt">\_</span><span class="va">$kb</span>.err <span class="dt">\</span></span>
 <span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;&quot;&quot;</span></span>
 <span id="cb51-28"><a href="#cb51-28" aria-hidden="true" tabindex="-1"></a><span class="st">        conda activate fst_env_rhel ;</span></span>
-<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a><span class="st">        plink \</span></span>
-<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a><span class="st">          --vcf </span><span class="va">$in_vcf_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz \</span></span>
-<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump </span><span class="va">$snp_p_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">\_with_P.txt \</span></span>
-<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-p1 0.00000001 \</span></span>
-<span id="cb51-33"><a href="#cb51-33" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-p2 0.00000001 \</span></span>
-<span id="cb51-34"><a href="#cb51-34" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-r2 </span><span class="va">$r2</span><span class="st"> \</span></span>
-<span id="cb51-35"><a href="#cb51-35" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-kb </span><span class="va">$kb</span><span class="st"> \</span></span>
+<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a><span class="st">        plink </span><span class="dt">\</span></span>
+<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a><span class="st">          --vcf </span><span class="va">$in_vcf_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">.vcf.gz </span><span class="dt">\</span></span>
+<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump </span><span class="va">$snp_p_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">\_with_P.txt </span><span class="dt">\</span></span>
+<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-p1 0.00000001 </span><span class="dt">\</span></span>
+<span id="cb51-33"><a href="#cb51-33" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-p2 0.00000001 </span><span class="dt">\</span></span>
+<span id="cb51-34"><a href="#cb51-34" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-r2 </span><span class="va">$r2</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb51-35"><a href="#cb51-35" aria-hidden="true" tabindex="-1"></a><span class="st">          --clump-kb </span><span class="va">$kb</span><span class="st"> </span><span class="dt">\</span></span>
 <span id="cb51-36"><a href="#cb51-36" aria-hidden="true" tabindex="-1"></a><span class="st">          --out </span><span class="va">$out_dir</span><span class="st">/</span><span class="va">$trait</span><span class="st">/r2-</span><span class="va">$r2</span><span class="st">\_kb-</span><span class="va">$kb</span><span class="st"> </span></span>
-<span id="cb51-37"><a href="#cb51-37" aria-hidden="true" tabindex="-1"></a><span class="st">        &quot;&quot;&quot;</span>  ;</span>
-<span id="cb51-38"><a href="#cb51-38" aria-hidden="true" tabindex="-1"></a>    <span class="kw">done</span> ;</span>
-<span id="cb51-39"><a href="#cb51-39" aria-hidden="true" tabindex="-1"></a>  <span class="kw">done</span>;  </span>
-<span id="cb51-40"><a href="#cb51-40" aria-hidden="true" tabindex="-1"></a><span class="kw">done</span></span></code></pre></div>
+<span id="cb51-37"><a href="#cb51-37" aria-hidden="true" tabindex="-1"></a><span class="st">        &quot;&quot;&quot;</span>  <span class="kw">;</span></span>
+<span id="cb51-38"><a href="#cb51-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">done</span> <span class="kw">;</span></span>
+<span id="cb51-39"><a href="#cb51-39" aria-hidden="true" tabindex="-1"></a>  <span class="cf">done</span><span class="kw">;</span>  </span>
+<span id="cb51-40"><a href="#cb51-40" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
 <div id="add-clumped-snp-files-to-data_list" class="section level3" number="1.9.1">
 <h3 number="1.9.1"><span class="header-section-number">1.9.1</span> Add clumped SNP files to <code>data_list</code></h3>
 <div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>target_dir <span class="ot">=</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;20210125_clumped&quot;</span>)</span>
@@ -3000,7 +2966,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
+    $(this).parent().toggleClass('nav-tabs-open');
   });
 });
 </script>

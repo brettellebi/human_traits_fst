@@ -9,10 +9,11 @@ library(here)
 library(tidyverse)
 library(pegas)
 library(knitr)
-library(plotly)
+library(karyoploteR)
 library(ggridges)
 library(qqman)
 library(gwasrapidd)
+library(cowplot)
 
 #############################
 # Paths
@@ -50,6 +51,8 @@ get_man <- function(df, trait, title, chr, bp, snp, p){
 #############################
 # Parameters
 #############################
+
+
 
 target_traits = c("body height",
                   "body mass index",
@@ -98,6 +101,16 @@ recode_vec = c("hei" = "Height",
 rev_recode_vec = names(recode_vec)
 names(rev_recode_vec) = recode_vec
 
+# Create vectors to recode pigmentation traits
+pig_traits = c("skin pigmentation",
+               "skin pigmentation measurement",
+               "eye color",
+               "eye colour measurement",
+               "hair color",
+               "hair colour measurement")
+pig_recode_vec = rep("all pigmentation", length(pig_traits))
+names(pig_recode_vec) = pig_traits
+
 # Colour palettes
 pal_primary = c("Height" = "#FC4E07",
                 "BMI" = "#FFBF00",
@@ -113,5 +126,26 @@ pal_secondary = c("Height" = "#B63502",
                   "Pigmentation" = "#1F033A")
 
 onekg_pal = c("#B8984D","#E3B64C","#CFB54D","#D49943","#C26B36","#E1B759","#ECCB51","#682B7B","#8C5793","#8D3B5E", "#AE307F","#5D448A","#B8C650","#7FAA53","#8DAF4F","#5E8A48","#6E974B","#2D3468","#394D92","#798EC1","#95C4DB","#81B6C2","#B6302C","#B1253A","#A33E3A","#A34028")
-names(onekg_pal) = c("LWK", "GWD", "MSL", "ABC", "ASW", "YRI", "ESN", "BEB", "STU", "ITU", "PJL", "GIH", "CHB", "KHV", "CHS", "JPT", "CDX", "TSI", "CEU", "IBS", "GBR", "FIN", "PEL", "MXL", "CLM", "PUR")
+names(onekg_pal) = c("LWK", "GWD", "MSL", "ACB", "ASW", "YRI", "ESN", "BEB", "STU", "ITU", "PJL", "GIH", "CHB", "KHV", "CHS", "JPT", "CDX", "TSI", "CEU", "IBS", "GBR", "FIN", "PEL", "MXL", "CLM", "PUR")
+
+
+# New pal with extended traits
+extended_traits = c("body height",
+                    "body mass index",
+                    "self reported educational attainment",
+                    "intelligence",
+                    "inflammatory bowel disease",
+                    "all pigmentation",
+                    "schizophrenia",
+                    "unipolar depression",
+                    "fasting blood glucose measurement",
+                    "myocardial infarction",
+                    "low density lipoprotein cholesterol measurement",
+                    "platelet count" )
+
+pal_primary_new = c("#fc4e07","#ffbf00","#0bc166","#00afbb","#d84797","#360568",
+                    "#4f0943", "#c200fb", "#00647a", "#57C13A", "#f2a918", "#e84141")
+
+names(pal_primary_new) = extended_traits
+
 

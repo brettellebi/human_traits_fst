@@ -1,10 +1,7 @@
 ---
-title: "Fst variation across human traits"
+title: "$F_{ST}$ variation across human traits"
 author: "Ian Brettell"
-date: '2021-02-03'
-#editor_options:
-#  chunk_output_type: inline
-#output: html_notebook
+date: '2021-06-08'
 output:
   html_document:
     toc: true
@@ -13,43 +10,18 @@ output:
     number_sections: true
     keep_md: true
     pandoc_args: --lua-filter=color-text.lua
-    highlight: pygments  
+    highlight: pygments
+#output: html_notebook
+#editor_options: 
+#  chunk_output_type: inline
 ---
 
-# Setup
 
-* [Working directory]{color="#4f0943"} on EBI Cluster: `/hps/research1/birney/users/ian/hmn_fst`
+* [Working directory]{color="#4f0943"} on EBI Codon HPC: `/hps/nobackup/birney/users/ian/hmn_fst`
 * [GitHub repository]{color="#4f0943"}: <https://github.com/brettellebi/human_traits_fst>
 
-## `conda` env on cluster
 
-
-```bash
-# Create env on cluster with mamba
-mamba create -y \
-  -n fst_env_rhel \
-  -c bioconda gatk4
-conda activate fst_env_rhel
-mamba install bcftools plink2 r-base r-essentials r-tidyverse r-units libgdal r-sf
-# Export
-conda env export \
-  --no-builds \
-  -f envs/fst_env_rhel.yml
-# Activate
-conda activate fst_env_rhel
-```
-
-## `renv`
-
-
-```r
-# Export env (to renv.lock file)
-renv::init()
-# To install packages on new system, or 'activate' the env:
-renv::restore()
-```
-
-## Source libraries, functions and plotting parameters
+# Source libraries, functions and plotting parameters
 
 
 ```r
@@ -58,2746 +30,301 @@ library(here)
 source(here::here("code", "scripts", "source.R"))
 ```
 
-## Download 1KG data
+# Gather and process 1KG VCFs and GWAS Catalog data
 
-### Download from FTP
-
-
-```bash
-wget \
-  -r -p -k \
-  --no-parent \
-  -cut-dirs=5 \
-  ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
-```
-
-### Put filenames into list
+Full Snakemake pipeline here: <https://github.com/brettellebi/human_traits_fst/tree/master/code/snakemake/20210416>
 
 
 ```bash
-find vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chr*.vcf.gz \
-  > human_traits_fst/data/20200205_vcfs.list
+cd /hps/software/users/birney/ian/repos/human_traits_fst
+conda activate snakemake
+sing_load
+snmk_proj="20210416"
+
+snakemake \
+  --jobs 5000 \
+  --latency-wait 500 \
+  --cluster-config code/snakemake/$snmk_proj/config/cluster.json \
+  --cluster 'bsub -g /snakemake_bgenie -J {cluster.name} -n {cluster.n} -M {cluster.memory} -o {cluster.output} -e {cluster.error}' \
+  --keep-going \
+  --rerun-incomplete \
+  --use-conda \
+  --use-singularity \
+  -s code/snakemake/$snmk_proj/Snakefile \
+  -p
 ```
 
-### Merge VCFs
-
-
-```bash
-java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1kg_all.vcf.gz
-# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrMT.phase3_callmom-v0_4.20130502.genotypes.vcf.gz are not compatible with the others.
-
-# So remove that one from list above
-sed -i '/MT/d' human_traits_fst/data/20200205_vcfs.list
-
-# run MergeVCFs again
-java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1kg_all.vcf.gz
-
-# Exception in thread "main" java.lang.IllegalArgumentException: The contig entries in input file /hps/research1/birney/users/ian/rac_hyp/vcfs/ftp.1000genomes.ebi.ac.uk/ALL.chrY.phase3_integrated_v2a.20130502.genotypes.vcf.gz are not compatible with the others.
-sed -i '/chrY/d' human_traits_fst/data/20200205_vcfs.list
-
-# run MergeVCFs again
-java -jar /nfs/software/birney/picard-2.9.0/picard.jar MergeVcfs \
-  I=human_traits_fst/data/20200205_vcfs.list \
-  O=vcfs/1kg_all.vcf.gz
-# SUCCESS
-```
-
-## Obtain GWAS data from the GWAS Catalog <https://www.ebi.ac.uk/gwas>
-
-### Pull data for each trait
-
-[**NOTE**]{color="red"}: Uncheck `Include child trait data` before downloading.
-
-All documents downloaded via 'Download Catalog data' link, then collated and saved here: `data/20210122_gwas_catalog.xlsx`
-
-#### Height
-
-* height: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004339>
-  - **4912 SNPs** from **51 studies**
-
-#### BMI
-
-* bmi: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004340>
-  - **7573 SNPs** from **155 studies**
-
-#### Educational attainment
-
-* self reported educational attainment: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004784>
-  - **3989 SNPs** from **24 studies**
-
-#### Intelligence
-
-* intelligence: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0004337>
-  - **2967 SNPs** from **27 studies**
-
-#### IBD
-
-* inflammatory bowel disease: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003767>
-  - **536 SNPs** from **34 studies**
-
-#### Pigmentation
-
-* skin pigmentation: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003784>
-  - **102 SNPs** from **6 studies**
-
-* skin pigmentation measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007009>
-  - **233 SNPs** from **9 studies**
-
-* eye color: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003949>
-  - **77 SNPs** from **13 studies**
-
-* eye colour measurement:
-<https://www.ebi.ac.uk/gwas/efotraits/EFO_0009764>
-  - **202 SNPs** from **9 studies**
-
-* hair color: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0003924>
-  - **424 SNPs** from **18 studies**
-
-* hair colour measurement: <https://www.ebi.ac.uk/gwas/efotraits/EFO_0007822>
-  - **541 SNPs** from **6 studies**
-
-### Read into list
+# Read in data and process
 
 
 ```r
-file_in = here::here("data", "20210122_gwas_catalog.xlsx")
-# Create vector of traits
-traits = c("hei", "bmi", "edu", "int", "ibd", "pig")
-names(traits) = traits
-# Assign sheets to traits
-sheets <- seq(1:11)
-names(sheets) <- c("hei", "bmi", "edu", "int", "ibd", rep("pig", 6))
-
-# get sheets
-sheet_names <- readxl::excel_sheets(file_in)
-
-# Create function to read in data
-read_catalog_data <- function(path, target_sheet){
-  # Read in data
-  out = readxl::read_xlsx(path, sheet = target_sheet) %>%
-    dplyr::select(CHR = CHR_ID,
-                  POS = CHR_POS,
-                  SNP_AL = `STRONGEST SNP-RISK ALLELE`,
-                  P = `P-VALUE`,
-                  OR_OR_BETA = `OR or BETA`,
-                  MAPPED_TRAIT,
-                  STUDY = `STUDY ACCESSION`,
-                  SAMPLE = `INITIAL SAMPLE SIZE`) %>%
-    # Split SNP and risk allele into separate columns
-    dplyr::mutate(TOP_SNP = stringr::str_split(SNP_AL, "-", simplify = T)[, 1],
-                  RISK_ALLELE = stringr::str_split(SNP_AL, "-", simplify = T)[, 2]) %>%
-    # Reorder and select
-    dplyr::select(CHR, POS, TOP_SNP, RISK_ALLELE, P, OR_OR_BETA, MAPPED_TRAIT, STUDY, SAMPLE)
-  # Change variables to specific types
-  out$CHR <- as.integer(out$CHR)
-  out$POS <- as.numeric(out$POS)
-  out$P <- as.numeric(out$P)
-  # return DF
-  return(out)
-}
-
-# Read in data
-counter <- 0
-data_list = lapply(traits, function(trait){
-  # set counter
-  counter <<- counter + 1
-  # set target file
-  target_file = file_in
-  # get target sheet
-  target_sheet = sheets[names(sheets) == trait]
-  length(target_sheet)
-  # read in pigmentation data from multiple sheets and bind into single DF
-  if (length(target_sheet) > 1){
-    # loop over each sheet
-    df <- lapply(target_sheet, function(sheet){
-      out <- read_catalog_data(target_file,
-                               target_sheet = sheet)
-    })
-    # set name of each DF to name of sheet (replacing spaces with underscores)
-    names(df) = sheet_names[target_sheet] %>%
-      stringr::str_replace_all(" ", "_")
-    # bind DFs into single DF
-    df <- dplyr::bind_rows(df, .id = "PIG_PHENO")
-  }
-  else {
-    # read in other data
-    df <- read_catalog_data(target_file,
-                            target_sheet = target_sheet)
-  }
-  # Set PHENO column
-  df$PHENO <- factor(trait, levels = trait_levels)
-  # Recode PHENO
-  df$PHENO = dplyr::recode(df$PHENO, !!!recode_vec)
-  # Create list
-  out = list()
-  # Return DF as "raw"
-  out[["raw"]] = df
-
-  return(out)
-})
-```
-
-```
-<<<<<<< HEAD
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in AB1130 / R1130C28: got '1E-423'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L2384 / R2384C12: got '2 x 9'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in M2384 / R2384C13: got '190120954 x 70383416'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L3046 / R3046C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L3070 / R3070C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4419 / R4419C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4420 / R4420C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4421 / R4421C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4422 / R4422C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L4586 / R4586C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, :
-## Expecting numeric in L6641 / R6641C12: got 'X'
-```
-
-```
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs
-## introduced by coercion
-```
-
-```
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced
-## by coercion
-=======
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in AB1130 /
-## R1130C28: got '1E-423'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L2384 /
-## R2384C12: got '2 x 9'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in M2384 /
-## R2384C13: got '190120954 x 70383416'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L3046 /
-## R3046C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L3070 /
-## R3070C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4419 /
-## R4419C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4420 /
-## R4420C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4421 /
-## R4421C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4422 /
-## R4422C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L4586 /
-## R4586C12: got 'X'
-```
-
-```
-## Warning in read_fun(path = enc2native(normalizePath(path)), sheet_i = sheet, : Expecting numeric in L6641 /
-## R6641C12: got 'X'
-```
-
-```
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = target_sheet): NAs introduced by coercion
-```
-
-```
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
-
-## Warning in read_catalog_data(target_file, target_sheet = sheet): NAs introduced by coercion
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-```
-
-```r
-# How many SNPs in raw data
-lapply(data_list, function(x) nrow(x[["raw"]]))
-```
-
-```
-## $hei
-## [1] 4912
-##
-## $bmi
-## [1] 7573
-##
-## $edu
-## [1] 3989
-##
-## $int
-## [1] 2967
-##
-## $ibd
-## [1] 536
-##
-## $pig
-## [1] 1579
-```
-
-```r
-# Clean data
-data_list = lapply(data_list, function(pheno){
-  df_clean = pheno[["raw"]]
-  # Remove rows with p-value of 0 (only 32 of them, associated with suntan)
-  df_clean = df_clean[df_clean$P != 0, ]
-  # Remove rows with NA in CHR
-  df_clean = df_clean[!is.na(df_clean$CHR), ]
-  # Remove duplicates
-  ## Find SNPs that are duplicated
-  dupes = unique(df_clean$TOP_SNP[duplicated(df_clean$TOP_SNP) | duplicated(df_clean$TOP_SNP, fromLast = T)])
-  ## Select only 1 SNP from each set of duplicated SNPs
-  dupe_filt = lapply(dupes, function(dupe){
-    # Take the one with the lowest P-value
-    min_p = min(df_clean$P[df_clean$TOP_SNP == dupe])
-    out = df_clean[df_clean$TOP_SNP == dupe & df_clean$P == min_p, ]
-    # If there are still duplicates due to having equal P, take the one with the largest effect size
-    if (nrow(out) > 1 ){
-      out = out[which.max(out$OR_OR_BETA), ]
-    }
-    return(out)
-  })
-  # Bind list into DF
-  dupe_filt = dplyr::bind_rows(dupe_filt)
-  # Extract non-duplicated rows
-  non_dupe = df_clean[!duplicated(df_clean$TOP_SNP) & !duplicated(df_clean$TOP_SNP, fromLast = T), ]
-  # Bind non-duplicated rows with filtered duplicates
-  df_clean = rbind(non_dupe, dupe_filt)
-  # Add to list
-  pheno[["clean"]] = df_clean
-
-  return(pheno)
-})
-
-# New SNP count
-lapply(data_list, function(x) nrow(x[["clean"]]))
-```
-
-```
-## $hei
-## [1] 4359
-##
-## $bmi
-## [1] 4184
-##
-## $edu
-## [1] 3021
-##
-## $int
-## [1] 2544
-##
-## $ibd
-## [1] 389
-##
-## $pig
-## [1] 1048
-```
-
-
-```r
-lapply(data_list, function(pheno){
-  knitr::kable(head(pheno[["clean"]]))
-})
-```
-
-$hei
-
-
-| CHR|       POS|TOP_SNP    |RISK_ALLELE |     P| OR_OR_BETA|MAPPED_TRAIT |STUDY      |SAMPLE                                  |PHENO  |
-|---:|---------:|:----------|:-----------|-----:|----------:|:------------|:----------|:---------------------------------------|:------|
-|  10|  31008555|rs2797910  |G           | 6e-06|    0.01036|body height  |GCST010059 |up to 6,835 Korean ancestry individuals |Height |
-|   3|  68732085|rs1156293  |G           | 1e-06|    0.02157|body height  |GCST010059 |up to 6,835 Korean ancestry individuals |Height |
-|  10|  98257696|rs1983864  |G           | 6e-06|         NA|body height  |GCST005908 |253,288 European ancestry individuals   |Height |
-|  11| 117103213|rs12269901 |C           | 2e-06|         NA|body height  |GCST005908 |253,288 European ancestry individuals   |Height |
-|  11|  18624296|rs11024739 |A           | 9e-06|         NA|body height  |GCST005908 |253,288 European ancestry individuals   |Height |
-|  11|   8231306|rs110419   |G           | 3e-07|         NA|body height  |GCST005908 |253,288 European ancestry individuals   |Height |
-
-$bmi
-
-
-| CHR|       POS|TOP_SNP    |RISK_ALLELE |     P| OR_OR_BETA|MAPPED_TRAIT    |STUDY      |SAMPLE                                                                                                                              |PHENO |
-|---:|---------:|:----------|:-----------|-----:|----------:|:---------------|:----------|:-----------------------------------------------------------------------------------------------------------------------------------|:-----|
-|   5|  79549808|rs6899277  |G           | 2e-06|       0.70|body mass index |GCST003647 |1,235 Hispanic individuals, 706 Asian ancestry individuals, 1,549 African American individuals, 2,395 European ancestry individuals |BMI   |
-|   5| 116877085|rs6866721  |C           | 1e-07|       0.76|body mass index |GCST003647 |1,235 Hispanic individuals, 706 Asian ancestry individuals, 1,549 African American individuals, 2,395 European ancestry individuals |BMI   |
-|   6|  84154244|rs2497155  |T           | 4e-06|       1.05|body mass index |GCST003647 |1,235 Hispanic individuals, 706 Asian ancestry individuals, 1,549 African American individuals, 2,395 European ancestry individuals |BMI   |
-|  11|  17737040|rs7926805  |C           | 1e-06|       0.80|body mass index |GCST003647 |1,235 Hispanic individuals, 706 Asian ancestry individuals, 1,549 African American individuals, 2,395 European ancestry individuals |BMI   |
-|   7| 137720035|rs10234581 |C           | 2e-06|         NA|body mass index |GCST003248 |40 Korean ancestry low BMI individuals, 37 Korean ancestry high BMI individuals                                                     |BMI   |
-|  11|  56539377|rs2187511  |G           | 1e-06|         NA|body mass index |GCST003248 |40 Korean ancestry low BMI individuals, 37 Korean ancestry high BMI individuals                                                     |BMI   |
-
-$edu
-
-
-| CHR|      POS|TOP_SNP    |RISK_ALLELE |  P| OR_OR_BETA|MAPPED_TRAIT                         |STUDY      |SAMPLE                                              |PHENO                  |
-|---:|--------:|:----------|:-----------|--:|----------:|:------------------------------------|:----------|:---------------------------------------------------|:----------------------|
-|  18| 79815871|rs34945223 |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-|  19|  4474728|rs76608582 |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-|  19| 18224905|rs4808766  |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-|  19| 30256794|rs55800473 |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-|  19| 35761593|rs807478   |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-|  20| 38884055|rs208795   |?           |  0|         NA|self reported educational attainment |GCST007037 |approximately 455,000 European ancestry individuals |Educational attainment |
-
-$int
-
-
-| CHR|       POS|TOP_SNP     |RISK_ALLELE |  P| OR_OR_BETA|MAPPED_TRAIT |STUDY      |SAMPLE                                                    |PHENO        |
-|---:|---------:|:-----------|:-----------|--:|----------:|:------------|:----------|:---------------------------------------------------------|:------------|
-|   2| 156027428|rs72904190  |A           |  0|  0.0284595|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-|   2| 156055088|rs72906064  |T           |  0|  0.0284257|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-|   2| 156667523|rs13023735  |A           |  0|  0.0180964|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-|   2| 160506319|rs62175972  |T           |  0|  0.0467504|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-|   2| 161045556|rs10930011  |A           |  0|  0.0168607|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-|   2| 160955841|rs114952970 |T           |  0|  0.0512996|intelligence |GCST005316 |120,934 British ancestry individuals, 127,548 individuals |Intelligence |
-
-$ibd
-
-
-| CHR|       POS|TOP_SNP    |RISK_ALLELE |     P| OR_OR_BETA|MAPPED_TRAIT               |STUDY      |SAMPLE                                                      |PHENO |
-|---:|---------:|:----------|:-----------|-----:|----------:|:--------------------------|:----------|:-----------------------------------------------------------|:-----|
-|   1| 154962487|rs3766920  |A           | 0e+00|       1.35|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-|  16|  80751551|rs16953946 |C           | 0e+00|       1.23|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-|  22|  36912743|rs4821558  |C           | 8e-07|       1.16|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-|   9|  76302462|rs11788518 |T           | 7e-06|       1.39|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-|   9|  21966222|rs3731257  |G           | 0e+00|       1.17|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-|   6| 116919430|rs1321366  |A           | 5e-06|       1.15|inflammatory bowel disease |GCST003602 |1,505 Korean ancestry cases, 4,041 Korean ancestry controls |IBD   |
-
-$pig
-
-
-|PIG_PHENO         | CHR|       POS|TOP_SNP     |RISK_ALLELE |     P| OR_OR_BETA|MAPPED_TRAIT      |STUDY      |SAMPLE                       |PHENO        |
-|:-----------------|---:|---------:|:-----------|:-----------|-----:|----------:|:-----------------|:----------|:----------------------------|:------------|
-|skin_pigmentation |   3| 187681148|rs79592764  |T           | 4e-07|       5.23|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-|skin_pigmentation |  10|  13564490|rs6602666   |G           | 0e+00|       4.03|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-|skin_pigmentation |  15|  50016753|rs8033655   |G           | 2e-07|       2.29|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-|skin_pigmentation |  20|  34116821|rs6142102   |G           | 2e-07|       2.21|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-|skin_pigmentation |   1| 188031112|rs77443641  |A           | 3e-06|      10.94|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-|skin_pigmentation |   1| 196973530|rs115105970 |T           | 2e-06|       6.84|skin pigmentation |GCST004219 |285 Puerto Rican individuals |Pigmentation |
-
-Get unique mapped traits
-
-
-```r
-lapply(data_list, function(pheno){
-  unique(pheno$clean$MAPPED_TRAIT)
-})
-```
-
-```
-## $hei
-## [1] "body height"                                                     
-## [2] "diastolic blood pressure, body height"                           
-## [3] "body weights and measures, body height"                          
-## [4] "anthropometric measurement, body height"                         
-## [5] "pericardial adipose tissue measurement, body weight, body height"
-##
-## $bmi
-##  [1] "body mass index"                                                                                                                                                                                                                                                                                                                                        
-##  [2] "systolic blood pressure, body mass index"                                                                                                                                                                                                                                                                                                               
-##  [3] "body mass index, obesity"                                                                                                                                                                                                                                                                                                                               
-##  [4] "response to drug, body mass index"                                                                                                                                                                                                                                                                                                                      
-##  [5] "body mass index, body weights and measures"                                                                                                                                                                                                                                                                                                             
-##  [6] "body mass index, fasting blood insulin measurement"                                                                                                                                                                                                                                                                                                     
-##  [7] "alcohol consumption measurement, body mass index"                                                                                                                                                                                                                                                                                                       
-##  [8] "physical activity measurement, body mass index"                                                                                                                                                                                                                                                                                                         
-##  [9] "smoking behaviour measurement, body mass index"                                                                                                                                                                                                                                                                                                         
-## [10] "waist-hip ratio, body mass index"                                                                                                                                                                                                                                                                                                                       
-## [11] "adult onset asthma, body mass index"                                                                                                                                                                                                                                                                                                                    
-## [12] "multiple sclerosis, body mass index"                                                                                                                                                                                                                                                                                                                    
-## [13] "anthropometric measurement, body mass index"                                                                                                                                                                                                                                                                                                            
-## [14] "visceral adipose tissue measurement, body mass index"                                                                                                                                                                                                                                                                                                   
-## [15] "body mass index, premature birth, parental genotype effect measurement"                                                                                                                                                                                                                                                                                 
-## [16] "bipolar disorder, body mass index"                                                                                                                                                                                                                                                                                                                      
-## [17] "total cholesterol measurement, diastolic blood pressure, triglyceride measurement, systolic blood pressure, hematocrit, ventricular rate measurement, glucose measurement, body mass index, high density lipoprotein cholesterol measurement"                                                                                                           
-## [18] "Barrett's esophagus, body mass index"                                                                                                                                                                                                                                                                                                                   
-## [19] "body mass index, asthma"                                                                                                                                                                                                                                                                                                                                
-## [20] "insulin sensitivity measurement, body mass index"                                                                                                                                                                                                                                                                                                       
-## [21] "body mass index, visceral:subcutaneous adipose tissue ratio"                                                                                                                                                                                                                                                                                            
-## [22] "total cholesterol measurement, hematocrit, stroke, ventricular rate measurement, body mass index, atrial fibrillation, high density lipoprotein cholesterol measurement, coronary artery disease, cancer, diastolic blood pressure, triglyceride measurement, systolic blood pressure, heart failure, diabetes mellitus, glucose measurement, mortality"
-## [23] "fibrinogen measurement, body mass index"                                                                                                                                                                                                                                                                                                                
-## [24] "urate measurement, body mass index"                                                                                                                                                                                                                                                                                                                     
-## [25] "body mass index, fasting blood glucose measurement"                                                                                                                                                                                                                                                                                                     
-## [26] "body mass index, age at assessment"                                                                                                                                                                                                                                                                                                                     
-## [27] "smoking behavior, body mass index"                                                                                                                                                                                                                                                                                                                      
-## [28] "diet measurement, body mass index"                                                                                                                                                                                                                                                                                                                      
-## [29] "sex interaction measurement, body mass index, age at assessment"                                                                                                                                                                                                                                                                                        
-## [30] "physical activity, body mass index"                                                                                                                                                                                                                                                                                                                     
-##
-## $edu
-## [1] "self reported educational attainment"                              
-## [2] "intelligence, self reported educational attainment"                
-## [3] "autism spectrum disorder, self reported educational attainment"    
-## [4] "schizophrenia, intelligence, self reported educational attainment"
-## [5] "self reported educational attainment, refractive error measurement"
-## [6] "systolic blood pressure, self reported educational attainment"     
-## [7] "diastolic blood pressure, self reported educational attainment"    
-## [8] "mean arterial pressure, self reported educational attainment"      
-## [9] "pulse pressure measurement, self reported educational attainment"  
-##
-## $int
-## [1] "intelligence"                                                     
-## [2] "cesarean section, intelligence"                                   
-## [3] "intelligence, specific language impairment, dyslexia"             
-## [4] "intelligence, self reported educational attainment"               
-## [5] "schizophrenia, intelligence"                                      
-## [6] "schizophrenia, intelligence, self reported educational attainment"
-##
-## $ibd
-##  [1] "inflammatory bowel disease"                                                                           
-##  [2] "inflammatory bowel disease, spine bone mineral density"                                               
-##  [3] "leukopenia, response to thiopurine, inflammatory bowel disease"                                       
-##  [4] "inflammatory bowel disease, femoral neck bone mineral density"                                        
-##  [5] "pyoderma gangrenosum, inflammatory bowel disease"                                                     
-##  [6] "Erythema nodosum, inflammatory bowel disease"                                                         
-##  [7] "myelosuppression, response to thiopurine, inflammatory bowel disease"                                 
-##  [8] "Alopecia, response to thiopurine, inflammatory bowel disease"                                         
-##  [9] "pancreatitis, response to thiopurine, inflammatory bowel disease"                                     
-## [10] "response to thiopurine, thiopurine immunosuppressant-induced pancreatitis, inflammatory bowel disease"
-## [11] "digestive system disease, response to thiopurine, inflammatory bowel disease"                         
-##
-## $pig
-## [1] "skin pigmentation"                                   
-## [2] "freckles, skin pigmentation"                         
-## [3] "skin pigmentation measurement"                       
-## [4] "eye color"                                           
-## [5] "eye colour measurement"                              
-## [6] "hair color"                                          
-## [7] "cutaneous melanoma, hair color"                      
-## [8] "hair colour measurement"                             
-## [9] "hair colour measurement, hair morphology measurement"
-```
-
-Are any of the OR_OR_BETAs negative?
-
-
-```r
-any(unlist(lapply(data_list, function(pheno) {
-  any(pheno$clean$OR_OR_BETA < 0,na.rm = T)
-})))
-```
-
-```
-## [1] FALSE
-```
-
-This must means that the `RISK_ALLELE` always affects the trait positively.
-
-But for what proportion of SNPs is the `RISK_ALLELE` not stated?
-
-
-```r
-lapply(data_list, function(pheno) {
-  length(which(pheno$clean$RISK_ALLELE == "?")) / nrow(pheno$clean)
-})
-```
-
-```
-## $hei
-## [1] 0.7065841
-##
-## $bmi
-## [1] 0.5023901
-##
-## $edu
-## [1] 0.1741145
-##
-## $int
-## [1] 0.4382862
-##
-## $ibd
-## [1] 0.3213368
-##
-## $pig
-## [1] 0.5314885
-```
-
-[**NOTE**]{color="red"}: In cases where `RISK_ALLELE` isn't provided, treat the `ALT` allele as `RISK_ALLELE`.
-
-### Generate Manhattan plots
-
-Plot
-
-
-```r
-counter = 0
-lapply(data_list, function(pheno_df){
-  # set counter
-  counter <<- counter + 1
-  df = pheno_df[["clean"]]
-  trait = unique(df$PHENO)
-  # Get title
-  title <- paste(trait, "\n", "SNP count:", nrow(df))
-  # Plot
-  get_man(df, trait = trait, title = title, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
-})
-```
-
-![](index_files/figure-html/unnamed-chunk-12-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-12-6.svg)<!-- -->
-
-Save
-
-
-```r
-output_dir = here::here("plots", "20210122_manhattan_all_snps")
-
-counter = 0
-lapply(data_list, function(pheno_df){
-
-  # set counter
-  counter <<- counter + 1
-  df = pheno_df[["clean"]]
-  trait = unique(df$PHENO)
-  # Get title
-  title <- paste(trait, "\n", "SNP count:", nrow(df))
-  # Set file name to save
-  file = file.path(output_dir,
-                   paste("manhattan_",
-                         names(data_list)[counter],
-                         ".svg",
-                         sep = ""))
-  # Set up graphics device
-  svg(file,
-      width = 10,
-      height = 6)  
-
-  # Plot
-  get_man(df, trait = trait, chr = "CHR", bp = "POS", snp = "TOP_SNP", p = "P")
-
-  dev.off()
-})
-```
-
-#### Create list of target SNPs to extract from 1KG
-
-
-```r
-dest_dir = here::here("data", "20210122_snp_hit_lists")
-
-# Make directory
-dir.create(dest_dir)
-
-# Just SNPs for extracting from 1KG
-counter <- 0
-lapply(data_list, function(pheno){
-  df = pheno[["clean"]]
-  # Set counter
-  counter <<- counter + 1
-  # Set file basename
-  trait = names(data_list)[counter]
-  filename = paste(trait, ".list", sep = "")
-  # Write SNPs to file
-  readr::write_lines(df$TOP_SNP, file.path(dest_dir, filename))
-})
-
-# SNPs and P-values with header for clumping with Plink
-counter <- 0
-lapply(data_list, function(pheno){
-  df = pheno[["clean"]]
-  # Set counter
-  counter <<- counter + 1
-  # Set file basename
-  trait = names(data_list)[counter]
-  filename = paste(trait, "_with_P.txt", sep = "")
-  # Write SNPs to file
-  df %>%
-    dplyr::select(SNP = TOP_SNP, P) %>%
-    readr::write_tsv(file.path(dest_dir, filename))
-})
-```
-
-## Filter 1KG VCF for target SNPs
-
-
-```bash
-
-traits=$(echo hei bmi edu int ibd pig)
-ref=../refs/hs37d5.fa.gz
-in_vcf=../vcfs/1kg_all.vcf.gz
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-snps_dir=data/20210122_snp_hit_lists
-out_dir=data/20210125_snp_hits_filtered
-
-mkdir -p $out_dir
-
-for trait in $(echo $traits ); do
-  bsub \
-    -M 10000 \
-    -o ../log/20210122_extract_snps_$trait.out \
-    -e ../log/20210122_extract_snps_$trait.err \
-    """
-    conda activate fst_env_rhel ;
-    gatk SelectVariants \
-      -R $ref \
-      -V $in_vcf \
-      --keep-ids $snps_dir/$trait.list \
-      -O $out_dir/$trait.vcf.gz
-    """ ;
-done
-```
-
-## Get allele frequencies of SNP hits with `Plink2`
-
-### Import 1KG metadata (for sample-population key)
-
-Downloded via this page: <http://www.internationalgenome.org/data>.
-
-Download link: <http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx>.
-
-Saved here: `data/20130606_sample_info.xlsx`
-
-
-```r
-samples_file = here::here("data", "20130606_sample_info.xlsx")
-
-meta = readxl::read_xlsx(samples_file,
-                         sheet = "Sample Info") %>%
-  dplyr::select(Sample, Population, Gender)
-
-knitr::kable(head(meta))
-```
-
-
-
-|Sample  |Population |Gender |
-|:-------|:----------|:------|
-|HG00096 |GBR        |male   |
-|HG00097 |GBR        |female |
-|HG00098 |GBR        |male   |
-|HG00099 |GBR        |female |
-|HG00100 |GBR        |female |
-|HG00101 |GBR        |male   |
-
-### Write population file for Plink2
-
-
-```r
-sample_popn_key_file = here::here("data", "plink2_sample_popn_key.txt")
-
-write.table(meta[, 1:2],
-            sample_popn_key_file,
-            quote = F,
-            sep = "\t",
-            row.names = F,
-            col.names = F)
-```
-
-### Run `Plink2` for SNP hits
-
-(Take only biallelic SNPs.)
-
-
-```bash
-
-conda activate fst_env_rhel
-
-# Set variables
-
-traits=$(echo hei bmi edu int ibd pig)
-in_vcf_dir=data/20210125_snp_hits_filtered
-popn_file=data/plink2_sample_popn_key.txt
-out_dir=data/20210122_snp_hits_alfreqs
-
-# Set up directories
-mkdir -p $out_dir
-
-for trait in $(echo $traits); do
-  mkdir -p $out_dir/$trait;
-done   
-
-# Run Plink2
-
-## Get global AF
-for trait in $(echo $traits); do
-  plink2 \
-    --vcf $in_vcf_dir/$trait.vcf.gz \
-    --freq \
-    --max-alleles 2 \
-    --snps-only \
-    --out $out_dir/$trait/$trait.all
-done
-
-## Get AF per population
-for trait in $(echo $traits); do
-  plink2 \
-    --vcf $in_vcf_dir/$trait.vcf.gz \
-    --freq \
-    --max-alleles 2 \
-    --snps-only \
-    --pheno iid-only $popn_file \
-    --loop-cats PHENO1 \
-    --out $out_dir/$trait/$trait ;
-done
-```
-
-### Add allele frequency files
-
-
-```r
-target_dir = here::here("data", "20210122_snp_hits_alfreqs")
-
-# Global
-counter <- 0
-data_list = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # get trait name
-  trait = names(data_list)[counter]
-  # get file path
-  target_path = file.path(target_dir, trait, paste(trait, ".all.afreq", sep = ""))
-  # read in data
-  clean_af = read_afreq(target_path)
-  # add POPN column
-  clean_af$POPN = "all"
-  # add to list
-  pheno[["clean_af"]] = clean_af
-
-  return(pheno)
-})
-
-# Per population
-counter <- 0
-data_list = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # get trait name
-  trait = names(data_list)[counter]
-  # get file path
-  target_files = list.files(file.path(target_dir, trait),
-                            pattern = ".*[^all]\\.afreq",
-                            full.names = T)
-  # get popn names
-  names(target_files) = basename(target_files) %>%
-    str_split("\\.", simplify = T) %>%
-    subset(select = 2)
-  # read files and bind into single DF
-  popn_afreqs = lapply(target_files, function(popn){
-    df = read_afreq(popn)
-  }) %>%
-    dplyr::bind_rows(.id = "POPN")# %>%
-#    dplyr::select(-OBS_CT) %>%
-#    tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = ALT_FREQS)
-  # combine with `clean_af`
-  pheno[["clean_af"]] = dplyr::bind_rows(pheno[["clean_af"]],
-                                         popn_afreqs)
-
-  return(pheno)
-})
-```
-
-## Set up negative controls
-
-Pull out random SNPs with the same global allele frequencies as the GWAS SNP-hits
-
-### Bin SNP hits by allele frequency
-
-Bind to clean DF to get AFs of risk allele
-
-[**NOTE**]{color="red"}: If `RISK_ALLELE` is unknown, set the allele frequency to `ALT_FREQS`
-
-
-```r
-data_list = lapply(data_list, function(pheno){
-  # join DFs
-  df = dplyr::left_join(pheno[["clean"]],
-                        dplyr::select(pheno[["clean_af"]],
-                                      -CHR),
-                        by = c("TOP_SNP" = "SNP"))
-  # get AF of risk allele
-  df$RISK_AF = dplyr::if_else(df$RISK_ALLELE == "?",
-                              df$ALT_FREQS,
-                              dplyr::if_else(df$RISK_ALLELE == df$ALT,
-                                             df$ALT_FREQS,
-                                             1 - df$ALT_FREQS))
-  # add `HIT_CONTROL` column
-  df$HIT_CONTROL = "hit"
-  # add to list
-  pheno[["consol"]] = df
-
-  return(pheno)
-})
-```
-
-
-Bin by risk allele frequency
-
-
-```r
-# 1% intervals
-breakpoints = seq(0, 1, 0.1)
-
-data_list = lapply(data_list, function(pheno){
-  # choose DF
-  df = pheno[["consol"]]
-  # add bins
-  df$BIN_10 = cut(df$RISK_AF, breaks = breakpoints, labels = F)
-  # save back into list
-  pheno[["consol"]] = df
-
-  return(pheno)
-})
-```
-
-Extract key columns and write to file
-
-
-```r
-out_dir = here::here("data", "20210201_snp_risk_hits_binned")
-
-dir.create(out_dir)
-
-# Save list
-counter <- 0
-risk_afs = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # get target DF
-  df = pheno[["consol"]]
-  # filter
-  df = df %>%
-    dplyr::filter(POPN == "all") %>% # take only global AFs
-    dplyr::select(TOP_SNP, BIN_10) %>%
-    tidyr::drop_na() # drop NAs
-  # set output path
-  trait = names(data_list)[counter]
-  path_out = file.path(out_dir, paste(trait, ".txt", sep = ""))
-  # write to file
-  readr::write_tsv(df, path_out)
-})
-```
-
-### Bin 1KG SNPs
-
-#### Get allele frequencies from 1KG
-
-With `Plink2`, per chromosome for speed.
-
-
-```bash
-# set output directory
-in_file=../vcfs/1kg_all.vcf.gz
-out_dir=../big_data/20210125_alfreqs_all
-
-mkdir -p $out_dir
-
-# Per chromosome
-for chr in $(seq 1 22) ; do
-  # create allele-freq tables
-  bsub \
-    -M 10000 \
-    -o ../log/20210125_plink_alfreq_$chr.out \
-    -e ../log/20210125_plink_alfreq_$chr.err \
-    """
-    conda activate fst_env_rhel ;
-    plink2 \
-      --vcf $in_file \
-      --freq \
-      --chr $chr \
-      --max-alleles 2 \
-      --snps-only \
-      --out $out_dir/$chr ";
-done
-```
-
-#### Bin them and save to single file
-
-
-```r
-# On cluster
-# `conda activate fst_env_rhel`
-
-library(here)
-source(here::here("code", "scripts", "source.R"))
-
-# Set variables
-in_dir = "../big_data/20210125_alfreqs_all"
-out_dir = "../big_data/20210201_alfreqs_all_binned_10"
-breakpoints = seq(0, 1, 0.1) # 10% bins
-
-# Create output directory
-dir.create(out_dir)
-
-<<<<<<< HEAD
-# Get list of input files
-=======
-# Get list of input files, excluding
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-in_files = list.files(in_dir, pattern = ".afreq", full.names = T)
-
-# Read in files, add bins, and write to output
-freq_list = lapply(in_files, function(chr_file){
-  # read in file
-  df = read_afreq(chr_file)
-  # add bins
-<<<<<<< HEAD
-  df$BIN_100 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
-=======
-  df$BIN_10 = cut(df$ALT_FREQS, breaks = breakpoints, labels = F)
-  # remove "ss" SNPs
-  df = df %>%
-    dplyr::filter(!grepl("ss", SNP))
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  # write file
-  readr::write_tsv(df, file = file.path(out_dir, basename(chr_file)))
-})
-
-# Combine into single DF
-freq_df = dplyr::bind_rows(freq_list)
-
-# Write to file
-readr::write_tsv(freq_df, file = file.path(out_dir, "all.afreq"))
-```
-
-#### Pull out random SNPs with same AF as trait risk alleles
-
-
-```r
-# On cluster
-
-library(here)
-source(here::here("code", "scripts", "source.R"))
-
 # Variables
+gcat_traits = gwasrapidd::get_traits(efo_trait = target_traits)
+trait_ids = gcat_traits@traits$efo_id
+names(trait_ids) = trait_ids
+target_dir = here::here("data/gwasrapidd/20210525")
 
-<<<<<<< HEAD
-input_risk_snp_dir = here::here("data", "20210126_snp_risk_hits_binned")
-all_1kg_bins = "../big_data/20210125_alfreqs_all_binned/all.afreq"
-initial_seed = 123
-output_dir = here::here("data", "20210126_random_snps")
-output_dir_snpids = here::here("data", "20210126_random_snps_snp_ids")
-=======
-input_risk_snp_dir = here::here("data", "20210201_snp_risk_hits_binned")
-all_1kg_bins = "../big_data/20210201_alfreqs_all_binned_10/all.afreq"
-initial_seed = 123
-output_dir = here::here("data", "20210201_random_snps")
-output_dir_snpids = here::here("data", "20210201_random_snps_snp_ids")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-dir.create(output_dir)
-dir.create(output_dir_snpids)
-
-## Read in target SNP DF and split into list by bin
-phenos = gsub(".txt", "", basename(list.files(input_risk_snp_dir)))
-names(phenos) = phenos
-
-risk_list = lapply(phenos, function(pheno){
-  # set file path
-  file_path = file.path(input_risk_snp_dir, paste(pheno, ".txt", sep = ""))
-  # read file
-  out = readr::read_tsv(file_path,
-                        col_names = T) %>%
-<<<<<<< HEAD
-    split(., f = .$BIN_100) # split by bin
-=======
-    split(., f = .$BIN_10) # split by bin
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
+# Read in raw associations objects
+assocs_raw = lapply(trait_ids, function(TRAIT_ID){
+  readRDS(file.path(target_dir, "associations_raw", paste(TRAIT_ID, ".rds", sep = "")))
 })
 
-## Read in 1KG data
-freq_df = readr::read_tsv(all_1kg_bins)
+# Read in raw studies objects
+studies_raw = lapply(trait_ids, function(TRAIT_ID){
+  readRDS(file.path(target_dir, "studies_raw", paste(TRAIT_ID, ".rds", sep = "")))
+})
 
-# For each bin in `risk_list`, pull out the same number of random number 1KG SNPs with the same bin
+# Read in association-study key
+studies_key = lapply(trait_ids, function(TRAIT_ID){
+  readRDS(file.path(target_dir, "studies_key", paste(TRAIT_ID, ".rds", sep = "")))  
+})
 
-## Set seed
-set.seed(initial_seed)
+# Read in genotypes from VCFs
+genos_raw = lapply(trait_ids, function(TRAIT_ID){
+  path = file.path(target_dir, "vcfs", paste(TRAIT_ID, ".vcf.gz", sep = ""))
+  n_variants = nrow(pegas::VCFloci(path))
+  pegas::read.vcf(path, to = n_variants)
+})
 
-## Get seeds for each bin
-seeds = sample(1:1000, length(risk_list))
+# Read in loci from VCFs
+loci_info = lapply(trait_ids, function(TRAIT_ID){
+  out = pegas::VCFloci(file.path(target_dir, "vcfs", paste(TRAIT_ID, ".vcf.gz", sep = "")))
+  out %>%
+    dplyr::mutate(CHROM = as.double(CHROM))
+})
 
-## Run over list
-counter <- 0
-<<<<<<< HEAD
-lapply(risk_list, function(pheno){
-  # set counter
-  counter <<- counter + 1  
-  # set seed for pheno
-  set.seed(seeds)[counter]
-=======
-test = lapply(risk_list, function(pheno){
-  # set counter
-  counter <<- counter + 1  
-  # set seed for pheno
-  set.seed(seeds[counter])
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  # get seeds for bin
-  bin_seeds = sample(1:1000, length(pheno))
-  # get random SNPs from each bin
-  bin_counter <- 0
-  out = lapply(pheno, function(bin_df){
-    # set `bin_counter`
-    bin_counter <<- bin_counter + 1
-    # get target bin
-    target_bin = as.integer(names(pheno)[bin_counter])
-    # get number of matches required
-    hits_n = nrow(bin_df)
-    # set seed
-    set.seed(bin_seeds[bin_counter])    
-    # filter 1kg DF for SNPs with same bin and get random hits
-    random_hits = freq_df %>%
-<<<<<<< HEAD
-      #dplyr::select(SNP, ALT_FREQS, OBS_CT, BIN_100) %>%
-      dplyr::filter(BIN_100 == target_bin) %>%
-      dplyr::slice_sample(n = hits_n) %>%
-      dplyr::rename(RANDOM_SNP = SNP,
-                    RANDOM_BIN_100 = BIN_100)
-=======
-      dplyr::filter(BIN_10 == target_bin) %>%
-      dplyr::slice_sample(n = hits_n) %>%
-      dplyr::rename(RANDOM_SNP = SNP,
-                    RANDOM_BIN_10 = BIN_10)
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-    # bind `random_hits` to target SNP df
-    df_out = cbind(bin_df, random_hits)
+# Create vector of populations
+## Read in population file
+pop_file = readr::read_csv(here::here("data/1kg_populations.csv"))
+## Create vector of populations
+populations = unlist(lapply(rownames(genos_raw[[1]]), function(sample){
+    pop_file$Population[pop_file$Sample == sample]
+}))
+## Create data frame with just 2,504 individuals
+pops_1kg = pop_file %>% 
+  dplyr::filter(Sample %in% rownames(genos_raw[[1]]))
 
-    return(df_out)
-  }) %>%
-    # bind into single data frame
-    dplyr::bind_rows()
+# Read in clumped SNPs
+clumped = lapply(trait_ids, function(TRAIT_ID){
+  readr::read_delim(file.path(target_dir, "plink/clumped", paste(TRAIT_ID, ".clumped", sep = "")),
+                    delim = " ", trim_ws = T)
+})
 
-  # save to file
-  ## set output path
-  trait = names(risk_list)[counter]
-  out_path = file.path(output_dir, paste(trait, ".txt", sep = ""))
-  ## write file
-  readr::write_tsv(out, out_path)
+# Read in 012 genotypes
+genos_012 = lapply(trait_ids, function(TRAIT_ID){
+  readr::read_tsv(file.path(target_dir, "plink/recode_012", paste(TRAIT_ID, ".traw", sep = ""))) %>% 
+    # rename columns to remove duplicated ID
+    dplyr::rename_with(~str_split(.x, pattern = "_", simplify = T) %>% 
+                       subset(select = 1),
+                       .cols = matches("_"))
+})
 
-  # save just SNP IDs (for Plink to get per-population AFs)
-  out_path = file.path(output_dir_snpids, paste(trait, ".list", sep = ""))
-  ## write file
-<<<<<<< HEAD
-  readr::write_lines(out$RANDOM_SNP, out_path)  
-=======
-  readr::write_lines(out$RANDOM_SNP, out_path)
-
-  return(out)
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
+# Read in Plink Fst
+fst_plink = lapply(trait_ids, function(TRAIT_ID){
+  readr::read_tsv(file.path(target_dir, "plink/fst", paste(TRAIT_ID, ".fst", sep = "")))
 })
 ```
 
-#### Filter VCFs for random SNPs
+## Counts
 
-
-```bash
-traits=$(echo hei bmi edu int ibd pig)
-ref=../refs/hs37d5.fa.gz
-<<<<<<< HEAD
-in_vcf=../vcfs/1gk_all.vcf.gz
-snps_dir=data/20210126_random_snps_snp_ids
-out_dir=data/20210127_snp_rndm_filtered
-=======
-in_vcf=../vcfs/1kg_all.vcf.gz
-snps_dir=data/20210201_random_snps_snp_ids
-out_dir=data/20210201_snp_rndm_filtered
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-mkdir -p $out_dir
-
-for trait in $(echo $traits ); do
-  bsub \
-    -M 10000 \
-<<<<<<< HEAD
-    -o ../log/20210127_extract_snps_$trait.out \
-    -e ../log/20210127_extract_snps_$trait.err \
-=======
-    -o ../log/20210201_extract_snps_$trait.out \
-    -e ../log/20210201_extract_snps_$trait.err \
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-    """
-    conda activate fst_env_rhel ;
-    gatk SelectVariants \
-      -R $ref \
-      -V $in_vcf \
-      --keep-ids $snps_dir/$trait.list \
-      -O $out_dir/$trait.vcf.gz
-    """ ;
-done
-```
-
-#### Get per-population allele frequencies of random SNPs
-
-
-```bash
-traits=$(echo hei bmi edu int ibd pig)
-<<<<<<< HEAD
-random_snps_dir=data/20210126_random_snps_snp_ids
-vcf_in_dir=data/20210127_snp_rndm_filtered
-popn_key=data/plink2_sample_popn_key.txt
-out_dir=data/20210127_snp_rndm_alfreqs
-=======
-random_snps_dir=data/20210201_random_snps_snp_ids
-vcf_in_dir=data/20210201_snp_rndm_filtered
-popn_key=data/plink2_sample_popn_key.txt
-out_dir=data/20210201_snp_rndm_alfreqs
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-
-for trait in $(echo $traits ); do
-
-  mkdir -p $out_dir/$trait
-
-  bsub \
-    -M 10000 \
-<<<<<<< HEAD
-    -o ../log/20210127_rdm_popn_afreqs_$trait.out \
-    -e ../log/20210127_rdm_popn_afreqs_$trait.err \
-=======
-    -o ../log/20210201_rdm_popn_afreqs_$trait.out \
-    -e ../log/20210201_rdm_popn_afreqs_$trait.err \
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-    """
-    conda activate fst_env_rhel ;
-    plink2 \
-      --vcf $vcf_in_dir/$trait.vcf.gz \
-      --extract $random_snps_dir/$trait.list \
-      --freq \
-      --pheno iid-only $popn_key \
-      --loop-cats PHENO1 \
-      --out $out_dir/$trait/$trait
-    """ ;
-<<<<<<< HEAD
-done  
-=======
-done
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-```
-
-#### Bind into single DF
+How many unique SNPs in datasets?
 
 
 ```r
-<<<<<<< HEAD
-in_dir_rndm = here::here("data", "20210126_random_snps")
-in_dir_afreq = here::here("data", "20210127_snp_rndm_alfreqs")
-=======
-in_dir_rndm = here::here("data", "20210201_random_snps")
-in_dir_afreq = here::here("data", "20210201_snp_rndm_alfreqs")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
+# How many unique SNPs in associations?
+raw_assocs_count = purrr::map(assocs_raw, function(TRAIT_ID){
+  TRAIT_ID@risk_alleles %>% 
+    dplyr::select(variant_id)
+}) %>% 
+  dplyr::bind_rows(.id = "efo_id") %>% 
+  dplyr::left_join(.,
+                   gcat_traits@traits,
+                   by = "efo_id") %>% 
+  # combine various pigmentation traits
+  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
+                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::distinct(variant_id) %>% 
+  dplyr::count(name = "N_ASSOCS")
 
-# Read in data
-
-## Random SNPs
-in_files_rndm = list.files(in_dir_rndm, full.names = T)
-names(in_files_rndm) = gsub(".txt", "", basename(in_files_rndm))
-
-random_snps = lapply(in_files_rndm, function(file){
-  out = readr::read_tsv(file)
-  # add `POPN` column
-  out$POPN = "all"
-
-  return(out)
-}) %>%
-  dplyr::bind_rows(.id = "PHENO")
-
-## Popn afreqs
-popn_afreqs = lapply(trait_levels, function(pheno){
-  target_files = list.files(file.path(in_dir_afreq, pheno), pattern = ".afreq", full.names = T)
-
-  names(target_files) = basename(target_files) %>%
-    str_split("\\.", simplify = T) %>%
-    subset(select = 2)
-
-  popn_afreqs = lapply(target_files, function(popn){
-    df = read_afreq(popn)
-  }) %>%
-<<<<<<< HEAD
-    dplyr::bind_rows(.id = "POPN") # %>%
-  #  dplyr::select(-OBS_CT) %>%
-  #  tidyr::pivot_wider(id_cols = SNP, names_from = POPN, values_from = c(ALT_FREQS, OBS_CT))
-
-  return(popn_afreqs)
-}) %>%
-  dplyr::bind_rows(.id = "PHENO")
-=======
-    dplyr::bind_rows(.id = "POPN")
-
-  return(popn_afreqs)
-}) %>%
-  dplyr::bind_rows(.id = "PHENO") %>%
-  tidyr::drop_na()
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-# Bind `popn_afreqs` to `random_snps`
-random_afreqs = dplyr::full_join(dplyr::select(random_snps, -c(POPN, ALT_FREQS, OBS_CT)),
-                                 popn_afreqs,
-                                 by = c("PHENO", "RANDOM_SNP" = "SNP", "REF", "ALT", "CHR"))
-# Bind `all` AFs
-random_afreqs = rbind(random_afreqs, random_snps)
-
-<<<<<<< HEAD
-## Recode PHENO
-#random_afreqs$PHENO = dplyr::recode(random_afreqs$PHENO, !!!rev_recode_vec)
-
-=======
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-## Add `HIT_CONTROL` column
-random_afreqs$HIT_CONTROL = "control"
+#How many unique SNPs in VCFs
+purrr::map(loci_info, function(TRAIT_ID){
+  TRAIT_ID %>% 
+    dplyr::select(ID)
+}) %>% 
+  dplyr::bind_rows(.id = "efo_id") %>% 
+  dplyr::left_join(.,
+                   gcat_traits@traits,
+                   by = "efo_id") %>% 
+  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
+                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::distinct(ID) %>% 
+  dplyr::count(name = "N_VCF") %>% 
+  # bind with raw assocs counts
+  dplyr::left_join(raw_assocs_count,
+                   .,
+                   by = "TRAIT") %>% 
+  # Order and add column with percentage
+  dplyr::mutate(PERC_RETREIVED = N_VCF / N_ASSOCS) %>% 
+  dplyr::arrange(.by_group = T) %>% 
+  knitr::kable(.)
 ```
 
-#### Add to `data_list`
+
+
+|TRAIT                                           | N_ASSOCS| N_VCF| PERC_RETREIVED|
+|:-----------------------------------------------|--------:|-----:|--------------:|
+|body height                                     |     4938|  4804|      0.9728635|
+|body mass index                                 |     4262|  4177|      0.9800563|
+|self reported educational attainment            |     3387|  3360|      0.9920283|
+|intelligence                                    |     2595|  2558|      0.9857418|
+|inflammatory bowel disease                      |      411|   399|      0.9708029|
+|all pigmentation                                |     1203|  1054|      0.8761430|
+|schizophrenia                                   |     2571|  2350|      0.9140412|
+|unipolar depression                             |     1794|  1747|      0.9738016|
+|fasting blood glucose measurement               |      200|   198|      0.9900000|
+|myocardial infarction                           |      276|   272|      0.9855072|
+|low density lipoprotein cholesterol measurement |     1504|  1319|      0.8769947|
+|platelet count                                  |     1851|  1728|      0.9335494|
+
+
+## Calculate Fst with `pegas`
 
 
 ```r
-counter <- 0
-data_list = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # set target pheno
-  target_pheno = names(data_list)[counter]
-  # add random afreqs
-  random_af = random_afreqs %>%
-    dplyr::filter(PHENO == target_pheno)
-  # recode PHENO
-  random_af$PHENO = dplyr::recode(random_af$PHENO, !!!recode_vec)
-  # add to list
-  pheno[["random_af"]] = random_af
-
-  return(pheno)
-})
-```
-
-## Clump to get lead SNPs
-
-Use `Plink1.9` (`Plink2.0` doesn't have a `clump` function.)
-
-From the `Plink1.7` documentation (<http://zzz.bwh.harvard.edu/plink/clump.shtml>), which applies to `Plink1.9`:
-
-> The clumping procedure takes all SNPs that are significant at threshold p1 that have not already been clumped (denoting these as index SNPs) and forms clumps of all other SNPs that are within a certain kb distance from the index SNP (default 250kb) and that are in linkage disequilibrium with the index SNP, based on an r-squared threshold (default 0.50)... This is a greedy algorithm and so each SNP will only appear in a single clump, if at all.
-
-> ...[t]he TOTAL field lists all SNPs that are clumped with the index SNP, irrespective of the p-value for those SNPs. This number is then split into those clumped SNPs that are not significant (p>0.05) and various other groups defined by significance thresholds. For SNPs that are significant at the p2 threshold, they are listed explicitly. The (1) after each SNP name refers to the results file they came from (in this case, there is only a single result file specified, so all values are 1).
-
-Here, we're taking all SNPs with *P* < 1e-08 as index SNPs, and it will explicitly list all SNPs within the clump that also meet that threshold.
-
-
-```bash
-
-# Activate environment
-conda activate fst_env_rhel
-
-# Set variables
-traits=$(echo hei bmi edu int ibd pig)
-in_vcf_dir=data/20210125_snp_hits_filtered
-snp_p_dir=data/20210122_snp_hit_lists
-out_dir=data/20210125_clumped
-
-r2_params=$(echo 0.1 0.2 0.3)
-kb_params=$(echo 500 750 1000 )
-
-# Make directory
-mkdir -p $out_dir
-
-# Run with different parameters
-for trait in $(echo $traits ); do
-
-  mkdir -p $out_dir/$trait ;
-
-  for r2 in $r2_params ; do
-    for kb in $kb_params ; do
-      bsub \
-        -o ../log/20210125_clump_$trait\_$r2\_$kb.out \
-        -e ../log/20210125_clump_$trait\_$r2\_$kb.err \
-        """
-        conda activate fst_env_rhel ;
-        plink \
-          --vcf $in_vcf_dir/$trait.vcf.gz \
-          --clump $snp_p_dir/$trait\_with_P.txt \
-          --clump-p1 0.00000001 \
-          --clump-p2 0.00000001 \
-          --clump-r2 $r2 \
-          --clump-kb $kb \
-          --out $out_dir/$trait/r2-$r2\_kb-$kb
-        """  ;
-    done ;
-  done;  
-done
-
-```
-
-<<<<<<< HEAD
-=======
-## Filter VCFs for clumped SNPs
-
-
-```bash
-# On cluster
-
-# Set variables
-traits=$(echo hei bmi edu int ibd pig)
-clump_param="r2-0.1_kb-1000"
-in_dir_snp=data/20210125_clumped
-in_dir_vcf=data/20210125_snp_hits_filtered
-ref=../refs/hs37d5.fa.gz
-out_dir_snp_list=data/20210128_clumped_snps
-out_dir_vcfs=data/20210128_hits_vcfs
-
-mkdir -p $out_dir_snp_list $out_dir_vcfs
-
-# Extract SNP column and write to list
-for trait in $(echo $traits ); do
-  target_file=$in_dir_snp/$trait/$clump_param.clumped ;
-  awk '{print $3}' $target_file | tail -n+2 \
-    > $out_dir_snp_list/$trait.list ;
-done
-
-# Make new VCFs
-for trait in $(echo $traits ); do
-  bsub \
-    -o ../log/20210128_filter_vcfs_clump_$trait.out \
-    -e ../log/20210128_filter_vcfs_clump_$trait.err \
-    """
-    conda activate fst_env_rhel ;
-    gatk SelectVariants \
-      -R $ref \
-      -V $in_dir_vcf/$trait.vcf.gz \
-      --keep-ids $out_dir_snp_list/$trait.list \
-      -O $out_dir_vcfs/$trait.vcf.gz     
-    """ ;
-done    
-
-```
-
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-### Add clumped SNP files to `data_list`
-
-
-```r
-target_dir = here::here("data", "20210125_clumped")
-
-counter <- 0
-data_list = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # get trait name
-  trait = names(data_list)[counter]
-  # get file path
-  target_files = list.files(file.path(target_dir, trait),
-                            pattern = ".clumped",
-                            full.names = T)
-  names(target_files) = gsub(".clumped", "", basename(target_files))
-  # read files as `clumped`
-  counter_clump <- 0
-  clumped = lapply(target_files, function(params){
-    # set counter
-    counter_clump <<- counter_clump + 1
-    # split params string
-    param_str = names(target_files)[counter_clump] %>%
-      stringr::str_split("_", simplify = T) %>%
-      stringr::str_split("-", simplify = T)
-    # get params
-    r2 = as.numeric(param_str[1,2])
-    kb = as.integer(param_str[2,2])
-    # read files
-    df = read.table(params, header = T)
-    # add params to DF
-    df$r2 = r2
-    df$kb = kb
-
-    return(df)
-  })
-  # add `clumped` list to `data_list`
-  pheno[["clumped"]] = clumped
-  # bind `clumped` into single DF and add to `data_list`
-  pheno[["clumped_all"]] = dplyr::bind_rows(clumped)
-
-  return(pheno)
-})
-```
-
-<<<<<<< HEAD
-=======
-## Extract random SNPs filtered by those matching the clumped SNPs
-
-
-```r
-out_dir = here::here("data", "20210201_random_snps")
-
-dir.create(out_dir)
-
-counter = 0
-out = lapply(data_list, function(pheno){
-  # set counter
-  counter <<- counter + 1
-  # get name of trait
-  trait = names(data_list)[counter]
-  # get clumped SNPs
-  clumped_snps = pheno[["clumped"]][[clump_param]]$SNP
-  # gather SNPs
-  snps = pheno[["random_af"]] %>%
-    dplyr::filter(TOP_SNP %in% clumped_snps) %>%
-    dplyr::select(RANDOM_SNP) %>%
-    unique(.)
-  # write to file
-  out_path = file.path(out_dir, paste(trait, ".list", sep = ""))
-  readr::write_lines(snps$RANDOM_SNP, out_path)
-})
-rm(out)
-```
-
-## Make VCFs for random control SNPs
-
-
-```bash
-# On cluster
-
-# Set variables
-traits=$(echo hei bmi edu int ibd pig)
-in_dir_snp_list=data/20210201_random_snps
-in_vcf=../vcfs/1kg_all.vcf.gz
-ref=../refs/hs37d5.fa.gz
-out_dir_vcfs=data/20210201_rndm_vcfs
-
-mkdir -p $out_dir_vcfs
-
-# Make new VCFs
-for trait in $(echo $traits ); do
-  bsub \
-    -M 20000 \
-    -o ../log/20210201_filter_vcfs_rndm_$trait.out \
-    -e ../log/20210201_filter_vcfs_rndm_$trait.err \
-    """
-    conda activate fst_env_rhel ;
-    gatk SelectVariants \
-      -R $ref \
-      -V $in_vcf \
-      --keep-ids $in_dir_snp_list/$trait.list \
-      -O $out_dir_vcfs/$trait.vcf.gz     
-    """ ;
-done    
-```
-
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-## Consolidate key data into single DF for analysis
-
-**NOTE**: `clump_param` is set in `code/scripts/source.R`
-
-
-```r
-data_list = lapply(data_list, function(pheno){
-  # Filter `consol` by the index SNPs in target `clump`
-  target_clump = pheno[["clumped"]][[clump_param]]
-
-  final = pheno[["consol"]] %>%
-    dplyr::rename(SNP = TOP_SNP) %>%
-    dplyr::filter(SNP %in% target_clump$SNP)
-
-  # Add allele frequencies of SNP hits (global and per-population)
-
-  # Add controls
-  controls = pheno[["random_af"]] %>%
-    # filter for SNPs in target_clump
-    dplyr::filter(TOP_SNP %in% target_clump$SNP) %>%
-<<<<<<< HEAD
-    dplyr::select(-c(TOP_SNP, BIN_100, RANDOM_BIN_100),
-=======
-    dplyr::select(-c(TOP_SNP, BIN_10, RANDOM_BIN_10),
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-                  SNP = RANDOM_SNP) %>%
-    dplyr::mutate(RISK_AF = ALT_FREQS)
-
-  final = dplyr::bind_rows(final, controls)  
-  pheno[["final"]] = final
-
-  return(pheno)
-})
-
-# Create final df
-final_df = lapply(data_list, function(pheno){
-  out = pheno[["final"]]
-
-  return(out)
-}) %>%
-  dplyr::bind_rows()
-
-# Set factors
-final_df$PHENO <- factor(final_df$PHENO, levels = trait_levels_verb)
-final_df$HIT_CONTROL = factor(final_df$HIT_CONTROL, levels = hit_control_levels)
-
-# Create DF for plotting
-final_plt = final_df %>%
-  dplyr::select(SNP, PHENO, POPN, RISK_AF, HIT_CONTROL) %>%
-  tidyr::pivot_wider(names_from = POPN, values_from = RISK_AF)
-```
-
-<<<<<<< HEAD
-=======
-
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-# Analysis
-
-## Manhattan plots
-
-
-```r
-counter = 0
-lapply(unique(final_df$PHENO), function(pheno){
-  # set counter
-  counter <<- counter + 1
-  df = final_df %>%
-    dplyr::filter(PHENO == pheno & HIT_CONTROL == "hit")
-  # Get number of SNPs
-  snp_n = length(unique(df$SNP))
-  # Get title
-  title <- paste(pheno, "\n", "SNP count:", snp_n)
-  # Plot
-  get_man(df, trait = pheno, title = title, chr = "CHR", bp = "POS", snp = "SNP", p = "P")
-})
-```
-
-<<<<<<< HEAD
-![](index_files/figure-html/unnamed-chunk-33-1.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-2.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-3.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-4.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-5.png)<!-- -->![](index_files/figure-html/unnamed-chunk-33-6.png)<!-- -->
-
-
-=======
-![](index_files/figure-html/unnamed-chunk-36-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-36-6.svg)<!-- -->
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-## Allele frequency distributions of risk alleles
-
-
-```r
-final_df %>%
-  dplyr::filter(HIT_CONTROL == "hit") %>%
-  ggplot(aes(RISK_AF, fill = PHENO)) +
-    geom_histogram(bins = 100) +
-    scale_fill_manual(values = pal_primary) +
-    facet_wrap(vars(PHENO), nrow = 2) +
-    guides(fill = F) +
-    xlab("Risk allele frequency") +
-    ylab("Count") +
-    theme_bw() +
-    ggtitle("Frequency distribution of \"risk\" alleles (all 1KG populations combined)")
-```
-
-```
-## Warning: Removed 28 rows containing non-finite values (stat_bin).
-```
-
-<<<<<<< HEAD
-![](index_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
-=======
-![](index_files/figure-html/unnamed-chunk-37-1.svg)<!-- -->
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-```r
-ggsave(here("plots", "20210127_af_distribution", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-## Allele frequency vs effect size
-
-
-```r
-one = final_df %>%
-  dplyr::filter(HIT_CONTROL == "hit" & POPN == "all") %>%
-  ggplot() +
-    geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO),
-               alpha = 0.2) +
-    scale_colour_manual(values = pal_primary) +
-    facet_wrap(vars(PHENO), nrow = 2) +
-    guides(colour = F, alpha = F) +
-    theme_bw() +
-    ggtitle("Risk allele frequency vs effect size (OR or beta)")
-
-# Zoom in
-two = final_df %>%
-  dplyr::filter(HIT_CONTROL == "hit" & POPN == "all") %>%
-  ggplot() +
-    geom_point(aes(RISK_AF, OR_OR_BETA, colour = PHENO),
-               alpha = 0.2) +
-    scale_colour_manual(values = pal_primary) +
-    facet_wrap(vars(PHENO), nrow = 2) +
-    guides(colour = F, alpha = F) +
-    theme_bw() +
-    ggtitle("Risk allele frequency vs effect size (OR or beta)") +
-    ylim(0,20)
-
-one
-```
-
-```
-## Warning: Removed 3463 rows containing missing values (geom_point).
-```
-
-```r
-two
-```
-
-```
-## Warning: Removed 3467 rows containing missing values (geom_point).
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-39-1.svg" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" /><img src="index_files/figure-html/unnamed-chunk-39-2.svg" alt="Full size and zoomed to 0 &lt; y &lt; 20" width="50%" />
-<p class="caption">Full size and zoomed to 0 < y < 20</p>
-</div>
-
-
-
-```r
-ggsave(here("plots", "20210127_af_v_effect_size", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_af_v_effect_size", "20210127_hits_zoomed.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-## Fst
-
-### With all populations
-
-#### Get Fst stats for top SNPs
-
-
-```r
-# Create raw list of variants
-<<<<<<< HEAD
-case = here::here("data", "20210125_snp_hits_filtered")
-control = here::here("data", "20210127_snp_rndm_filtered")
-target_dirs = c(case, control)
-names(target_dirs) = c("case", "control")
-
-# Set seed
-initial_seed = 53
-set.seed(initial_seed)
-seeds = sample(1:1000, size = length(target_dirs))
-=======
-hit = here::here("data", "20210128_hits_vcfs")
-control = here::here("data", "20210201_rndm_vcfs")
-target_dirs = c(hit, control)
-names(target_dirs) = c("hit", "control")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-# Run
-counter = 0
-fst_out = lapply(target_dirs, function(target_dir){
-  # set counter
-  counter <<- counter + 1
-
-  vcf_list_raw <- lapply(trait_levels, function(trait){
-    target_file = file.path(target_dir, paste(trait, ".vcf.gz", sep = ""))
-    # read in file
-    vcf_out <- pegas::read.vcf(target_file)
-<<<<<<< HEAD
-    # filter `cases` for clumped SNPs, and take same number of `control` SNPs
-    ## get target SNP IDs
-    target_snps = data_list[[trait]]$clumped[[clump_param]]$SNP
-    if (names(target_dirs)[counter] == "case"){
-      ## filter VCF
-      vcf_out = vcf_out[, colnames(vcf_out) %in% target_snps]
-      ## take sample of same number of `control` SNPs
-    } else if (names(target_dirs)[counter] == "control"){
-      set.seed(seeds[counter])
-      vcf_out = vcf_out[, sample(ncol(vcf_out), size = length(target_snps))]
-    }
-=======
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-    return(vcf_out)
-  })
-
-  # Create vector of populations
-  populations <- unlist(lapply(rownames(vcf_list_raw[[1]]), function(sample){
-    meta$Population[meta$Sample == sample]
-  }))
-
-  # Generate Fst stats
-  fst_out_df <- lapply(vcf_list_raw, function(pheno){
-    out = as.data.frame(pegas::Fst(pheno, pop = populations))
-    # put rownames into separate column
-    out$snp <- rownames(out)
-
-    return(out)
-  }) %>%
-    # bind into single DF
-    dplyr::bind_rows(.id = "phenotype") %>%
-    # remove NA
-    tidyr::drop_na()
-
-  return(fst_out_df)
-}) %>%
-<<<<<<< HEAD
-  dplyr::bind_rows(.id = "case_control")
-=======
-  dplyr::bind_rows(.id = "hit_control")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-# Recode phenotype
-fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels)
-fst_out$phenotype = dplyr::recode(fst_out$phenotype, !!!recode_vec)
-```
-
-Write to file
-
-
-```r
-<<<<<<< HEAD
-out_dir = here::here("data", "20210127_results")
-out_path = file.path(out_dir, paste("20210127_fst", ".csv", sep = ""))
-=======
-out_dir = here::here("data", "20210203_results")
-out_path = file.path(out_dir, paste("20210203_fst", ".csv", sep = ""))
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-dir.create(out_dir)
-
-readr::write_csv(fst_out, out_path)
-```
-
-Read back in
-
-```r
-<<<<<<< HEAD
-fst_out = readr::read_csv(here::here("data", "20210127_results/20210127_fst.csv"))
-fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
-=======
-fst_out = readr::read_csv(here::here("data", "20210203_results", "20210203_fst.csv"))
-fst_out$phenotype <- factor(fst_out$phenotype, levels = trait_levels_verb)
-fst_out$hit_control = factor(fst_out$hit_control, levels = hit_control_levels)
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-knitr::kable(head(fst_out))
-```
-
-
-
-<<<<<<< HEAD
-|case_control |phenotype | Fit|       Fst| Fis|snp        |
-|:------------|:---------|---:|---------:|---:|:----------|
-|case         |Height    |   1| 0.0543812|   1|rs2710889  |
-|case         |Height    |   1| 0.2898026|   1|rs1240697  |
-|case         |Height    |   1| 0.0972836|   1|rs28401288 |
-|case         |Height    |   1| 0.0669376|   1|rs377599   |
-|case         |Height    |   1| 0.0274605|   1|rs12028979 |
-|case         |Height    |   1| 0.0888646|   1|rs5024246  |
-=======
-|hit_control |phenotype | Fit|       Fst| Fis|snp        |
-|:-----------|:---------|---:|---------:|---:|:----------|
-|hit         |Height    |   1| 0.0543812|   1|rs2710889  |
-|hit         |Height    |   1| 0.2898026|   1|rs1240697  |
-|hit         |Height    |   1| 0.0972836|   1|rs28401288 |
-|hit         |Height    |   1| 0.0669376|   1|rs377599   |
-|hit         |Height    |   1| 0.0274605|   1|rs12028979 |
-|hit         |Height    |   1| 0.0888646|   1|rs5024246  |
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-#### *Fst* histograms
-
-
-```r
-one = fst_out %>%
-<<<<<<< HEAD
-  dplyr::filter(case_control == "case") %>%
-=======
-  dplyr::filter(hit_control == "hit") %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
-    theme_bw() +
-    scale_fill_manual(values = pal_primary)  +
-<<<<<<< HEAD
-    guides(fill = F)
-
-two = fst_out %>%
-  dplyr::filter(case_control == "control") %>%
-=======
-    guides(fill = F) +
-    ylim(0, 450) +
-    ggtitle("Hits")
-
-two = fst_out %>%
-  dplyr::filter(hit_control == "control") %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-<<<<<<< HEAD
-    guides(fill = F)
-=======
-    guides(fill = F) +
-    ylim(0, 450) +
-    ggtitle("Controls")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-one
-two
-```
-
-<div class="figure">
-<<<<<<< HEAD
-<img src="index_files/figure-html/unnamed-chunk-44-1.png" alt="Cases vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-44-2.png" alt="Cases vs controls" width="50%" />
-<p class="caption">Cases vs controls</p>
-=======
-<img src="index_files/figure-html/unnamed-chunk-47-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-47-2.svg" alt="Hits vs controls" width="50%" />
-<p class="caption">Hits vs controls</p>
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-</div>
-
-
-
-
-```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_histograms", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
-ggsave(file.path(plot_path, "histograms_hits.svg"),
-       device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_histograms", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
-out_path = file.path(plot_path, "histograms_rndm.svg")
-
-ggsave(out_path,
-       device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-       height = 12,
-       width = 20)
-```
-
-#### *Fst* density
-
-##### Facets
-
-
-```r
-one = fst_out %>%
-<<<<<<< HEAD
-  dplyr::filter(case_control == "case") %>%
-=======
-  dplyr::filter(hit_control == "hit") %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_primary) +
-<<<<<<< HEAD
-    guides(fill = F)
-
-
-two = fst_out %>%
-  dplyr::filter(case_control == "control") %>%
-=======
-    guides(fill = F) +
-    ylim(0, 12) +
-    ggtitle("Hits")
-
-
-two = fst_out %>%
-  dplyr::filter(hit_control == "control") %>%
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-<<<<<<< HEAD
-    guides(fill = F)
-=======
-    guides(fill = F) +
-    ylim(0, 12) +
-    ggtitle("Controls")
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-
-one
-two
-```
-
-<div class="figure">
-<<<<<<< HEAD
-<img src="index_files/figure-html/unnamed-chunk-49-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-49-2.png" alt="Hits vs controls" width="50%" />
-=======
-<img src="index_files/figure-html/unnamed-chunk-52-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-52-2.svg" alt="Hits vs controls" width="50%" />
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-<p class="caption">Hits vs controls</p>
-</div>
-
-
-
-
-```r
-<<<<<<< HEAD
-ggsave(here("plots", "20210127_densities", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-=======
-ggsave(file.path(plot_path, "density_hits.svg"),
-       device = "svg",
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(file.path(plot_path, "density_rndm.svg"),
-       device = "svg",
-       height = 12,
-       width = 20)
-```
-
-##### Ridges
-
-
-```r
-one = fst_out %>%
-  dplyr::filter(hit_control == "hit") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot() +
-    geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
-                         scale = 2) +
-    scale_fill_manual(values = pal_primary) +
-    ylab(label = NULL) +
-    theme_bw() +
-    guides(fill = F) +
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
-    ggtitle("Hits")
-
-two = fst_out %>%
-  dplyr::filter(hit_control == "control") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot() +
-    geom_density_ridges2(mapping = aes(x = Fst, y = phenotype, fill = phenotype),
-                         scale = 2) +
-    scale_fill_manual(values = pal_secondary) +
-    ylab(label = NULL) +
-    theme_bw() +
-    guides(fill = F) +
-    scale_y_discrete(expand = expand_scale(add = c(0.2, 2.3))) +
-    ggtitle("Controls")
-
-one
-two
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-57-1.svg" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-57-2.svg" alt="Hits vs controls" width="50%" />
-<p class="caption">Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(file.path(plot_path, "ridges_hits.svg"),
-       device = "svg",
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(file.path(plot_path, "ridges_rndm.svg"),
-       device = "svg",
-       height = 12,
-       width = 20)
-```
-
-<<<<<<< HEAD
-### Run Kolmogorov-Smirnov Tests
-
-
-```r
-case_control = unique(fst_out$case_control)
-names(case_control) = case_control
-
-ks_out = lapply(case_control, function(dataset){
-  # filter dataset
-  target_df = fst_out[fst_out$case_control == dataset, ]
-  # run pairwise KS tests
-  ks_out = lapply(trait_levels_verb, function(trait_a){
-    out = lapply(trait_levels_verb, function(trait_b){
-      results = ks.test(target_df$Fst[target_df$phenotype == trait_a],
-                        target_df$Fst[target_df$phenotype == trait_b])
-      P = results$p.value
-
-      return(P)
-    }) %>%
-      dplyr::bind_rows(.id = "test_b")
-
-    return(out)
-  })  %>%
-    dplyr::bind_rows(.id = "trait")
-
-  traits = ks_out$trait
-  ks_out$trait <- NULL
-
-  rownames(ks_out) = traits
-  return(ks_out)
-})
-
-# convert to matrix
-ks_mat = lapply(ks_out, function(dataset){
-  out = as.matrix(dataset)
-
-  return(out)
+fst_pegas = lapply(genos_raw, function(TRAIT_ID){
+  pegas::Fst(TRAIT_ID, pop = populations)
 })
 ```
 
 
 
-```r
-# Process for plotting
-ks_out_gg = lapply(ks_out, function(dataset){
-  out = dataset
-  out$A = rownames(dataset)
-  out = out %>%
-    pivot_longer(cols = -A, names_to = "B", values_to = "ks_P")
-  # convert P-values to -log10
-  out$ks_P = -log10(out$ks_P)
 
-  return(out)
-}) %>%
-  dplyr::bind_rows(.id = "case_control") %>%
-  dplyr::mutate(across(c("A", "B"),
-                       ~factor(.x, levels = trait_levels_verb)))
+
+# Plot $F_{ST}$
+
+## Bind relevant data
+
+
+```r
+fst_pegas_df = lapply(trait_ids, function(TRAIT_ID){
+  # Loci info
+  loci = loci_info[[TRAIT_ID]] %>% 
+    dplyr::select(CHROM, POS, ID, REF, ALT)
+  # Risk alleles
+  risk_alleles = assocs_raw[[TRAIT_ID]]@risk_alleles %>% 
+    dplyr::select(association_id, variant_id, risk_allele)
+  # Study key
+  study_key = studies_key[[TRAIT_ID]]
+  # Studies
+  studies = studies_raw[[TRAIT_ID]]@studies %>% 
+    dplyr::select(study_id, initial_sample_size, replication_sample_size)
+  # Fst
+  fst = fst_pegas[[TRAIT_ID]] %>%
+    data.frame(.) %>% 
+    tibble::rownames_to_column(var = "ID") %>% 
+    dplyr::select(ID, FST_PEGAS = Fst)
+  
+  # Bind all
+  out = dplyr::left_join(loci, risk_alleles, by = c("ID" = "variant_id")) %>% 
+    dplyr::left_join(study_key, by = "association_id") %>% 
+    dplyr::left_join(studies, by = "study_id") %>% 
+    dplyr::left_join(fst, by = "ID")
+}) %>% 
+  dplyr::bind_rows(.id = "EFO_ID") %>%
+  # Add `trait` for each `efo_id` from `gcat_traits` key
+  dplyr::left_join(gcat_traits@traits %>% 
+                     dplyr::select(efo_id, trait),
+                   by = c("EFO_ID" = "efo_id")) %>% 
+  dplyr::select(EFO_ID, trait, everything()) %>% 
+  # Recode Pigmentation traits
+  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec)) %>% 
+  # Factorise to order
+  dplyr::mutate(TRAIT = factor(TRAIT, levels = extended_traits))
+
+# Create a second df with clumped SNPs
+## Get clumped SNPs
+clumped_snps = lapply(clumped, function(TRAIT_ID) {
+  TRAIT_ID %>%
+    dplyr::pull(SNP)
+}) %>% purrr::flatten_chr()
+## Create list and bind
+fst_pegas_df_clumps= list(
+  "ALL" = fst_pegas_df,
+  "CLUMPED" = fst_pegas_df %>% 
+    dplyr::filter(ID %in% clumped_snps)
+) %>% 
+  dplyr::bind_rows(.id = "FILTER")
+
+# How many unique SNPs in total (having grouped by TRAIT)
+fst_pegas_df_clumps %>% 
+  dplyr::filter(FILTER == "ALL") %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::distinct(ID) %>% 
+  nrow()
 ```
 
-Plot
+```
+## [1] 23966
+```
 
 ```r
-heat_hits_all = ks_out_gg %>%
-  dplyr::filter(case_control == "case") %>%
+# How many unique SNPs in total after clumping (having grouped by TRAIT)
+fst_pegas_df_clumps %>% 
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::distinct(ID) %>% 
+  nrow()
+```
+
+```
+## [1] 10221
+```
+
+
+## Initial counts of variants
+
+
+```r
+fst_pegas_df_clumps %>%
+  # group by FILTER and TRAIT to take unique SNPs within each group
+  dplyr::group_by(FILTER, TRAIT) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>% 
+  # ungroup
+  dplyr::ungroup() %>% 
+  # plot
   ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c() +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_controls_all = ks_out_gg %>%
-  dplyr::filter(case_control == "control") %>%
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c(option = "magma") +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_hits_all
-heat_controls_all
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-61-1.png" alt="Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-61-2.png" alt="Hits vs controls" width="50%" />
-<p class="caption">Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_hits_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_all.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-### Try with same number of SNPs
-
-[**Strategy**]{color="red"}: Will it make a difference if we analyse the same number of SNPs for each trait? i.e. is the different number of SNPs for each trait affecting the KS test output?
-
-IBD only has 182 hits, so remove from this part of the analysis.
-
-The trait with the next least number of hits is `Intelligence`, with `480. So we'll take a random sample of 40
-
-
-```r
-fst_sample = split(fst_out, f = fst_out$case_control)
-fst_sample = lapply(fst_sample, function(dataset){
-  out = split(dataset, f = dataset$phenotype)
-  out = lapply(out, function(pheno){
-    pheno = pheno %>%
-      dplyr::slice_sample(n = 480)
-
-    return(pheno)
-  }) %>%
-    dplyr::bind_rows() %>%
-    dplyr::filter(phenotype != "IBD")
-}) %>%
-  dplyr::bind_rows()
-```
-
-#### Histograms
-
-
-```r
-one = fst_sample %>%
-  dplyr::filter(case_control == "case") %>%
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
+    geom_bar(aes(TRAIT, fill = TRAIT)) +
+    scale_fill_manual(values = pal_primary_new) +
     theme_bw() +
-    scale_fill_manual(values = pal_primary)  +
-    guides(fill = F)
-
-two = fst_sample %>%
-  dplyr::filter(case_control == "control") %>%
-  ggplot() +
-    geom_histogram(aes(Fst, fill = phenotype), bins = 100) +
-    facet_wrap(~phenotype) +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
-
-one
-two
+    theme(axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank()) +
+    ylab("N loci") +
+    facet_wrap(~FILTER, nrow = 2)
 ```
 
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-67-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-67-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
+![](index_files/figure-html/unnamed-chunk-9-1.svg)<!-- -->
 
+### $F_{ST}$
+
+#### Pegas
 
 
 ```r
-ggsave(here("plots", "20210127_histograms", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_histograms", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-#### Density
-
-
-```r
-one = fst_sample %>%
-  dplyr::filter(case_control == "case") %>%
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_primary) +
-    guides(fill = F)
-
-two = fst_sample %>%
-  dplyr::filter(case_control == "control") %>%
-  ggplot(aes(Fst, fill = phenotype)) +
-    geom_density() +
-    labs(fill = "Phenotype") +
-    facet_wrap(~phenotype) +
-    ylab("Density") +
-    theme_bw() +
-    scale_fill_manual(values = pal_secondary) +
-    guides(fill = F)
-
-one
-two
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-72-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-72-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(here("plots", "20210127_densities", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_densities", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-### KS test
-
-
-```r
-case_control = unique(fst_sample$case_control)
-names(case_control) = case_control
-
-trait_levels_verb_sample = trait_levels_verb[-which(trait_levels_verb == "IBD")]
-traits_sample = traits[-which(traits == "ibd")]
-
-ks_sample = lapply(case_control, function(dataset){
-  # filter dataset
-  target_df = fst_sample[fst_sample$case_control == dataset, ]
-  # run pairwise KS tests
-  ks_out = lapply(trait_levels_verb_sample, function(trait_a){
-    out = lapply(trait_levels_verb_sample, function(trait_b){
-      results = ks.test(target_df$Fst[target_df$phenotype == trait_a],
-                        target_df$Fst[target_df$phenotype == trait_b])
-      P = results$p.value
-
-      return(P)
-    }) %>%
-      dplyr::bind_rows(.id = "test_b")
-
-    return(out)
-  })  %>%
-    dplyr::bind_rows(.id = "trait")
-
-  traits = ks_out$trait_levels_verb_sample
-  ks_out$trait <- NULL
-
-  rownames(ks_out) = trait_levels_verb_sample
-  return(ks_out)
-})
-```
-
-#### Heatmaps
-
-
-```r
-ks_sample_gg = lapply(ks_sample, function(dataset){
-  out = dataset
-  out$A = rownames(dataset)
-  out = out %>%
-    pivot_longer(cols = -A, names_to = "B", values_to = "ks_P")
-  # convert P-values to -log10
-  out$ks_P = -log10(out$ks_P)
-
-  return(out)
-}) %>%
-  dplyr::bind_rows(.id = "case_control") %>%
-  dplyr::mutate(across(c("A", "B"),
-                       ~factor(.x, levels = trait_levels_verb_sample)))
-```
-
-Plot
-
-```r
-heat_hits_sample = ks_sample_gg %>%
-  dplyr::filter(case_control == "case") %>%
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c() +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_controls_sample = ks_sample_gg %>%
-  dplyr::filter(case_control == "control") %>%
-  ggplot() +
-    geom_tile(aes(A, B, fill = ks_P)) +
-    scale_fill_viridis_c(option = "magma") +
-    coord_fixed() +
-    xlab(NULL) +
-    ylab(NULL) +
-    labs(fill = "KS-test\n-log(P)")
-
-heat_hits_sample
-heat_controls_sample
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-79-1.png" alt="SAMPLED: Hits vs controls" width="50%" /><img src="index_files/figure-html/unnamed-chunk-79-2.png" alt="SAMPLED: Hits vs controls" width="50%" />
-<p class="caption">SAMPLED: Hits vs controls</p>
-</div>
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_hits_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-
-
-
-```r
-ggsave(here("plots", "20210127_ks_heatmaps", "20210127_controls_sample.png"),
-       device = "png",
-       units = "cm",
-       dpi = 400,
-       height = 12,
-       width = 20)
-```
-
-### Compare effects of sampling on P-values
-
-
-```r
-heat_hits_all
-heat_hits_sample
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-84-1.png" alt="Hits: all vs sample" width="50%" /><img src="index_files/figure-html/unnamed-chunk-84-2.png" alt="Hits: all vs sample" width="50%" />
-<p class="caption">Hits: all vs sample</p>
-</div>
-
-
-```r
-heat_controls_all
-heat_controls_sample
-```
-
-<div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-85-1.png" alt="Controls: all vs sample" width="50%" /><img src="index_files/figure-html/unnamed-chunk-85-2.png" alt="Controls: all vs sample" width="50%" />
-<p class="caption">Controls: all vs sample</p>
-</div>
-=======
-### Tests
-
-#### Median, 80 and 90 percentiles, KS test, and MW test
-
-[Rationale]{color="red"}:
-
-1. Get the median, and 0.8 and 0.9 percentiles for the *Fst* density of each trait.
-2. Run one-sided Mann-Whitney tests using `Height` as the reference against each of the other traits.
-3. Run one-sided Kolmogorov-Smirnov tests using `Height` as the reference against each of the other traits.
-4. Determine which tests to use to confirm the differences apparent in the forms of the density curves.
-
-
-```r
-final_list = split(fst_out, f = fst_out$hit_control)
-final_list = lapply(final_list, function(dataset){
-  split_data = split(dataset, f = dataset$phenotype)
-
-  out = lapply(split_data, function(pheno){
-    stats = list()
-
-    # Get median and 90 percentile
-    stats[["stats"]] = c("median" = median(pheno$Fst),
-                         quantile(pheno$Fst, probs = 0.8),
-                         quantile(pheno$Fst, probs = 0.9))
-
-    # Get Mann-Whitney results
-    stats[["final_list"]] = wilcox.test(x = split_data[["Height"]]$Fst,
-                                    y = pheno$Fst,
-                                    alternative = "less",
-                                    paired = F,
-                                    conf.int = T)
-
-    # Get KS results
-    stats[["ks_out"]] = ks.test(x = split_data[["Height"]]$Fst,
-                                y = pheno$Fst,
-                                alternative = "greater")
-
-    return(stats)
-  })# %>%
-    #dplyr::bind_rows(.id = "phenotype")
-
-
-  return(out)
-
-})
-
-# Collapse into DF
-final_df = lapply(final_list, function(dataset){
-  out = lapply(dataset, function(pheno){
-    # Put key data into data frame
-    df = c("MEDIAN" = pheno[["stats"]][["median"]],
-           "80%" = pheno[["stats"]][["80%"]],
-           "90%" = pheno[["stats"]][["90%"]],
-           pheno[["final_list"]]$statistic,
-           "P_MW" = pheno[["final_list"]]$p.value,
-           "CONF_LOWER" = pheno[["final_list"]]$conf.int[1],
-           "CONF_UPPER" = pheno[["final_list"]]$conf.int[2],
-           pheno[["ks_out"]]$statistic,
-           "P_KS" = pheno[["ks_out"]]$p.value)
-
-    return(df)
-  }) %>%
-    dplyr::bind_rows(.id = "PHENO")
-
-  return(out)
-}) %>%
-  dplyr::bind_rows(.id = "HIT_CONTROL")
-
-# Factor
-final_df$PHENO <- factor(final_df$PHENO, levels = trait_levels_verb)
-final_df$HIT_CONTROL = factor(final_df$HIT_CONTROL, levels = hit_control_levels)
-
-# Output table
-final_df %>%
-  dplyr::filter(PHENO != "Height" & HIT_CONTROL == "hit") %>%
-  dplyr::select(!HIT_CONTROL) %>%
-  knitr::kable()
-```
-
-
-
-|PHENO                  |    MEDIAN|       80%|       90%|       W|      P_MW| CONF_LOWER| CONF_UPPER|       D^+|      P_KS|
-|:----------------------|---------:|---------:|---------:|-------:|---------:|----------:|----------:|---------:|---------:|
-|BMI                    | 0.0473438| 0.0951012| 0.1338033| 2014306| 0.9994353|       -Inf|  0.0069362| 0.0354889| 0.0920426|
-|Educational attainment | 0.0591072| 0.1189623| 0.1617981| 1668872| 0.0000070|       -Inf| -0.0042002| 0.0875242| 0.0000007|
-|Intelligence           | 0.0640484| 0.1187706| 0.1599932|  522053| 0.0000130|       -Inf| -0.0062020| 0.1251515| 0.0000034|
-|IBD                    | 0.0559605| 0.1180520| 0.1704417|  205361| 0.0233731|       -Inf| -0.0012905| 0.1019891| 0.0293960|
-|Pigmentation           | 0.0513410| 0.1238692| 0.1724036|  621561| 0.8097992|       -Inf|  0.0059789| 0.0355927| 0.3547547|
-
-### Final *Fst* density plots for hits
-
-Some options for the figure.
-
-
-```r
-fst_out %>%
-  dplyr::filter(hit_control == "hit") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot(aes(Fst, phenotype, fill = phenotype)) +
-    stat_density_ridges(geom = "density_ridges_gradient",
-                        scale = 2,
-                        calc_ecdf = TRUE,
-                        quantiles = c(0.5, 0.8, 0.9),
-                        quantile_lines = T) +
-  scale_fill_manual(values = pal_primary) +
-  guides(fill = F) +
-  theme_bw() +
-  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
-  ylab(NULL) +
-  ggtitle("Median, 80% and 90%; auto-bandwidth")
-```
-
-```
-## Picking joint bandwidth of 0.0133
-```
-
-![](index_files/figure-html/unnamed-chunk-63-1.svg)<!-- -->
-
-```r
-# Automatic bandwidth
-fst_out %>%
-  dplyr::filter(hit_control == "hit") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
-    geom_density_ridges(scale = 2,
-                        calc_ecdf = TRUE,
-                        quantiles = c(0.5, 0.8, 0.9),
-                        quantile_lines = T,
-                        jittered_points = TRUE,
-                        point_shape = '|', alpha = 0.85, point_size = 2,
-                        position = position_points_jitter(width = 0.01, height = 0)) +
-  scale_fill_manual(values = pal_primary) +
-  scale_colour_manual(values = pal_secondary) +
-  guides(fill = F, colour = F) +
-  theme_bw() +
-  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
-  ylab(NULL) +
-  ggtitle("Median, 80% and 90%; auto-bandwidth; with points")  
-```
-
-```
-## Picking joint bandwidth of 0.0133
-```
-
-![](index_files/figure-html/unnamed-chunk-64-1.svg)<!-- -->
-
-
-```r
-# Manually-set bandwidth
-fst_out %>%
-  dplyr::filter(hit_control == "hit") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot(aes(Fst, phenotype, fill = phenotype)) +
-    geom_density_ridges(scale = 2,
-                        bandwidth = 0.003,
-                        calc_ecdf = TRUE,
-                        quantiles = c(0.5, 0.8, 0.9),
-                        quantile_lines = T,
-                        jittered_points = TRUE,
-                        point_shape = '|', alpha = 0.85, point_size = 2,
-                        position = position_points_jitter(width = 0.01, height = 0)) +
-  scale_fill_manual(values = pal_primary) +
- # scale_colour_manual(values = pal_secondary) +
-  guides(fill = F, colour = F) +
-  theme_bw() +
-  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
-  ylab(NULL) +
-  ggtitle("Median, 80% and 90%; manual bandwidth; with points; black lines")  
-```
-
-![](index_files/figure-html/unnamed-chunk-65-1.svg)<!-- -->
-
-
-```r
-# Manually-set bandwidth
-fst_out %>%
-  dplyr::filter(hit_control == "hit") %>%
-  dplyr::mutate(phenotype = factor(phenotype, levels = rev(trait_levels_verb))) %>%
-  ggplot(aes(Fst, phenotype, fill = phenotype, colour = phenotype)) +
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  # group by TRAIT to take unique SNPs
+  dplyr::group_by(TRAIT) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(TRAIT = factor(TRAIT, levels = rev(extended_traits))) %>%
+  # plot
+  ggplot(aes(FST_PEGAS, TRAIT, fill = TRAIT, colour = TRAIT)) +
     geom_density_ridges(scale = 2,
                         bandwidth = 0.003,
                         calc_ecdf = TRUE,
@@ -2806,14 +333,356 @@ fst_out %>%
                         jittered_points = TRUE,
                         point_shape = '|', alpha = 0.85, point_size = 2,
                         position = position_points_jitter(width = 0.01, height = 0)) +
-  scale_fill_manual(values = pal_primary) +
-  scale_colour_manual(values = pal_secondary) +
+  scale_fill_manual(values = pal_primary_new) +
+  scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
   guides(fill = F, colour = F) +
   theme_bw() +
   scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
   ylab(NULL) +
-  ggtitle("Median, 80% and 90%; manual bandwidth; with points; coloured lines")  
+  ggtitle("Median and 90%") 
 ```
 
-![](index_files/figure-html/unnamed-chunk-66-1.svg)<!-- -->
->>>>>>> e1d0d20ebc8c277bd98448a6ed43c802b1ff6638
+```
+## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).
+```
+
+![$F_{ST}$ calculated with 26 populations](index_files/figure-html/unnamed-chunk-10-1.svg)
+
+#### Plink
+
+
+```r
+# How many unique SNPs in Fst Plink output?
+fst_plink %>% 
+  dplyr::bind_rows(.id = "TRAIT") %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::distinct(SNP) %>% 
+  nrow()
+```
+
+```
+## [1] 24083
+```
+
+```r
+# Bind Plink outputs `fst_pegas_df_clump`
+fst_all_df = fst_plink %>% 
+  dplyr::bind_rows() %>% 
+  # rename columns for ease of binding
+  dplyr::select(ID = SNP, FST_PLINK = FST) %>% 
+  # take distinct
+  dplyr::distinct(ID, .keep_all = T) %>% 
+  # bind with `fst_pegas_df_clumped`
+  dplyr::left_join(fst_pegas_df_clumps,
+                   .,
+                   by = "ID")
+
+# Plot correlation between pegas and Plink Fst
+fst_all_df %>% 
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  ggplot() +
+    geom_point(aes(FST_PEGAS, FST_PLINK, colour = TRAIT),
+               alpha = 0.2)+
+    theme_bw() +
+    scale_colour_manual(values = pal_primary_new) +
+    coord_fixed()
+```
+
+```
+## Warning: Removed 1 rows containing missing values (geom_point).
+```
+
+![Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs.](index_files/figure-html/unnamed-chunk-11-1.svg)
+
+### $F_{ST}$ for 3 populations (CEU, CHS, YRI)
+
+
+```r
+target_3_pops = c("YRI", "CEU", "CHS")
+
+# Get list of samples from the 3 target populations
+pops_3_pops = pops_1kg %>% 
+  dplyr::filter(Population %in% target_3_pops)
+```
+
+
+```r
+# Get Fst
+fst_3_pops = lapply(genos_raw, function(TRAIT_ID){
+  genos_filt = TRAIT_ID[rownames(TRAIT_ID) %in% pops_3_pops$Sample, ]
+  pegas::Fst(TRAIT_ID, pop = populations)
+})
+```
+
+
+
+
+
+
+```r
+fst_3_pops_df = fst_3_pops %>% 
+  purrr::map(., . %>% 
+               data.frame(.) %>% 
+               tibble::rownames_to_column(var = "ID") %>% 
+               dplyr::select(ID, FST_PEGAS_3_POPS = Fst)) %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::distinct(ID, .keep_all = T) %>% 
+  dplyr::left_join(.,
+                   fst_all_df,
+                   by = "ID")
+```
+
+
+```r
+fst_3_pops_df %>% 
+  dplyr::filter(FILTER == "CLUMPED") %>%  # filter for clumped index SNPs
+  # group by TRAIT to take unique SNPs
+  dplyr::group_by(TRAIT) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(TRAIT = factor(TRAIT, levels = rev(extended_traits))) %>% 
+  # plot
+  ggplot(aes(FST_PEGAS_3_POPS, TRAIT, fill = TRAIT, colour = TRAIT)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary_new) +
+  scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median and 90%") 
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).
+```
+
+![$F_{ST}$ calculated with only 3 populations: CEU, CHS, and YRI](index_files/figure-html/unnamed-chunk-17-1.svg)
+
+# 012 Histograms per population
+
+Process data
+
+
+```r
+increase_allele_counts = lapply(trait_ids, function(TRAIT_ID){
+  
+  # Get risk allele and direction
+  out = dplyr::left_join(assocs_raw[[TRAIT_ID]]@associations %>% 
+              dplyr::select(association_id, pvalue, beta_direction),
+            assocs_raw[[TRAIT_ID]]@risk_alleles %>% 
+              dplyr::select(association_id, variant_id, risk_allele),
+            by = "association_id") %>% 
+    # Filter for clumped SNPS
+    dplyr::filter(variant_id %in% clumped[[TRAIT_ID]]$SNP) %>% 
+    # Bind with 012 genotypes
+    left_join(.,
+              genos_012[[TRAIT_ID]],
+              by = c("variant_id" = "SNP")) %>% 
+    # Find whether the risk allele is COUNTED or ALT in 012 genotypes
+    dplyr::mutate(RISK_ALLELE = dplyr::case_when(
+      risk_allele == COUNTED ~ "counted",
+      risk_allele == ALT ~ "alt",
+      TRUE ~ NA_character_
+      )
+    ) %>% 
+    # Specify the "increase" allele to count 
+    dplyr::mutate(TO_COUNT = dplyr::case_when(
+      beta_direction == "increase" & RISK_ALLELE == "counted" ~ "COUNTED",
+      beta_direction == "increase" & RISK_ALLELE == "alt" ~ "ALT",
+      beta_direction == "decrease" & RISK_ALLELE == "counted" ~ "ALT",
+      beta_direction == "decrease" & RISK_ALLELE == "alt" ~ "COUNTED",
+      TRUE ~ NA_character_
+      )
+    ) %>% 
+    # Swap counts if TO_COUNT == "ALT". This leaves the genotype as NA if TO_COUNT is NA
+    dplyr::mutate(dplyr::across(all_of(pops_1kg$Sample),
+                                ~dplyr::case_when(
+                                  TO_COUNT == "ALT" ~ dplyr::recode(.x,
+                                                                    `0` = 2,
+                                                                    `2` = 0),
+                                  TO_COUNT == "COUNTED" ~ .x,
+                                  ))) %>% 
+  # Pivot longer and get allele counts
+    tidyr::pivot_longer(cols = all_of(pops_1kg$Sample),
+                        names_to = "SAMPLE",
+                        values_to = "INCREASE_ALLELE_COUNT") %>% 
+    # add population
+    dplyr::inner_join(.,
+                     pops_1kg,
+                     by = c("SAMPLE" = "Sample")) %>% 
+    # factor `Population` to order
+    dplyr::mutate(Population = factor(Population, levels = names(onekg_pal))) %>% 
+    # factor `INCREASE_ALLELE_COUNT` to order
+    dplyr::mutate(INCREASE_ALLELE_COUNT = factor(INCREASE_ALLELE_COUNT, levels = c(0:2, NA))) %>% 
+    # Remove duplicate SNPs
+    ## First those with NA in `TO_COUNT`
+#    dplyr::filter((duplicated(.$variant_id) == F | duplicated(.$variant_id, fromLast = T)) & is.na(TO_COUNT)) %>%
+    ## Then other duplicates
+#    dplyr::distinct(variant_id, .keep_all = T) %>% 
+    # Get per-population counts of 0,1,2, and NA
+    dplyr::group_by(Population) %>% 
+    dplyr::count(INCREASE_ALLELE_COUNT) %>% 
+    dplyr::ungroup()
+  return(out)
+})
+```
+
+Plot 
+
+## Counts including NAs 
+
+To show the number of SNPs for which direction of effect was unavailable.
+
+
+```r
+increase_allele_counts %>% 
+  dplyr::bind_rows(.id = "efo_id") %>% 
+  dplyr::left_join(.,
+                   gcat_traits@traits %>% 
+                     dplyr::select(efo_id, trait),
+                   by = "efo_id") %>% 
+  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
+                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
+  dplyr::group_by(TRAIT) %>% 
+  dplyr::group_map(
+    ~ggplot(.x) +
+      geom_col(aes(INCREASE_ALLELE_COUNT, n, fill = Population)) +
+      facet_wrap(~Population) +
+      scale_fill_manual(values = onekg_pal) +
+      theme_bw() +
+      ggtitle(unique(.x$TRAIT)) + 
+      guides(fill = F) +
+      xlab("Count of allele associated with increase in trait"),
+  .keep = T)
+```
+
+![](index_files/figure-html/unnamed-chunk-19-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-10.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-11.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-12.svg)<!-- -->
+
+## Counts excluding NAs 
+
+Now showing counts as proportions
+
+
+```r
+increase_allele_counts %>% 
+  dplyr::bind_rows(.id = "efo_id") %>% 
+  # add trait names
+  dplyr::left_join(.,
+                   gcat_traits@traits %>% 
+                     dplyr::select(efo_id, trait),
+                   by = "efo_id") %>% 
+  # combine pigmentation traits and order traits
+  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
+                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
+  # remove NAs
+  dplyr::filter(!is.na(INCREASE_ALLELE_COUNT)) %>% 
+  # group by population and calculate proportions
+  dplyr::group_by(Population, TRAIT) %>% 
+  dplyr::mutate(FREQ = n / sum(n)) %>% 
+  dplyr::ungroup(Population) %>% 
+  # Plot for each TRAIT
+  dplyr::group_map(
+    ~ggplot(.x) +
+      geom_col(aes(INCREASE_ALLELE_COUNT, FREQ, fill = Population)) +
+      facet_wrap(~Population) +
+      scale_fill_manual(values = onekg_pal) +
+      theme_bw() +
+      ggtitle(unique(.x$TRAIT)) + 
+      guides(fill = F) +
+      xlab("Count of allele associated with increase in trait"),
+  .keep = T)
+```
+
+![](index_files/figure-html/unnamed-chunk-20-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-10.svg)<!-- -->
+
+## $F_{ST}$ of component traits of `all pigmentation`
+
+
+```r
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  # filter for pigmentation traits
+  dplyr::filter(TRAIT == "all pigmentation") %>% 
+  # group by `trait` to take unique SNPs
+  dplyr::group_by(trait) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # factorise `trait` to order
+  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
+  # plot
+  ggplot(aes(FST_PEGAS,
+           colour = TRAIT,
+           fill = TRAIT)) +
+    geom_histogram(bins = 50) +
+    facet_wrap(~trait, ncol = 1) +
+    scale_fill_manual(values = pal_primary_new) +
+    scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
+    guides(fill = F, colour = F) +
+    theme_bw() +
+    ylab("count") #+
+```
+
+![$F_{ST}$ across pigmentation traits](index_files/figure-html/unnamed-chunk-21-1.svg)
+
+```r
+#  ggtitle("Median and 90%") 
+```
+
+## $F_{ST}$ of SNPs discovered in different studies
+
+
+```r
+# How many studies contributed to pigmentation traits?
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  # filter for pigmentation traits
+  dplyr::filter(TRAIT == "all pigmentation") %>% 
+  # factorise `trait` to order
+  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
+  # count studies for each trait
+  dplyr::group_by(trait) %>% 
+  dplyr::distinct(study_id) %>% 
+  dplyr::summarise(N_STUDIES = dplyr::n())
+
+# Plot  
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>% 
+  # filter for pigmentation traits
+  dplyr::filter(TRAIT == "all pigmentation") %>% 
+  # factorise `trait` to order
+  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
+  # group by `trait` to take unique SNPs
+  dplyr::group_by(trait) %>% 
+  # take unique IDs
+#  dplyr::distinct(ID, .keep_all = T) %>% 
+  # Plot for each `trait`
+  dplyr::group_map(
+    ~ ggplot(.x, aes(FST_PEGAS,
+                     colour = TRAIT,
+                     fill = TRAIT)) +
+        geom_histogram(bins = 50) +
+        facet_wrap(~initial_sample_size, ncol = 1) +
+        scale_fill_manual(values = pal_primary_new) +
+        scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
+        guides(fill = F, colour = F) +
+        theme_bw() +
+        ylab("count") +
+        ggtitle(unique(.x$trait)),
+  .keep = T)
+```
+
+![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-1.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-2.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-3.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-4.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-5.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-6.svg)
+
+

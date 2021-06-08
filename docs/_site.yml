@@ -1,7 +1,7 @@
-name: "Fst variation across human traits"
+name: "$F_{ST}$ variation across human traits"
 output_dir: "."
 navbar:
-  title: "Fst variation across human traits"
+  title: "$F_{ST}$ variation across human traits"
   left:
     - text: "Analysis"
       href: index.html
