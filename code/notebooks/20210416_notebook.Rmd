@@ -572,8 +572,7 @@ fst_pegas_df_clumps %>%
     scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
     guides(fill = F, colour = F) +
     theme_bw() +
-    ylab("count") #+
-#  ggtitle("Median and 90%") 
+    ylab("count")
 ```
 
 ## $F_{ST}$ of SNPs discovered in different studies

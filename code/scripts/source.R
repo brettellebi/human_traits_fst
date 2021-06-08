@@ -21,7 +21,7 @@ library(cowplot)
 
 ## Latest plot path
 plot_path = here::here("plots", "20210203_batch")
-dir.create(plot_path)
+dir.create(plot_path, showWarnings = F)
 
 #############################
 # Functions
