@@ -148,4 +148,30 @@ pal_primary_new = c("#fc4e07","#ffbf00","#0bc166","#00afbb","#d84797","#360568",
 
 names(pal_primary_new) = extended_traits
 
+# New pal with different shade for each pigmentation trait
 
+pal_primary_new_exp = c("#fc4e07","#ffbf00","#0bc166","#00afbb","#d84797",
+                      karyoploteR::lighter("#360568", amount = 80),
+                      karyoploteR::lighter("#360568", amount = 60),
+                      karyoploteR::lighter("#360568", amount = 40),
+                      karyoploteR::lighter("#360568", amount = 20),
+                      "#360568",
+                      karyoploteR::darker("#360568", amount = 20),
+                      "#4f0943", "#c200fb", "#00647a", "#57C13A", "#f2a918", "#e84141")
+names(pal_primary_new_exp) = target_traits
+
+# Pal for 
+traits_with_pig = c("body height",
+                    "body mass index",
+                    "self reported educational attainment",
+                    "intelligence",
+                    "inflammatory bowel disease",
+                    "skin pigmentation / measurement",
+                    "schizophrenia",
+                    "unipolar depression",
+                    "fasting blood glucose measurement",
+                    "myocardial infarction",
+                    "low density lipoprotein cholesterol measurement",
+                    "platelet count" )
+pal_primary_with_pig = pal_primary_new
+names(pal_primary_with_pig) = traits_with_pig

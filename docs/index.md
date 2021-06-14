@@ -1,7 +1,7 @@
 ---
 title: "$F_{ST}$ variation across human traits"
 author: "Ian Brettell"
-date: '2021-06-08'
+date: '2021-06-14'
 output:
   html_document:
     toc: true
@@ -348,6 +348,123 @@ fst_pegas_df_clumps %>%
 
 ![$F_{ST}$ calculated with 26 populations](index_files/figure-html/unnamed-chunk-10-1.svg)
 
+##### With skin pigmentation
+
+
+```r
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = rev(traits_with_pig))) %>%
+  # plot
+  ggplot(aes(FST_PEGAS, trait_with_pig, fill = trait_with_pig, colour = trait_with_pig)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary_with_pig) +
+  scale_colour_manual(values = karyoploteR::darker(pal_primary_with_pig)) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median and 90%") 
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).
+```
+
+![$F_{ST}$ calculated with 26 populations](index_files/figure-html/unnamed-chunk-11-1.svg)
+##### ECDF
+
+
+```r
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
+  # plot
+  ggplot() +
+    stat_ecdf(aes(FST_PEGAS, colour = trait_with_pig)) +
+    scale_colour_manual(values = pal_primary_with_pig) +
+    guides(colour = F) +
+    facet_wrap(~trait_with_pig, ncol = 3) +
+    theme_bw() +
+    ggtitle("ECDF") +
+    labs(colour = "Trait",
+         x = expression(F[ST]),
+         y = NULL)
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_ecdf).
+```
+
+![Faceted](index_files/figure-html/unnamed-chunk-12-1.svg)
+
+```r
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
+  # plot
+  ggplot() +
+    stat_ecdf(aes(FST_PEGAS, colour = trait_with_pig)) +
+    scale_colour_manual(values = pal_primary_with_pig) +
+    theme_bw() +
+    ggtitle("ECDF") +
+    labs(colour = "Trait",
+         x = expression(F[ST]),
+         y = NULL)
+```
+
+```
+## Warning: Removed 1 rows containing non-finite values (stat_ecdf).
+```
+
+![Together](index_files/figure-html/unnamed-chunk-13-1.svg)
+
 #### Plink
 
 
@@ -392,7 +509,7 @@ fst_all_df %>%
 ## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
-![Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs.](index_files/figure-html/unnamed-chunk-11-1.svg)
+![Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs.](index_files/figure-html/unnamed-chunk-14-1.svg)
 
 ### $F_{ST}$ for 3 populations (CEU, CHS, YRI)
 
@@ -465,7 +582,7 @@ fst_3_pops_df %>%
 ## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).
 ```
 
-![$F_{ST}$ calculated with only 3 populations: CEU, CHS, and YRI](index_files/figure-html/unnamed-chunk-17-1.svg)
+![$F_{ST}$ calculated with only 3 populations: CEU, CHS, and YRI](index_files/figure-html/unnamed-chunk-20-1.svg)
 
 # 012 Histograms per population
 
@@ -565,7 +682,7 @@ increase_allele_counts %>%
   .keep = T)
 ```
 
-![](index_files/figure-html/unnamed-chunk-19-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-10.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-11.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-19-12.svg)<!-- -->
+![](index_files/figure-html/unnamed-chunk-22-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-10.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-11.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-22-12.svg)<!-- -->
 
 ## Counts excluding NAs 
 
@@ -602,7 +719,7 @@ increase_allele_counts %>%
   .keep = T)
 ```
 
-![](index_files/figure-html/unnamed-chunk-20-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-20-10.svg)<!-- -->
+![](index_files/figure-html/unnamed-chunk-23-1.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-2.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-3.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-4.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-5.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-6.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-7.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-8.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-9.svg)<!-- -->![](index_files/figure-html/unnamed-chunk-23-10.svg)<!-- -->
 
 ## $F_{ST}$ of component traits of `all pigmentation`
 
@@ -632,7 +749,7 @@ fst_pegas_df_clumps %>%
     ylab("count") #+
 ```
 
-![$F_{ST}$ across pigmentation traits](index_files/figure-html/unnamed-chunk-21-1.svg)
+![$F_{ST}$ across pigmentation traits](index_files/figure-html/unnamed-chunk-24-1.svg)
 
 ```r
 #  ggtitle("Median and 90%") 
@@ -683,6 +800,6 @@ fst_pegas_df_clumps %>%
   .keep = T)
 ```
 
-![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-1.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-2.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-3.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-4.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-5.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-22-6.svg)
+![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-1.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-2.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-3.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-4.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-5.svg)![$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations](index_files/figure-html/unnamed-chunk-25-6.svg)
 
 

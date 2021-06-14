@@ -314,6 +314,102 @@ fst_pegas_df_clumps %>%
   ggtitle("Median and 90%") 
 ```
 
+##### With skin pigmentation
+
+```{r, fig.cap = "$F_{ST}$ calculated with 26 populations", fig.height=10, fig.width=8}
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = rev(traits_with_pig))) %>%
+  # plot
+  ggplot(aes(FST_PEGAS, trait_with_pig, fill = trait_with_pig, colour = trait_with_pig)) +
+    geom_density_ridges(scale = 2,
+                        bandwidth = 0.003,
+                        calc_ecdf = TRUE,
+                        quantiles = c(0.5, 0.9),
+                        quantile_lines = T,
+                        jittered_points = TRUE,
+                        point_shape = '|', alpha = 0.85, point_size = 2,
+                        position = position_points_jitter(width = 0.01, height = 0)) +
+  scale_fill_manual(values = pal_primary_with_pig) +
+  scale_colour_manual(values = karyoploteR::darker(pal_primary_with_pig)) +
+  guides(fill = F, colour = F) +
+  theme_bw() +
+  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
+  ylab(NULL) +
+  ggtitle("Median and 90%") 
+```
+##### ECDF
+
+```{r, fig.height=8, fig.width=8, fig.cap = "Faceted"}
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
+  # plot
+  ggplot() +
+    stat_ecdf(aes(FST_PEGAS, colour = trait_with_pig)) +
+    scale_colour_manual(values = pal_primary_with_pig) +
+    guides(colour = F) +
+    facet_wrap(~trait_with_pig, ncol = 3) +
+    theme_bw() +
+    ggtitle("ECDF") +
+    labs(colour = "Trait",
+         x = expression(F[ST]),
+         y = NULL)
+```
+```{r, fig.height=8, fig.width=12, fig.cap = "Together"}
+fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # reverse order of traits to put `body height` at the top
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
+  # plot
+  ggplot() +
+    stat_ecdf(aes(FST_PEGAS, colour = trait_with_pig)) +
+    scale_colour_manual(values = pal_primary_with_pig) +
+    theme_bw() +
+    ggtitle("ECDF") +
+    labs(colour = "Trait",
+         x = expression(F[ST]),
+         y = NULL)
+```
+
 #### Plink
 
 ```{r, fig.cap="Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs."}
