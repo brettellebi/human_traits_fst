@@ -741,7 +741,7 @@ div.tocify {
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.ticks.x =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&quot;N loci&quot;</span>) <span class="sc">+</span></span>
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>FILTER, <span class="at">nrow =</span> <span class="dv">2</span>)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-9-1.svg" /><!-- --></p>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.svg" width="672" /></p>
 <div id="f_st" class="section level3" number="4.2.1">
 <h3 number="4.2.1"><span class="header-section-number">4.2.1</span> <span class="math inline">\(F_{ST}\)</span></h3>
 <div id="pegas" class="section level4" number="4.2.1.1">
@@ -774,8 +774,10 @@ div.tocify {
 <span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Median and 90%&quot;</span>) </span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).</code></pre>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-10-1.svg" alt="" />
-<p class="caption"><span class="math inline">\(F_{ST}\)</span> calculated with 26 populations</p>
+<img src="index_files/figure-html/unnamed-chunk-10-1.svg" alt="$F_{ST}$ calculated with 26 populations" width="768" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> calculated with 26 populations
+</p>
 </div>
 <div id="with-skin-pigmentation" class="section level5" number="4.2.1.1.1">
 <h5 number="4.2.1.1.1"><span class="header-section-number">4.2.1.1.1</span> With skin pigmentation</h5>
@@ -813,7 +815,15 @@ div.tocify {
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="cn">NULL</span>) <span class="sc">+</span></span>
 <span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Median and 90%&quot;</span>) </span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-11-1.svg" alt="F_{ST} calculated with 26 populations" /> ##### ECDF</p>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-11-1.svg" alt="$F_{ST}$ calculated with 26 populations" width="768" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> calculated with 26 populations
+</p>
+</div>
+</div>
+<div id="ecdf" class="section level5" number="4.2.1.1.2">
+<h5 number="4.2.1.1.2"><span class="header-section-number">4.2.1.1.2</span> ECDF</h5>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fst_pegas_df_clumps <span class="sc">%&gt;%</span> </span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter for clumped index SNPs</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(FILTER <span class="sc">==</span> <span class="st">&quot;CLUMPED&quot;</span>) <span class="sc">%&gt;%</span></span>
@@ -843,8 +853,10 @@ div.tocify {
 <span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">y =</span> <span class="cn">NULL</span>)</span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing non-finite values (stat_ecdf).</code></pre>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-12-1.svg" alt="" />
-<p class="caption">Faceted</p>
+<img src="index_files/figure-html/unnamed-chunk-12-1.svg" alt="Faceted" width="768" />
+<p class="caption">
+Faceted
+</p>
 </div>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fst_pegas_df_clumps <span class="sc">%&gt;%</span> </span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter for clumped index SNPs</span></span>
@@ -873,8 +885,10 @@ div.tocify {
 <span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">y =</span> <span class="cn">NULL</span>)</span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing non-finite values (stat_ecdf).</code></pre>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-13-1.svg" alt="" />
-<p class="caption">Together</p>
+<img src="index_files/figure-html/unnamed-chunk-13-1.svg" alt="Together" width="1152" />
+<p class="caption">
+Together
+</p>
 </div>
 </div>
 </div>
@@ -910,8 +924,10 @@ div.tocify {
 <span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_fixed</span>()</span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing missing values (geom_point).</code></pre>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-14-1.svg" alt="" />
-<p class="caption">Comparison between <code>Plink1.9</code> and <code>pegas</code> <span class="math inline">\(F_{ST}\)</span> outputs.</p>
+<img src="index_files/figure-html/unnamed-chunk-14-1.svg" alt="Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs." width="672" />
+<p class="caption">
+Comparison between <code>Plink1.9</code> and <code>pegas</code> <span class="math inline">\(F_{ST}\)</span> outputs.
+</p>
 </div>
 </div>
 </div>
@@ -964,8 +980,10 @@ div.tocify {
 <span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">&quot;Median and 90%&quot;</span>) </span></code></pre></div>
 <pre><code>## Warning: Removed 1 rows containing non-finite values (stat_density_ridges).</code></pre>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-20-1.svg" alt="" />
-<p class="caption"><span class="math inline">\(F_{ST}\)</span> calculated with only 3 populations: CEU, CHS, and YRI</p>
+<img src="index_files/figure-html/unnamed-chunk-20-1.svg" alt="$F_{ST}$ calculated with only 3 populations: CEU, CHS, and YRI" width="768" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> calculated with only 3 populations: CEU, CHS, and YRI
+</p>
 </div>
 </div>
 </div>
@@ -1057,7 +1075,7 @@ div.tocify {
 <span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">guides</span>(<span class="at">fill =</span> F) <span class="sc">+</span></span>
 <span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">xlab</span>(<span class="st">&quot;Count of allele associated with increase in trait&quot;</span>),</span>
 <span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">.keep =</span> T)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-22-1.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-2.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-3.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-4.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-5.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-6.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-7.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-8.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-9.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-10.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-11.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-22-12.svg" /><!-- --></p>
+<p><img src="index_files/figure-html/unnamed-chunk-22-1.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-2.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-3.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-4.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-5.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-6.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-7.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-8.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-9.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-10.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-11.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-22-12.svg" width="672" /></p>
 </div>
 <div id="counts-excluding-nas" class="section level2" number="5.2">
 <h2 number="5.2"><span class="header-section-number">5.2</span> Counts excluding NAs</h2>
@@ -1089,7 +1107,7 @@ div.tocify {
 <span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">guides</span>(<span class="at">fill =</span> F) <span class="sc">+</span></span>
 <span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">xlab</span>(<span class="st">&quot;Count of allele associated with increase in trait&quot;</span>),</span>
 <span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">.keep =</span> T)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-23-1.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-2.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-3.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-4.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-5.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-6.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-7.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-8.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-9.svg" /><!-- --><img src="index_files/figure-html/unnamed-chunk-23-10.svg" /><!-- --></p>
+<p><img src="index_files/figure-html/unnamed-chunk-23-1.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-2.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-3.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-4.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-5.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-6.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-7.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-8.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-9.svg" width="672" /><img src="index_files/figure-html/unnamed-chunk-23-10.svg" width="672" /></p>
 </div>
 <div id="f_st-of-component-traits-of-all-pigmentation" class="section level2" number="5.3">
 <h2 number="5.3"><span class="header-section-number">5.3</span> <span class="math inline">\(F_{ST}\)</span> of component traits of <code>all pigmentation</code></h2>
@@ -1116,8 +1134,10 @@ div.tocify {
 <span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
 <span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&quot;count&quot;</span>) <span class="co">#+</span></span></code></pre></div>
 <div class="figure">
-<img src="index_files/figure-html/unnamed-chunk-24-1.svg" alt="" />
-<p class="caption"><span class="math inline">\(F_{ST}\)</span> across pigmentation traits</p>
+<img src="index_files/figure-html/unnamed-chunk-24-1.svg" alt="$F_{ST}$ across pigmentation traits" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> across pigmentation traits
+</p>
 </div>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co">#  ggtitle(&quot;Median and 90%&quot;) </span></span></code></pre></div>
 </div>
@@ -1162,7 +1182,42 @@ div.tocify {
 <span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ylab</span>(<span class="st">&quot;count&quot;</span>) <span class="sc">+</span></span>
 <span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ggtitle</span>(<span class="fu">unique</span>(.x<span class="sc">$</span>trait)),</span>
 <span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">.keep =</span> T)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-25-1.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /><img src="index_files/figure-html/unnamed-chunk-25-2.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /><img src="index_files/figure-html/unnamed-chunk-25-3.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /><img src="index_files/figure-html/unnamed-chunk-25-4.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /><img src="index_files/figure-html/unnamed-chunk-25-5.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /><img src="index_files/figure-html/unnamed-chunk-25-6.svg" alt="F_{ST} of SNPs discovered for pigmentation traits in different studies with different discovery populations" /></p>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-1.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-2.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-3.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-4.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-5.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
+<div class="figure">
+<img src="index_files/figure-html/unnamed-chunk-25-6.svg" alt="$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations" width="480" />
+<p class="caption">
+<span class="math inline">\(F_{ST}\)</span> of SNPs discovered for pigmentation traits in different studies with different discovery populations
+</p>
+</div>
 </div>
 </div>
 
