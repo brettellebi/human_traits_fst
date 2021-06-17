@@ -257,16 +257,24 @@ fst_pegas_df_clumps %>%
 
 ```{r}
 fst_pegas_df_clumps %>%
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # order traits
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
   # group by FILTER and TRAIT to take unique SNPs within each group
-  dplyr::group_by(FILTER, TRAIT) %>% 
+  dplyr::group_by(FILTER, trait_with_pig) %>% 
   # take unique IDs
   dplyr::distinct(ID, .keep_all = T) %>% 
   # ungroup
   dplyr::ungroup() %>% 
   # plot
   ggplot() +
-    geom_bar(aes(TRAIT, fill = TRAIT)) +
-    scale_fill_manual(values = pal_primary_new) +
+    geom_bar(aes(trait_with_pig, fill = trait_with_pig)) +
+    scale_fill_manual(values = pal_primary_with_pig) +
     theme_bw() +
     theme(axis.text.x = element_blank(),
           axis.title.x = element_blank(),
@@ -275,13 +283,12 @@ fst_pegas_df_clumps %>%
     facet_wrap(~FILTER, nrow = 2)
 ```
 
-## $F_{ST}$
+## $F_{ST}$ ridges
 
 ```{r, fig.cap = "$F_{ST}$ calculated with 26 populations", fig.height=10, fig.width=8}
 fst_pegas_df_clumps %>% 
   # filter for clumped index SNPs
   dplyr::filter(FILTER == "CLUMPED") %>%
-
   # create new column combining skin pigmentation traits
   dplyr::mutate(trait_with_pig = dplyr::recode(trait,
                                                "skin pigmentation" = "skin pigmentation / measurement",
@@ -314,7 +321,7 @@ fst_pegas_df_clumps %>%
   ggtitle("Median and 90%") 
 ```
 
-## ECDF
+## $F_{ST}$ eCDF 
 
 ```{r, fig.height=8, fig.width=8, fig.cap = "Faceted"}
 fst_pegas_df_clumps %>% 
@@ -374,9 +381,9 @@ fst_pegas_df_clumps %>%
          y = NULL)
 ```
 
-# KS tests
+# Kolmogorov-Smirnov tests
 
-Comparing Fst distributions of each trait against each other.
+Comparing $F_{ST}$ distributions of each trait against each other.
 
 ```{r, warning=F, message=F}
 ks_list = fst_pegas_df_clumps %>% 
@@ -415,7 +422,7 @@ ks_out = purrr::map(ks_list, function(TRAIT_1){
 
 ```
 
-## D statistic
+## D-statistic
 
 ```{r, fig.height=9, fig.width=10}
 ks_out %>% 
