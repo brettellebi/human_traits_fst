@@ -52,7 +52,7 @@ snakemake \
   -p
 ```
 
-# Read in data and process
+# Read in data and post-process
 
 ```{r, message = F, results = "hide"}
 # Variables
@@ -116,15 +116,11 @@ genos_012 = lapply(trait_ids, function(TRAIT_ID){
                        .cols = matches("_"))
 })
 
-# Read in Plink Fst
-fst_plink = lapply(trait_ids, function(TRAIT_ID){
-  readr::read_tsv(file.path(target_dir, "plink/fst", paste(TRAIT_ID, ".fst", sep = "")))
-})
 ```
 
 ## Counts
 
-How many unique SNPs in datasets?
+How many unique SNPs for each trait?
 
 ```{r}
 # How many unique SNPs in associations?
@@ -169,7 +165,6 @@ purrr::map(loci_info, function(TRAIT_ID){
 
 ```
 
-
 ## Calculate Fst with `pegas`
 
 ```{r, eval = F}
@@ -187,8 +182,6 @@ saveRDS(fst_pegas, out_path)
 ```{r, echo = F}
 fst_pegas = readRDS(here::here("data/gwasrapidd/20210525/pegas/fst/fst.rds"))
 ```
-
-# Plot $F_{ST}$
 
 ## Bind relevant data
 
@@ -258,6 +251,7 @@ fst_pegas_df_clumps %>%
 
 ```
 
+# Plot
 
 ## Initial counts of variants
 
@@ -281,40 +275,7 @@ fst_pegas_df_clumps %>%
     facet_wrap(~FILTER, nrow = 2)
 ```
 
-### $F_{ST}$
-
-#### Pegas
-
-```{r, fig.cap = "$F_{ST}$ calculated with 26 populations", fig.height=10, fig.width=8}
-fst_pegas_df_clumps %>% 
-  # filter for clumped index SNPs
-  dplyr::filter(FILTER == "CLUMPED") %>% 
-  # group by TRAIT to take unique SNPs
-  dplyr::group_by(TRAIT) %>% 
-  # take unique IDs
-  dplyr::distinct(ID, .keep_all = T) %>%
-  # reverse order of traits to put `body height` at the top
-  dplyr::mutate(TRAIT = factor(TRAIT, levels = rev(extended_traits))) %>%
-  # plot
-  ggplot(aes(FST_PEGAS, TRAIT, fill = TRAIT, colour = TRAIT)) +
-    geom_density_ridges(scale = 2,
-                        bandwidth = 0.003,
-                        calc_ecdf = TRUE,
-                        quantiles = c(0.5, 0.9),
-                        quantile_lines = T,
-                        jittered_points = TRUE,
-                        point_shape = '|', alpha = 0.85, point_size = 2,
-                        position = position_points_jitter(width = 0.01, height = 0)) +
-  scale_fill_manual(values = pal_primary_new) +
-  scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
-  guides(fill = F, colour = F) +
-  theme_bw() +
-  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
-  ylab(NULL) +
-  ggtitle("Median and 90%") 
-```
-
-##### With skin pigmentation
+## $F_{ST}$
 
 ```{r, fig.cap = "$F_{ST}$ calculated with 26 populations", fig.height=10, fig.width=8}
 fst_pegas_df_clumps %>% 
@@ -340,9 +301,10 @@ fst_pegas_df_clumps %>%
                         calc_ecdf = TRUE,
                         quantiles = c(0.5, 0.9),
                         quantile_lines = T,
-                        jittered_points = TRUE,
+                        jittered_points = T,
                         point_shape = '|', alpha = 0.85, point_size = 2,
-                        position = position_points_jitter(width = 0.01, height = 0)) +
+                        position = position_points_jitter(height = 0),
+    ) +
   scale_fill_manual(values = pal_primary_with_pig) +
   scale_colour_manual(values = karyoploteR::darker(pal_primary_with_pig)) +
   guides(fill = F, colour = F) +
@@ -352,7 +314,7 @@ fst_pegas_df_clumps %>%
   ggtitle("Median and 90%") 
 ```
 
-##### ECDF
+## ECDF
 
 ```{r, fig.height=8, fig.width=8, fig.cap = "Faceted"}
 fst_pegas_df_clumps %>% 
@@ -383,7 +345,8 @@ fst_pegas_df_clumps %>%
          x = expression(F[ST]),
          y = NULL)
 ```
-```{r, fig.height=8, fig.width=12, fig.cap = "Together"}
+
+```{r, fig.height=8, fig.width=12, fig.cap = "Unfaceted"}
 fst_pegas_df_clumps %>% 
   # filter for clumped index SNPs
   dplyr::filter(FILTER == "CLUMPED") %>%
@@ -411,310 +374,7 @@ fst_pegas_df_clumps %>%
          y = NULL)
 ```
 
-#### Plink
 
-```{r, fig.cap="Comparison between `Plink1.9` and `pegas` $F_{ST}$ outputs."}
-# How many unique SNPs in Fst Plink output?
-fst_plink %>% 
-  dplyr::bind_rows(.id = "TRAIT") %>% 
-  dplyr::group_by(TRAIT) %>% 
-  dplyr::distinct(SNP) %>% 
-  nrow()
 
-# Bind Plink outputs `fst_pegas_df_clump`
-fst_all_df = fst_plink %>% 
-  dplyr::bind_rows() %>% 
-  # rename columns for ease of binding
-  dplyr::select(ID = SNP, FST_PLINK = FST) %>% 
-  # take distinct
-  dplyr::distinct(ID, .keep_all = T) %>% 
-  # bind with `fst_pegas_df_clumped`
-  dplyr::left_join(fst_pegas_df_clumps,
-                   .,
-                   by = "ID")
-
-# Plot correlation between pegas and Plink Fst
-fst_all_df %>% 
-  dplyr::filter(FILTER == "CLUMPED") %>% 
-  ggplot() +
-    geom_point(aes(FST_PEGAS, FST_PLINK, colour = TRAIT),
-               alpha = 0.2)+
-    theme_bw() +
-    scale_colour_manual(values = pal_primary_new) +
-    coord_fixed()
-```
-
-### $F_{ST}$ for 3 populations (CEU, CHS, YRI)
-
-```{r}
-target_3_pops = c("YRI", "CEU", "CHS")
-
-# Get list of samples from the 3 target populations
-pops_3_pops = pops_1kg %>% 
-  dplyr::filter(Population %in% target_3_pops)
-```
-
-```{r, eval = F}
-# Get Fst
-fst_3_pops = lapply(genos_raw, function(TRAIT_ID){
-  genos_filt = TRAIT_ID[rownames(TRAIT_ID) %in% pops_3_pops$Sample, ]
-  pegas::Fst(TRAIT_ID, pop = populations)
-})
-```
-
-```{r, eval = F, echo = F}
-out_path = here::here("data/gwasrapidd/20210525/pegas/fst/fst_3_pops.rds")
-dir.create(dirname(out_path), showWarnings = F, recursive = T)
-saveRDS(fst_3_pops, out_path)
-```
-
-```{r, echo = F}
-fst_3_pops = readRDS(here::here("data/gwasrapidd/20210525/pegas/fst/fst_3_pops.rds"))
-```
-
-```{r}
-fst_3_pops_df = fst_3_pops %>% 
-  purrr::map(., . %>% 
-               data.frame(.) %>% 
-               tibble::rownames_to_column(var = "ID") %>% 
-               dplyr::select(ID, FST_PEGAS_3_POPS = Fst)) %>% 
-  dplyr::bind_rows() %>% 
-  dplyr::distinct(ID, .keep_all = T) %>% 
-  dplyr::left_join(.,
-                   fst_all_df,
-                   by = "ID")
-```
-
-```{r, fig.cap = "$F_{ST}$ calculated with only 3 populations: CEU, CHS, and YRI", fig.height=10, fig.width=8}
-fst_3_pops_df %>% 
-  dplyr::filter(FILTER == "CLUMPED") %>%  # filter for clumped index SNPs
-  # group by TRAIT to take unique SNPs
-  dplyr::group_by(TRAIT) %>% 
-  # take unique IDs
-  dplyr::distinct(ID, .keep_all = T) %>%
-  # reverse order of traits to put `body height` at the top
-  dplyr::mutate(TRAIT = factor(TRAIT, levels = rev(extended_traits))) %>% 
-  # plot
-  ggplot(aes(FST_PEGAS_3_POPS, TRAIT, fill = TRAIT, colour = TRAIT)) +
-    geom_density_ridges(scale = 2,
-                        bandwidth = 0.003,
-                        calc_ecdf = TRUE,
-                        quantiles = c(0.5, 0.9),
-                        quantile_lines = T,
-                        jittered_points = TRUE,
-                        point_shape = '|', alpha = 0.85, point_size = 2,
-                        position = position_points_jitter(width = 0.01, height = 0)) +
-  scale_fill_manual(values = pal_primary_new) +
-  scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
-  guides(fill = F, colour = F) +
-  theme_bw() +
-  scale_y_discrete(expand = expansion(add = c(0.2, 2.3))) +
-  ylab(NULL) +
-  ggtitle("Median and 90%") 
-```
-
-# 012 Histograms per population
-
-Process data
-
-```{r}
-increase_allele_counts = lapply(trait_ids, function(TRAIT_ID){
-  
-  # Get risk allele and direction
-  out = dplyr::left_join(assocs_raw[[TRAIT_ID]]@associations %>% 
-              dplyr::select(association_id, pvalue, beta_direction),
-            assocs_raw[[TRAIT_ID]]@risk_alleles %>% 
-              dplyr::select(association_id, variant_id, risk_allele),
-            by = "association_id") %>% 
-    # Filter for clumped SNPS
-    dplyr::filter(variant_id %in% clumped[[TRAIT_ID]]$SNP) %>% 
-    # Bind with 012 genotypes
-    left_join(.,
-              genos_012[[TRAIT_ID]],
-              by = c("variant_id" = "SNP")) %>% 
-    # Find whether the risk allele is COUNTED or ALT in 012 genotypes
-    dplyr::mutate(RISK_ALLELE = dplyr::case_when(
-      risk_allele == COUNTED ~ "counted",
-      risk_allele == ALT ~ "alt",
-      TRUE ~ NA_character_
-      )
-    ) %>% 
-    # Specify the "increase" allele to count 
-    dplyr::mutate(TO_COUNT = dplyr::case_when(
-      beta_direction == "increase" & RISK_ALLELE == "counted" ~ "COUNTED",
-      beta_direction == "increase" & RISK_ALLELE == "alt" ~ "ALT",
-      beta_direction == "decrease" & RISK_ALLELE == "counted" ~ "ALT",
-      beta_direction == "decrease" & RISK_ALLELE == "alt" ~ "COUNTED",
-      TRUE ~ NA_character_
-      )
-    ) %>% 
-    # Swap counts if TO_COUNT == "ALT". This leaves the genotype as NA if TO_COUNT is NA
-    dplyr::mutate(dplyr::across(all_of(pops_1kg$Sample),
-                                ~dplyr::case_when(
-                                  TO_COUNT == "ALT" ~ dplyr::recode(.x,
-                                                                    `0` = 2,
-                                                                    `2` = 0),
-                                  TO_COUNT == "COUNTED" ~ .x,
-                                  ))) %>% 
-  # Pivot longer and get allele counts
-    tidyr::pivot_longer(cols = all_of(pops_1kg$Sample),
-                        names_to = "SAMPLE",
-                        values_to = "INCREASE_ALLELE_COUNT") %>% 
-    # add population
-    dplyr::inner_join(.,
-                     pops_1kg,
-                     by = c("SAMPLE" = "Sample")) %>% 
-    # factor `Population` to order
-    dplyr::mutate(Population = factor(Population, levels = names(onekg_pal))) %>% 
-    # factor `INCREASE_ALLELE_COUNT` to order
-    dplyr::mutate(INCREASE_ALLELE_COUNT = factor(INCREASE_ALLELE_COUNT, levels = c(0:2, NA))) %>% 
-    # Remove duplicate SNPs
-    ## First those with NA in `TO_COUNT`
-#    dplyr::filter((duplicated(.$variant_id) == F | duplicated(.$variant_id, fromLast = T)) & is.na(TO_COUNT)) %>%
-    ## Then other duplicates
-#    dplyr::distinct(variant_id, .keep_all = T) %>% 
-    # Get per-population counts of 0,1,2, and NA
-    dplyr::group_by(Population) %>% 
-    dplyr::count(INCREASE_ALLELE_COUNT) %>% 
-    dplyr::ungroup()
-  return(out)
-})
-
-```
-
-Plot 
-
-## Counts including NAs 
-
-To show the number of SNPs for which direction of effect was unavailable.
-
-```{r, results = "hide"}
-increase_allele_counts %>% 
-  dplyr::bind_rows(.id = "efo_id") %>% 
-  dplyr::left_join(.,
-                   gcat_traits@traits %>% 
-                     dplyr::select(efo_id, trait),
-                   by = "efo_id") %>% 
-  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
-                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
-  dplyr::group_by(TRAIT) %>% 
-  dplyr::group_map(
-    ~ggplot(.x) +
-      geom_col(aes(INCREASE_ALLELE_COUNT, n, fill = Population)) +
-      facet_wrap(~Population) +
-      scale_fill_manual(values = onekg_pal) +
-      theme_bw() +
-      ggtitle(unique(.x$TRAIT)) + 
-      guides(fill = F) +
-      xlab("Count of allele associated with increase in trait"),
-  .keep = T)
-
-```
-
-## Counts excluding NAs 
-
-Now showing counts as proportions
-
-```{r, results = "hide"}
-increase_allele_counts %>% 
-  dplyr::bind_rows(.id = "efo_id") %>% 
-  # add trait names
-  dplyr::left_join(.,
-                   gcat_traits@traits %>% 
-                     dplyr::select(efo_id, trait),
-                   by = "efo_id") %>% 
-  # combine pigmentation traits and order traits
-  dplyr::mutate(TRAIT = dplyr::recode(trait, !!!pig_recode_vec),
-                TRAIT = factor(TRAIT, levels = extended_traits)) %>% 
-  # remove NAs
-  dplyr::filter(!is.na(INCREASE_ALLELE_COUNT)) %>% 
-  # group by population and calculate proportions
-  dplyr::group_by(Population, TRAIT) %>% 
-  dplyr::mutate(FREQ = n / sum(n)) %>% 
-  dplyr::ungroup(Population) %>% 
-  # Plot for each TRAIT
-  dplyr::group_map(
-    ~ggplot(.x) +
-      geom_col(aes(INCREASE_ALLELE_COUNT, FREQ, fill = Population)) +
-      facet_wrap(~Population) +
-      scale_fill_manual(values = onekg_pal) +
-      theme_bw() +
-      ggtitle(unique(.x$TRAIT)) + 
-      guides(fill = F) +
-      xlab("Count of allele associated with increase in trait"),
-  .keep = T)
-```
-
-## $F_{ST}$ of component traits of `all pigmentation`
-
-```{r, fig.cap = "$F_{ST}$ across pigmentation traits", fig.width = 5, fig.height = 7}
-fst_pegas_df_clumps %>% 
-  # filter for clumped index SNPs
-  dplyr::filter(FILTER == "CLUMPED") %>% 
-  # filter for pigmentation traits
-  dplyr::filter(TRAIT == "all pigmentation") %>% 
-  # group by `trait` to take unique SNPs
-  dplyr::group_by(trait) %>% 
-  # take unique IDs
-  dplyr::distinct(ID, .keep_all = T) %>%
-  # factorise `trait` to order
-  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
-  # plot
-  ggplot(aes(FST_PEGAS,
-           colour = TRAIT,
-           fill = TRAIT)) +
-    geom_histogram(bins = 50) +
-    facet_wrap(~trait, ncol = 1) +
-    scale_fill_manual(values = pal_primary_new) +
-    scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
-    guides(fill = F, colour = F) +
-    theme_bw() +
-    ylab("count") #+
-#  ggtitle("Median and 90%") 
-```
-
-## $F_{ST}$ of SNPs discovered in different studies
-
-```{r, fig.cap = "$F_{ST}$ of SNPs discovered for pigmentation traits in different studies with different discovery populations", fig.width = 5, fig.height = 9, results = "hide"}
-# How many studies contributed to pigmentation traits?
-fst_pegas_df_clumps %>% 
-  # filter for clumped index SNPs
-  dplyr::filter(FILTER == "CLUMPED") %>% 
-  # filter for pigmentation traits
-  dplyr::filter(TRAIT == "all pigmentation") %>% 
-  # factorise `trait` to order
-  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
-  # count studies for each trait
-  dplyr::group_by(trait) %>% 
-  dplyr::distinct(study_id) %>% 
-  dplyr::summarise(N_STUDIES = dplyr::n())
-
-# Plot  
-fst_pegas_df_clumps %>% 
-  # filter for clumped index SNPs
-  dplyr::filter(FILTER == "CLUMPED") %>% 
-  # filter for pigmentation traits
-  dplyr::filter(TRAIT == "all pigmentation") %>% 
-  # factorise `trait` to order
-  dplyr::mutate(trait = factor(trait, levels = pig_traits)) %>%
-  # group by `trait` to take unique SNPs
-  dplyr::group_by(trait) %>% 
-  # take unique IDs
-#  dplyr::distinct(ID, .keep_all = T) %>% 
-  # Plot for each `trait`
-  dplyr::group_map(
-    ~ ggplot(.x, aes(FST_PEGAS,
-                     colour = TRAIT,
-                     fill = TRAIT)) +
-        geom_histogram(bins = 50) +
-        facet_wrap(~initial_sample_size, ncol = 1) +
-        scale_fill_manual(values = pal_primary_new) +
-        scale_colour_manual(values = karyoploteR::darker(pal_primary_new)) +
-        guides(fill = F, colour = F) +
-        theme_bw() +
-        ylab("count") +
-        ggtitle(unique(.x$trait)),
-  .keep = T)
-```
 
 

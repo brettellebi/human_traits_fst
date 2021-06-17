@@ -5,6 +5,8 @@ navbar:
   left:
     - text: "Analysis"
       href: index.html
+    - text: "Distribution of trait-increasing alleles"
+      href: distribution_of_trait-increasing_alleles.html
 output:
   html_document:
     theme: flatly
