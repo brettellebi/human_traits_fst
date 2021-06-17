@@ -331,7 +331,7 @@ fst_pegas_df_clumps %>%
   dplyr::group_by(trait_with_pig) %>% 
   # take unique IDs
   dplyr::distinct(ID, .keep_all = T) %>%
-  # reverse order of traits to put `body height` at the top
+  # order traits
   dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
   # plot
   ggplot() +
@@ -361,7 +361,7 @@ fst_pegas_df_clumps %>%
   dplyr::group_by(trait_with_pig) %>% 
   # take unique IDs
   dplyr::distinct(ID, .keep_all = T) %>%
-  # reverse order of traits to put `body height` at the top
+  # order traits
   dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>%
   # plot
   ggplot() +
@@ -374,7 +374,73 @@ fst_pegas_df_clumps %>%
          y = NULL)
 ```
 
+# KS tests
 
+Comparing Fst distributions of each trait against each other.
 
+```{r, warning=F, message=F}
+ks_list = fst_pegas_df_clumps %>% 
+  # filter for clumped index SNPs
+  dplyr::filter(FILTER == "CLUMPED") %>%
+
+  # create new column combining skin pigmentation traits
+  dplyr::mutate(trait_with_pig = dplyr::recode(trait,
+                                               "skin pigmentation" = "skin pigmentation / measurement",
+                                               "skin pigmentation measurement" = "skin pigmentation / measurement")) %>% 
+  # remove all pigmentation traits other than skin pigmentation and skin pigmentation measurement
+  dplyr::filter(trait_with_pig %in% traits_with_pig) %>% 
+  # group by trait to take unique SNPs
+  dplyr::group_by(trait_with_pig) %>% 
+  # take unique IDs
+  dplyr::distinct(ID, .keep_all = T) %>%
+  # order traits
+  dplyr::mutate(trait_with_pig = factor(trait_with_pig, levels = traits_with_pig)) %>% 
+  # split by trait
+  split(., f = .$trait_with_pig)
+
+# Run KS test
+ks_out = purrr::map(ks_list, function(TRAIT_1){
+  lapply(ks_list, function(TRAIT_2){
+    out = ks.test(TRAIT_1$FST_PEGAS,
+                  TRAIT_2$FST_PEGAS)
+    df = data.frame(D_STATISTIC = out$statistic,
+                    P_VALUE = out$p.value)
+  }) %>% 
+    dplyr::bind_rows(.id = "TRAIT_2")
+}) %>% 
+  dplyr::bind_rows(.id = "TRAIT_1") %>% 
+  # order TRAIT variables
+  dplyr::mutate(TRAIT_1 = factor(TRAIT_1, levels = traits_with_pig),
+                TRAIT_2 = factor(TRAIT_2, levels = traits_with_pig))
+
+```
+
+## D statistic
+
+```{r, fig.height=9, fig.width=10}
+ks_out %>% 
+  # plot
+  ggplot() +
+    geom_tile(aes(TRAIT_1, TRAIT_2, fill = D_STATISTIC)) + 
+    scale_fill_viridis_c() +
+    theme_bw() + 
+    coord_fixed() +
+    labs(x = NULL, y = NULL) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## P-value
+
+```{r, fig.height=9, fig.width=10}
+ks_out %>% 
+  # plot
+  ggplot() +
+    geom_tile(aes(TRAIT_1, TRAIT_2, fill = P_VALUE)) + 
+    scale_fill_viridis_c(option = "inferno") +
+    theme_bw() + 
+    coord_fixed() +
+    labs(x = NULL, y = NULL) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
 
