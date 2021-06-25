@@ -3,6 +3,8 @@ rule download_1KG_38_annotated:
         input = os.path.join(config["ftp_dir_1kg_38_annotated"], "ALL.chr{chr}.phase3_shapeit2_mvncall_integrated_v3plus_nounphased.rsID.genotypes.GRCh38_dbSNP.vcf{gz_ext}")
     output:
         os.path.join(config["working_dir"], "vcfs/1kg/20150319/chrs/{chr}.vcf{gz_ext}")
+    container:
+        config["bash"]
     shell:
         """
         wget -O {output} {params.input}
@@ -19,7 +21,7 @@ rule fix_vcf_headers:
         os.path.join(config["working_dir"], "vcfs/1kg/20150319/chrs/{chr}.vcf.gz")
     output:
         os.path.join(config["working_dir"], "vcfs/1kg/20150319/reheaded/{chr}.vcf.gz")
-    singularity:
+    container:
         config["bcftools"]
     shell:
         """

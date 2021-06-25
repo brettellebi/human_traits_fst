@@ -1,6 +1,23 @@
 working_dir:
     "/hps/nobackup/birney/users/ian/hmn_fst"
 traits:
+    - "body height"
+    - "body mass index",
+    - "self reported educational attainment",
+    - "intelligence",
+    - "inflammatory bowel disease",
+    - "skin pigmentation",
+    - "skin pigmentation measurement",
+    - "eye color",
+    - "eye colour measurement",
+    - "hair color",
+    - "hair colour measurement",
+    - "schizophrenia",
+    - "unipolar depression",
+    - "fasting blood glucose measurement",
+    - "myocardial infarction",
+    - "low density lipoprotein cholesterol measurement",
+    - "platelet count"
 contigs:
     - 1
     - 2
@@ -40,19 +57,19 @@ ftp_dir_1kg_38_annotated:
 new_header:
     "data/1kg/20150319/new_header.vcf"
 date_of_gwas_collection:
-    "20210525"
-date_of_dbsnp_collection:
-    "20210524"
+    "20210625"
 tmp_dir:
     "/hps/nobackup/birney/users/ian/hmn_fst/tmp"
 picard:
     "/hps/software/users/birney/ian/containers/picard_2.25.2.sif"
-r-base:
-    "/hps/software/users/birney/ian/containers/r-base_4.0.5.sif"
+bash:
+    "docker://bash:5.1.8"
+r-container:
+    "docker://brettellebi/human_traits_fst:rocker_tidyverse_4.1.0_20210625"
 bcftools:
-    "/hps/software/users/birney/ian/containers/bcftools_1.9.sif"
+    "docker://quay.io/biocontainers/bcftools:1.10--h5d15f04_0"
 plink1.9:
-    "/hps/software/users/birney/ian/containers/plink_1.9_1.90b6.6.sif"
+    "docker://biocontainers/plink1.9:v1.90b3.45-170113-1-deb_cv1"
 rscript:
     "Rscript --no-save --no-restore --no-environ --no-site-file"
 ftp_pop_file:
