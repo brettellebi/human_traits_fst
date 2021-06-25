@@ -7,7 +7,7 @@ rule get_associations:
         efo_id = lambda wildcards: wildcards.efo_id,
         output_dir = lambda wildcards, output: os.path.dirname(str(output))
     container:
-        config["r-container"]
+        config["R"]
     shell:
         """
         mkdir -p {params.output_dir} ;
@@ -21,7 +21,7 @@ rule get_studies:
         key = "data/gwasrapidd/{date}/studies_key/{efo_id}.rds",
         studies = "data/gwasrapidd/{date}/studies_raw/{efo_id}.rds"
     container:
-        config["r-container"]
+        config["R"]
     script:
         "scripts/get_studies.R"
 
@@ -33,7 +33,7 @@ rule process_associations:
     params:
         efo_id = lambda wildcards: wildcards.efo_id
     container:
-        config["r-container"]
+        config["R"]
     script:
         "scripts/process_associations.R"
 
@@ -55,7 +55,7 @@ rule get_snp_ids:
     output:
         "data/gwasrapidd/{date}/assocations_snp_ids/{efo_id}.txt"
     container:
-        config["r-container"]
+        config["R"]
     script:
         "scripts/get_snp_ids.R"
 
@@ -66,7 +66,7 @@ rule extract_gtypes:
     output:
         os.path.join(config["working_dir"], "vcfs/1kg/20150319/filtered/{date}/{efo_id}/by_chr/{chr}.vcf.gz")
     container:
-        config['bcftools']
+        config["bcftools"]
     shell:
         """
         bcftools view \

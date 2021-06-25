@@ -60,18 +60,22 @@ date_of_gwas_collection:
     "20210625"
 tmp_dir:
     "/hps/nobackup/birney/users/ian/hmn_fst/tmp"
+
+#####################
+# Containers
+#####################
 picard:
-    "/hps/software/users/birney/ian/containers/picard_2.25.2.sif"
+    "docker://quay.io/biocontainers/picard:2.25.6--hdfd78af_0"
 bash:
     "docker://bash:5.1.8"
-r-container:
+R:
     "docker://brettellebi/human_traits_fst:rocker_tidyverse_4.1.0_20210625"
 bcftools:
     "docker://quay.io/biocontainers/bcftools:1.10--h5d15f04_0"
 plink1.9:
     "docker://biocontainers/plink1.9:v1.90b3.45-170113-1-deb_cv1"
-rscript:
-    "Rscript --no-save --no-restore --no-environ --no-site-file"
+
+
 ftp_pop_file:
     "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx"
 local_pop_file:
@@ -84,7 +88,8 @@ get_associations_script:
     "code/scripts/get_associations.R"
 get_variants_script:
     "code/scripts/get_variants.R"
-#####################
+
+    #####################
 # Variables
 #####################
 clump_r2:
